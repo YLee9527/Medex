@@ -5,6 +5,7 @@ export interface MediaCardProps {
   tags: string[];
   selected: boolean;
   onClick: (id: string) => void;
+  className?: string;
 }
 
 export default function MediaCard({
@@ -13,7 +14,8 @@ export default function MediaCard({
   filename,
   tags,
   selected,
-  onClick
+  onClick,
+  className
 }: MediaCardProps) {
   return (
     <button
@@ -21,7 +23,7 @@ export default function MediaCard({
       onClick={() => onClick(id)}
       className={`group w-[180px] overflow-hidden rounded-[8px] bg-[#242424] text-left text-[#EAEAEA] transition-colors ${
         selected ? 'border-2 border-blue-500' : 'border border-white/10 hover:border-white/20'
-      }`}
+      } ${className ?? ''}`}
     >
       <div className="relative aspect-video w-full overflow-hidden">
         {thumbnail ? (

@@ -24,9 +24,11 @@ type AppState = {
   tags: SidebarTagItem[];
   mediaItems: MediaItem[];
   selectedMediaId: string;
+  viewMode: 'grid' | 'list';
   clickNav: (navId: string) => void;
   clickTag: (tagId: string) => void;
   clickMedia: (mediaId: string) => void;
+  setViewMode: (mode: 'grid' | 'list') => void;
 };
 
 const initialNavItems: SidebarNavItem[] = [
@@ -74,6 +76,7 @@ export const useAppStore = create<AppState>((set) => ({
   tags: initialTags,
   mediaItems: initialMediaItems,
   selectedMediaId: '',
+  viewMode: 'grid',
   clickNav: (navId) => {
     console.log('nav clicked:', navId);
     set((state) => ({
@@ -99,5 +102,6 @@ export const useAppStore = create<AppState>((set) => ({
   clickMedia: (mediaId) => {
     console.log('media card clicked:', mediaId);
     set({ selectedMediaId: mediaId });
-  }
+  },
+  setViewMode: (mode) => set({ viewMode: mode })
 }));
