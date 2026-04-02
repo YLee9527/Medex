@@ -1,7 +1,9 @@
 import { useAppStore } from '../store/useAppStore';
 
 export default function Inspector() {
-  const selectedMedia = useAppStore((state) => state.selectedMedia);
+  const mediaItems = useAppStore((state) => state.mediaItems);
+  const selectedMediaId = useAppStore((state) => state.selectedMediaId);
+  const selectedMedia = mediaItems.find((item) => item.id === selectedMediaId) ?? {};
 
   return (
     <aside className="w-[320px] shrink-0 border-l border-white/10 bg-medexInspector p-4 text-medexText">

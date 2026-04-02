@@ -1,20 +1,10 @@
+import { SidebarNavItem, SidebarTagItem } from '../store/useAppStore';
+
 export interface SidebarProps {
   navItems: SidebarNavItem[];
   tags: SidebarTagItem[];
   onTagClick: (tagId: string) => void;
   onNavClick: (navId: string) => void;
-}
-
-export interface SidebarNavItem {
-  id: string;
-  label: string;
-  active: boolean;
-}
-
-export interface SidebarTagItem {
-  id: string;
-  name: string;
-  selected: boolean;
 }
 
 export default function Sidebar({
