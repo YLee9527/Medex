@@ -29,6 +29,7 @@ type AppState = {
   clickTag: (tagId: string) => void;
   clickMedia: (mediaId: string) => void;
   setViewMode: (mode: 'grid' | 'list') => void;
+  changeSelectedMediaTag: (tagId: string, action: 'add' | 'remove') => void;
 };
 
 const initialNavItems: SidebarNavItem[] = [
@@ -103,5 +104,35 @@ export const useAppStore = create<AppState>((set) => ({
     console.log('media card clicked:', mediaId);
     set({ selectedMediaId: mediaId });
   },
-  setViewMode: (mode) => set({ viewMode: mode })
+  setViewMode: (mode) => set({ viewMode: mode }),
+  changeSelectedMediaTag: (tagId, action) =>
+    set((state) => {
+      if (!state.selectedMediaId) {
+        return state;
+      }
+
+      return {
+        mediaItems: state.mediaItems.map((item) => {
+          if (item.id !== state.selectedMediaId) {
+            return item;
+          }
+
+          if (action === 'add') {
+            if (!tagId || item.tags.includes(tagId)) {
+              return item;
+            }
+
+            return {
+              ...item,
+              tags: [...item.tags, tagId]
+            };
+          }
+
+          return {
+            ...item,
+            tags: item.tags.filter((tag) => tag !== tagId)
+          };
+        })
+      };
+    })
 }));
