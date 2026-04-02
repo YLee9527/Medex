@@ -47,13 +47,17 @@ export default function MediaGrid({ mediaList, onCardClick, viewMode }: MediaGri
   }
 
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto overscroll-contain pr-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
+    <div
+      className="grid min-h-0 flex-1 auto-rows-auto content-start justify-start gap-3 overflow-y-auto overscroll-contain pr-1 sm:gap-4 lg:gap-5"
+      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 220px))' }}
+    >
       {mediaList.map((item) => (
-        <div key={item.id} className="flex justify-start">
+        <div key={item.id} className="flex">
           <MediaCard
             {...item}
             onClick={onCardClick}
-            className="w-[180px]"
+            className="w-full"
+            mode="grid"
           />
         </div>
       ))}

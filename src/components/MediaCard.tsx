@@ -11,6 +11,7 @@ export interface MediaCardProps {
   selected: boolean;
   onClick: (id: string) => void;
   className?: string;
+  mode?: 'grid' | 'list';
 }
 
 export default function MediaCard({
@@ -20,9 +21,11 @@ export default function MediaCard({
   tags,
   selected,
   onClick,
-  className
+  className,
+  mode = 'grid'
 }: MediaCardProps) {
   const widthClass = className ?? 'w-[180px]';
+  const isGrid = mode === 'grid';
 
   return (
     <button
@@ -30,9 +33,9 @@ export default function MediaCard({
       onClick={() => onClick(id)}
       className={`group overflow-hidden rounded-[8px] bg-[#242424] text-left text-[#EAEAEA] transition-colors ${
         selected ? 'border-2 border-blue-500' : 'border border-white/10 hover:border-white/20'
-      } ${widthClass}`}
+      } ${widthClass} ${isGrid ? 'h-[220px]' : 'h-auto'}`}
     >
-      <div className="relative aspect-video w-full overflow-hidden">
+      <div className={`relative w-full overflow-hidden ${isGrid ? 'h-[150px] shrink-0' : 'aspect-video'}`}>
         {thumbnail ? (
           <img src={thumbnail} alt={filename} className="h-full w-full object-cover" />
         ) : (
@@ -50,9 +53,11 @@ export default function MediaCard({
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 p-3">
-        <p className="max-h-10 overflow-hidden text-[14px] leading-5 text-[#EAEAEA]">{filename}</p>
-        <div className="flex max-h-[56px] flex-wrap gap-1 overflow-y-auto">
+      <div className={`flex flex-col gap-2 p-3 ${isGrid ? 'h-[70px] overflow-hidden' : ''}`}>
+        <p className="overflow-hidden text-[14px] leading-5 text-[#EAEAEA] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
+          {filename}
+        </p>
+        <div className={`flex flex-wrap gap-1 ${isGrid ? 'max-h-6 overflow-hidden' : 'max-h-[56px] overflow-y-auto'}`}>
           {tags.map((tag) => (
             <span key={tag} className="rounded bg-white/10 px-2 py-0.5 text-[12px] leading-4 text-white/80">
               #{tag}
