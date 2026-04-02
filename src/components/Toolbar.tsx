@@ -23,10 +23,11 @@ export default function Toolbar({ activeTags, viewMode, onViewModeChange }: Tool
         <button
           type="button"
           onClick={() => onViewModeChange('grid')}
-          className={`flex h-8 w-8 items-center justify-center rounded-full text-white transition-colors ${
-            viewMode === 'grid' ? 'bg-[#444444]' : 'bg-white/10 hover:bg-[#555555]'
+          className={`flex h-8 w-8 items-center justify-center rounded-[6px] text-white transition-colors ${
+            viewMode === 'grid' ? 'bg-[#444444] text-white' : 'bg-transparent text-white/70 hover:bg-[#555555]'
           }`}
           aria-label="Grid View"
+          aria-pressed={viewMode === 'grid'}
           title="Grid"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
@@ -36,10 +37,11 @@ export default function Toolbar({ activeTags, viewMode, onViewModeChange }: Tool
         <button
           type="button"
           onClick={() => onViewModeChange('list')}
-          className={`flex h-8 w-8 items-center justify-center rounded-full text-white transition-colors ${
-            viewMode === 'list' ? 'bg-[#444444]' : 'bg-white/10 hover:bg-[#555555]'
+          className={`flex h-8 w-8 items-center justify-center rounded-[6px] text-white transition-colors ${
+            viewMode === 'list' ? 'bg-[#444444] text-white' : 'bg-transparent text-white/70 hover:bg-[#555555]'
           }`}
           aria-label="List View"
+          aria-pressed={viewMode === 'list'}
           title="List"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">

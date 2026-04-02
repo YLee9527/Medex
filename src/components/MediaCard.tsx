@@ -17,13 +17,15 @@ export default function MediaCard({
   onClick,
   className
 }: MediaCardProps) {
+  const widthClass = className ?? 'w-[180px]';
+
   return (
     <button
       type="button"
       onClick={() => onClick(id)}
-      className={`group w-[180px] overflow-hidden rounded-[8px] bg-[#242424] text-left text-[#EAEAEA] transition-colors ${
+      className={`group overflow-hidden rounded-[8px] bg-[#242424] text-left text-[#EAEAEA] transition-colors ${
         selected ? 'border-2 border-blue-500' : 'border border-white/10 hover:border-white/20'
-      } ${className ?? ''}`}
+      } ${widthClass}`}
     >
       <div className="relative aspect-video w-full overflow-hidden">
         {thumbnail ? (

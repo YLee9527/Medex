@@ -4,7 +4,7 @@ import InspectorContainer from './containers/InspectorContainer';
 
 export default function App() {
   return (
-    <div className="flex min-h-screen min-w-[1200px] bg-medexMain text-medexText">
+    <div className="flex h-screen min-w-[1200px] overflow-hidden bg-medexMain text-medexText">
       <SidebarContainer />
       <Main />
       <InspectorContainer />

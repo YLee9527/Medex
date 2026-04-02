@@ -14,7 +14,7 @@ export default function Sidebar({
   onNavClick
 }: SidebarProps) {
   return (
-    <aside className="h-[calc(100vh-24px)] w-[240px] shrink-0 border-r border-white/10 bg-[#1E1E1E] p-4 text-[#EAEAEA]">
+    <aside className="h-full w-[240px] shrink-0 overflow-y-auto border-r border-white/10 bg-[#1E1E1E] p-4 text-[#EAEAEA]">
       <div className="mb-8 rounded border border-white/10 p-3">
         <h1 className="text-xl font-semibold tracking-wide">Medex</h1>
         <p className="mt-1 text-xs text-white/60">Media Management</p>

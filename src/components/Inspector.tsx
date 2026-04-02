@@ -26,7 +26,7 @@ export default function Inspector({ media, onTagChange }: InspectorProps) {
   };
 
   return (
-    <aside className="h-full w-[320px] shrink-0 border-l border-white/10 bg-[#1E1E1E] p-4 text-[#EAEAEA]">
+    <aside className="flex h-full w-[320px] shrink-0 flex-col overflow-hidden border-l border-white/10 bg-[#1E1E1E] p-4 text-[#EAEAEA]">
       <h2 className="mb-4 text-base font-medium">Inspector</h2>
 
       {!media ? (
@@ -34,7 +34,7 @@ export default function Inspector({ media, onTagChange }: InspectorProps) {
           请选择一个媒体查看详情
         </div>
       ) : (
-        <div className="flex h-[calc(100vh-96px)] flex-col gap-4 rounded-lg border border-white/10 p-3">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 rounded-lg border border-white/10 p-3">
           <div className="group relative aspect-video w-full overflow-hidden rounded-md bg-black/30">
             {media.thumbnail ? (
               <img
@@ -51,7 +51,7 @@ export default function Inspector({ media, onTagChange }: InspectorProps) {
             <p className="text-[14px] leading-5 text-[#EAEAEA]">{media.filename}</p>
           </div>
 
-          <div className="flex flex-wrap gap-1 overflow-y-auto">
+          <div className="flex max-h-28 flex-wrap gap-1 overflow-y-auto">
             {media.tags.map((tag) => (
               <button
                 key={tag}

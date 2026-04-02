@@ -3,7 +3,7 @@ import ToolbarContainer from '../containers/ToolbarContainer';
 
 export default function Main() {
   return (
-    <main className="flex min-w-0 flex-1 flex-col bg-medexMain p-6 text-medexText">
+    <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-medexMain p-6 text-medexText">
       <header className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-medium">Media Grid</h2>
       </header>
@@ -12,7 +12,7 @@ export default function Main() {
         <ToolbarContainer />
       </div>
 
-      <div className="flex flex-1 rounded border border-dashed border-white/20 p-4">
+      <div className="flex min-h-0 flex-1 overflow-hidden rounded border border-dashed border-white/20 p-4">
         <MediaGridContainer />
       </div>
     </main>

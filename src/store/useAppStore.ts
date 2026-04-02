@@ -17,6 +17,8 @@ export type MediaItem = {
   thumbnail: string;
   filename: string;
   tags: string[];
+  isFavorite: boolean;
+  isRecent: boolean;
 };
 
 type AppState = {
@@ -50,27 +52,42 @@ const initialMediaItems: MediaItem[] = [
     id: 'media-1',
     thumbnail: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=80',
     filename: 'city-night-clip.mp4',
-    tags: ['夜晚', '城市', '素材']
+    tags: ['夜晚', '城市', '素材'],
+    isFavorite: true,
+    isRecent: true
   },
   {
     id: 'media-2',
     thumbnail: 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=600&q=80',
     filename: 'cat-closeup.jpg',
-    tags: ['猫', '宠物', 'UI']
+    tags: ['猫', '宠物', 'UI'],
+    isFavorite: false,
+    isRecent: true
   },
   {
     id: 'media-3',
     thumbnail: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80',
     filename: 'dashboard-reference.png',
-    tags: ['UI', '设计', '参考']
+    tags: ['UI', '设计', '参考'],
+    isFavorite: true,
+    isRecent: false
   },
   {
     id: 'media-4',
     thumbnail: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80',
     filename: 'forest-atmosphere.mov',
-    tags: ['自然', '夜晚', '素材']
+    tags: ['自然', '夜晚', '素材'],
+    isFavorite: false,
+    isRecent: false
   }
 ];
+
+const makeTagId = (tagName: string) =>
+  tagName
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\u4e00-\u9fa5-]/g, '');
 
 export const useAppStore = create<AppState>((set) => ({
   navItems: initialNavItems,
@@ -111,28 +128,55 @@ export const useAppStore = create<AppState>((set) => ({
         return state;
       }
 
-      return {
-        mediaItems: state.mediaItems.map((item) => {
-          if (item.id !== state.selectedMediaId) {
+      const normalizedTagName = tagId.trim();
+      if (!normalizedTagName) {
+        return state;
+      }
+
+      const nextMediaItems = state.mediaItems.map((item) => {
+        if (item.id !== state.selectedMediaId) {
+          return item;
+        }
+
+        if (action === 'add') {
+          if (item.tags.includes(normalizedTagName)) {
             return item;
-          }
-
-          if (action === 'add') {
-            if (!tagId || item.tags.includes(tagId)) {
-              return item;
-            }
-
-            return {
-              ...item,
-              tags: [...item.tags, tagId]
-            };
           }
 
           return {
             ...item,
-            tags: item.tags.filter((tag) => tag !== tagId)
+            tags: [...item.tags, normalizedTagName]
           };
-        })
+        }
+
+        return {
+          ...item,
+          tags: item.tags.filter((tag) => tag !== normalizedTagName)
+        };
+      });
+
+      const tagStillUsed = nextMediaItems.some((item) => item.tags.includes(normalizedTagName));
+      const hasTagInSidebar = state.tags.some((tag) => tag.name === normalizedTagName);
+
+      let nextTags = state.tags;
+      if (action === 'add' && !hasTagInSidebar) {
+        nextTags = [
+          ...state.tags,
+          {
+            id: makeTagId(normalizedTagName) || `tag-${Date.now()}`,
+            name: normalizedTagName,
+            selected: false
+          }
+        ];
+      }
+
+      if (action === 'remove' && !tagStillUsed) {
+        nextTags = nextTags.filter((tag) => tag.name !== normalizedTagName);
+      }
+
+      return {
+        mediaItems: nextMediaItems,
+        tags: nextTags
       };
     })
 }));

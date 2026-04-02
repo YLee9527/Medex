@@ -13,9 +13,9 @@ export default function MediaGrid({ mediaList, onCardClick, viewMode }: MediaGri
       : 'flex flex-col gap-2';
 
   return (
-    <div className={`flex-1 ${layoutClassName}`}>
+    <div className={`min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 ${layoutClassName}`}>
       {mediaList.map((item) => (
-        <div key={item.id} className={viewMode === 'grid' ? 'flex justify-start' : 'w-full'}>
+        <div key={item.id} className={viewMode === 'grid' ? 'flex justify-start' : 'min-w-0 w-full'}>
           <MediaCard
             {...item}
             onClick={onCardClick}
