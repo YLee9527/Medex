@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { MediaCardProps } from './MediaCard';
 
 export interface InspectorProps {
@@ -8,19 +9,21 @@ export interface InspectorProps {
 }
 
 export default function Inspector({ media, onTagChange, onToggleFavorite, onDeleteMedia }: InspectorProps) {
+  const [newTag, setNewTag] = useState('');
+
   const handleRemoveTag = (tagId: string) => {
     console.log('inspector tag change:', tagId, 'remove');
     onTagChange(tagId, 'remove');
   };
 
   const handleAddTag = () => {
-    const value = window.prompt('请输入新标签');
-    const tagValue = value?.trim();
+    const tagValue = newTag.trim();
     if (!tagValue) {
       return;
     }
     console.log('inspector tag change:', tagValue, 'add');
     onTagChange(tagValue, 'add');
+    setNewTag('');
   };
 
   return (
@@ -63,13 +66,6 @@ export default function Inspector({ media, onTagChange, onToggleFavorite, onDele
                   #{tag}
                 </button>
               ))}
-              <button
-                type="button"
-                onClick={handleAddTag}
-                className="rounded-[6px] bg-[#444444] px-2 py-1 text-[12px] leading-4 text-white hover:bg-[#555555]"
-              >
-                + 添加
-              </button>
             </div>
           </div>
 
@@ -84,26 +80,50 @@ export default function Inspector({ media, onTagChange, onToggleFavorite, onDele
           <div className="mt-auto">
             <p className="mb-2 text-xs text-white/70">操作：</p>
             <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  console.log('inspector favorite toggle:', media.id);
-                  onToggleFavorite(media.id);
-                }}
-                className="rounded-md bg-[#444444] px-3 py-2 text-left text-sm text-white hover:bg-[#555555]"
-              >
-                ⭐ 收藏
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  console.log('inspector delete media:', media.id);
-                  onDeleteMedia(media.id);
-                }}
-                className="rounded-md bg-red-700/80 px-3 py-2 text-left text-sm text-white hover:bg-red-700"
-              >
-                删除
-              </button>
+              <div className="grid grid-cols-[1fr_auto] gap-2">
+                <input
+                  type="text"
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddTag();
+                    }
+                  }}
+                  placeholder="输入标签"
+                  className="rounded-md border border-white/15 bg-black/20 px-3 py-2 text-sm text-white outline-none placeholder:text-white/40 focus:border-white/30"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddTag}
+                  className="rounded-md bg-[#444444] px-3 py-2 text-sm text-white hover:bg-[#555555]"
+                >
+                  新增标签
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    console.log('inspector favorite toggle:', media.id);
+                    onToggleFavorite(media.id);
+                  }}
+                  className="rounded-md bg-[#444444] px-3 py-2 text-left text-sm text-white hover:bg-[#555555]"
+                >
+                  {media.isFavorite ? '取消收藏' : '收藏'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    console.log('inspector delete media:', media.id);
+                    onDeleteMedia(media.id);
+                  }}
+                  className="rounded-md bg-red-700/80 px-3 py-2 text-sm text-white hover:bg-red-700"
+                >
+                  删除
+                </button>
+              </div>
             </div>
           </div>
         </div>
