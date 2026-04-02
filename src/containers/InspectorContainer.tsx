@@ -6,6 +6,8 @@ export default function InspectorContainer() {
   const mediaItems = useAppStore((state) => state.mediaItems);
   const selectedMediaId = useAppStore((state) => state.selectedMediaId);
   const changeSelectedMediaTag = useAppStore((state) => state.changeSelectedMediaTag);
+  const toggleFavorite = useAppStore((state) => state.toggleFavorite);
+  const deleteMedia = useAppStore((state) => state.deleteMedia);
 
   const selectedMedia = mediaItems.find((item) => item.id === selectedMediaId);
 
@@ -17,5 +19,12 @@ export default function InspectorContainer() {
       }
     : null;
 
-  return <Inspector media={media} onTagChange={changeSelectedMediaTag} />;
+  return (
+    <Inspector
+      media={media}
+      onTagChange={changeSelectedMediaTag}
+      onToggleFavorite={toggleFavorite}
+      onDeleteMedia={deleteMedia}
+    />
+  );
 }

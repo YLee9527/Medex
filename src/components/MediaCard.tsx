@@ -3,6 +3,11 @@ export interface MediaCardProps {
   thumbnail: string;
   filename: string;
   tags: string[];
+  time?: string;
+  mediaType?: string;
+  duration?: string;
+  resolution?: string;
+  isFavorite?: boolean;
   selected: boolean;
   onClick: (id: string) => void;
   className?: string;

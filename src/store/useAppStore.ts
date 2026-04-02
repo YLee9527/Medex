@@ -17,6 +17,10 @@ export type MediaItem = {
   thumbnail: string;
   filename: string;
   tags: string[];
+  time: string;
+  mediaType: string;
+  duration: string;
+  resolution: string;
   isFavorite: boolean;
   isRecent: boolean;
 };
@@ -32,6 +36,8 @@ type AppState = {
   clickMedia: (mediaId: string) => void;
   setViewMode: (mode: 'grid' | 'list') => void;
   changeSelectedMediaTag: (tagId: string, action: 'add' | 'remove') => void;
+  toggleFavorite: (mediaId: string) => void;
+  deleteMedia: (mediaId: string) => void;
 };
 
 const initialNavItems: SidebarNavItem[] = [
@@ -53,6 +59,10 @@ const initialMediaItems: MediaItem[] = [
     thumbnail: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=80',
     filename: 'city-night-clip.mp4',
     tags: ['夜晚', '城市', '素材'],
+    time: '2026-03',
+    mediaType: 'mp4',
+    duration: '00:32',
+    resolution: '1920x1080',
     isFavorite: true,
     isRecent: true
   },
@@ -61,6 +71,10 @@ const initialMediaItems: MediaItem[] = [
     thumbnail: 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=600&q=80',
     filename: 'cat-closeup.jpg',
     tags: ['猫', '宠物', 'UI'],
+    time: '2026-03',
+    mediaType: 'jpg',
+    duration: '00:08',
+    resolution: '1920x1080',
     isFavorite: false,
     isRecent: true
   },
@@ -69,6 +83,10 @@ const initialMediaItems: MediaItem[] = [
     thumbnail: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80',
     filename: 'dashboard-reference.png',
     tags: ['UI', '设计', '参考'],
+    time: '2026-02',
+    mediaType: 'png',
+    duration: '00:00',
+    resolution: '2560x1440',
     isFavorite: true,
     isRecent: false
   },
@@ -77,6 +95,10 @@ const initialMediaItems: MediaItem[] = [
     thumbnail: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80',
     filename: 'forest-atmosphere.mov',
     tags: ['自然', '夜晚', '素材'],
+    time: '2026-01',
+    mediaType: 'mov',
+    duration: '01:12',
+    resolution: '3840x2160',
     isFavorite: false,
     isRecent: false
   }
@@ -177,6 +199,28 @@ export const useAppStore = create<AppState>((set) => ({
       return {
         mediaItems: nextMediaItems,
         tags: nextTags
+      };
+    }),
+  toggleFavorite: (mediaId) =>
+    set((state) => ({
+      mediaItems: state.mediaItems.map((item) =>
+        item.id === mediaId
+          ? {
+              ...item,
+              isFavorite: !item.isFavorite
+            }
+          : item
+      )
+    })),
+  deleteMedia: (mediaId) =>
+    set((state) => {
+      const nextMediaItems = state.mediaItems.filter((item) => item.id !== mediaId);
+      const usedTagNames = new Set(nextMediaItems.flatMap((item) => item.tags));
+
+      return {
+        mediaItems: nextMediaItems,
+        selectedMediaId: state.selectedMediaId === mediaId ? '' : state.selectedMediaId,
+        tags: state.tags.filter((tag) => usedTagNames.has(tag.name))
       };
     })
 }));
