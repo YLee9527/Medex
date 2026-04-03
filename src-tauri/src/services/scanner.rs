@@ -21,6 +21,8 @@ pub struct MediaItem {
     pub filename: String,
     #[serde(rename = "type")]
     pub media_type: String,
+    #[serde(rename = "isFavorite")]
+    pub is_favorite: bool,
     pub tags: Vec<String>,
 }
 
@@ -116,6 +118,7 @@ fn get_all_media_inner(conn: &Connection) -> Result<Vec<MediaItem>> {
                 m.path,
                 m.filename,
                 m.type,
+                m.is_favorite,
                 COALESCE(GROUP_CONCAT(t.name, '||'), '') AS tags_concat
              FROM media m
              LEFT JOIN media_tags mt ON mt.media_id = m.id
@@ -132,7 +135,8 @@ fn get_all_media_inner(conn: &Connection) -> Result<Vec<MediaItem>> {
                 path: row.get(1)?,
                 filename: row.get(2)?,
                 media_type: row.get(3)?,
-                tags: parse_tags(row.get::<_, String>(4)?),
+                is_favorite: row.get::<_, i64>(4)? != 0,
+                tags: parse_tags(row.get::<_, String>(5)?),
             })
         })
         .context("failed to execute get_all_media query")?;
@@ -164,6 +168,7 @@ pub fn filter_media_by_tags(tag_names: Vec<String>) -> Result<Vec<MediaItem>, St
                 m.path,
                 m.filename,
                 m.type,
+                m.is_favorite,
                 COALESCE(GROUP_CONCAT(t2.name, '||'), '') AS tags_concat
              FROM media m
              JOIN (
@@ -196,7 +201,8 @@ pub fn filter_media_by_tags(tag_names: Vec<String>) -> Result<Vec<MediaItem>, St
                     path: row.get(1)?,
                     filename: row.get(2)?,
                     media_type: row.get(3)?,
-                    tags: parse_tags(row.get::<_, String>(4)?),
+                    is_favorite: row.get::<_, i64>(4)? != 0,
+                    tags: parse_tags(row.get::<_, String>(5)?),
                 })
             })
             .context("failed to execute filter_media_by_tags query")?;
@@ -271,6 +277,19 @@ pub fn scan_and_index(path: String, app_handle: AppHandle) -> Result<(), String>
     println!("[scanner] done");
 
     Ok(())
+}
+
+#[tauri::command]
+pub fn set_media_favorite(media_id: i64, is_favorite: bool) -> Result<(), String> {
+    crate::db::with_connection(|conn| {
+        conn.execute(
+            "UPDATE media SET is_favorite = ?, updated_at = ? WHERE id = ?;",
+            params![if is_favorite { 1 } else { 0 }, current_timestamp_seconds(), media_id],
+        )
+        .context("failed to update media favorite state")?;
+        Ok(())
+    })
+    .map_err(|err| err.to_string())
 }
 
 fn current_timestamp_seconds() -> i64 {

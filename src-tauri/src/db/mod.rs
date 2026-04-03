@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf, sync::Mutex};
 
 use anyhow::{anyhow, Context, Result};
 use once_cell::sync::OnceCell;
-use rusqlite::Connection;
+use rusqlite::{params, Connection};
 use tauri::Manager;
 
 static DB_CONN: OnceCell<Mutex<Connection>> = OnceCell::new();
@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS media (
     path TEXT UNIQUE,
     filename TEXT,
     type TEXT,
+    is_favorite INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER,
     updated_at INTEGER
 );
@@ -46,12 +47,44 @@ pub fn init_db(app_handle: &tauri::AppHandle) -> Result<()> {
 
     conn.execute_batch(INIT_SQL)
         .context("failed to create tables/indexes for medex database")?;
+    ensure_media_favorite_column(&conn)?;
 
     DB_CONN
         .set(Mutex::new(conn))
         .map_err(|_| anyhow!("database connection has already been initialized"))?;
 
     println!("SQLite initialized: {}", db_path.display());
+    Ok(())
+}
+
+fn ensure_media_favorite_column(conn: &Connection) -> Result<()> {
+    let mut stmt = conn
+        .prepare("PRAGMA table_info(media);")
+        .context("failed to prepare pragma table_info(media)")?;
+    let rows = stmt
+        .query_map([], |row| {
+            let name: String = row.get(1)?;
+            Ok(name)
+        })
+        .context("failed to query pragma table_info(media)")?;
+
+    let mut has_is_favorite = false;
+    for row in rows {
+        let col = row.context("failed to parse pragma row")?;
+        if col == "is_favorite" {
+            has_is_favorite = true;
+            break;
+        }
+    }
+
+    if !has_is_favorite {
+        conn.execute(
+            "ALTER TABLE media ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0;",
+            params![],
+        )
+        .context("failed to add is_favorite column to media table")?;
+    }
+
     Ok(())
 }
 

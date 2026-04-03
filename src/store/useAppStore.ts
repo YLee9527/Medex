@@ -32,6 +32,7 @@ export type DbMediaItem = {
   path: string;
   filename: string;
   type: string;
+  isFavorite?: boolean;
   tags?: string[];
 };
 
@@ -258,8 +259,6 @@ export const useAppStore = create<AppState>((set) => ({
         }
         return {
           ...item,
-          tags: previous.tags,
-          isFavorite: previous.isFavorite,
           isRecent: previous.isRecent
         };
       });

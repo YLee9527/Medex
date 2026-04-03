@@ -17,6 +17,24 @@ export default function MediaGridContainer() {
   const viewMode = useAppStore((state) => state.viewMode);
   const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb);
 
+  const handleToggleFavorite = async (mediaId: string) => {
+    const target = mediaItems.find((item) => item.id === mediaId);
+    if (!target) {
+      return;
+    }
+    const nextFavorite = !target.isFavorite;
+    try {
+      await invoke('set_media_favorite', {
+        mediaId: Number(mediaId),
+        isFavorite: nextFavorite
+      });
+      toggleFavorite(mediaId);
+    } catch (error) {
+      console.error('[ui] set_media_favorite failed:', error);
+      window.alert(`收藏状态更新失败：${String(error)}`);
+    }
+  };
+
   const activeNavId = navItems.find((item) => item.active)?.id ?? 'all-media';
   const selectedTagNames = useMemo(
     () => tags.filter((tag) => tag.selected).map((tag) => tag.name),
@@ -42,7 +60,7 @@ export default function MediaGridContainer() {
             mediaType: row.type,
             duration: '--:--',
             resolution: '未知',
-            isFavorite: false,
+            isFavorite: row.isFavorite ?? false,
             isRecent: false
           }));
           setMediaItemsFromDb(mapped);
@@ -78,7 +96,7 @@ export default function MediaGridContainer() {
     <MediaGrid
       mediaList={mediaList}
       onCardClick={clickMedia}
-      onToggleFavorite={toggleFavorite}
+      onToggleFavorite={handleToggleFavorite}
       onTagAdded={addTagToMediaLocal}
       onTagRemoved={removeTagFromMediaLocal}
       viewMode={viewMode}

@@ -46,7 +46,7 @@ export default function ToolbarContainer() {
       mediaType: row.type,
       duration: '--:--',
       resolution: '未知',
-      isFavorite: false,
+      isFavorite: row.isFavorite ?? false,
       isRecent: false
     }));
     setMediaItemsFromDb(mapped);
