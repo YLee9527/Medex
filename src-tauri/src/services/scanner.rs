@@ -156,12 +156,24 @@ pub fn get_all_media() -> Result<Vec<MediaItem>, String> {
 
 #[tauri::command]
 pub fn filter_media_by_tags(tag_names: Vec<String>) -> Result<Vec<MediaItem>, String> {
+    filter_media(tag_names, None)
+}
+
+#[tauri::command]
+pub fn filter_media(tag_names: Vec<String>, media_type: Option<String>) -> Result<Vec<MediaItem>, String> {
+    let normalized_media_type = normalize_media_type(media_type)?;
+
     crate::db::with_connection(|conn| {
         if tag_names.is_empty() {
-            return get_all_media_inner(conn);
+            return get_all_media_with_type_inner(conn, normalized_media_type.as_deref());
         }
 
         let placeholders = vec!["?"; tag_names.len()].join(",");
+        let type_filter = if normalized_media_type.is_some() {
+            " AND m1.type = ?"
+        } else {
+            ""
+        };
         let sql = format!(
             "SELECT
                 m.id,
@@ -177,6 +189,7 @@ pub fn filter_media_by_tags(tag_names: Vec<String>) -> Result<Vec<MediaItem>, St
                 JOIN media_tags mt1 ON m1.id = mt1.media_id
                 JOIN tags t1 ON t1.id = mt1.tag_id
                 WHERE t1.name IN ({})
+                {}
                 GROUP BY m1.id
                 HAVING COUNT(DISTINCT t1.id) = ?
              ) matched ON matched.id = m.id
@@ -184,11 +197,15 @@ pub fn filter_media_by_tags(tag_names: Vec<String>) -> Result<Vec<MediaItem>, St
              LEFT JOIN tags t2 ON t2.id = mt2.tag_id
              GROUP BY m.id
              ORDER BY m.id DESC;",
-            placeholders
+            placeholders, type_filter
         );
 
+        let tag_count = tag_names.len() as i64;
         let mut values: Vec<Value> = tag_names.into_iter().map(Value::Text).collect();
-        values.push(Value::Integer(values.len() as i64));
+        if let Some(ref media_type_value) = normalized_media_type {
+            values.push(Value::Text(media_type_value.clone()));
+        }
+        values.push(Value::Integer(tag_count));
 
         let mut stmt = conn
             .prepare(&sql)
@@ -309,4 +326,64 @@ fn parse_tags(tags_concat: String) -> Vec<String> {
         .filter(|tag| !tag.is_empty())
         .map(ToString::to_string)
         .collect()
+}
+
+fn get_all_media_with_type_inner(conn: &Connection, media_type: Option<&str>) -> Result<Vec<MediaItem>> {
+    let mut sql = String::from(
+        "SELECT
+            m.id,
+            m.path,
+            m.filename,
+            m.type,
+            m.is_favorite,
+            COALESCE(GROUP_CONCAT(t.name, '||'), '') AS tags_concat
+         FROM media m
+         LEFT JOIN media_tags mt ON mt.media_id = m.id
+         LEFT JOIN tags t ON t.id = mt.tag_id",
+    );
+
+    let mut values: Vec<Value> = Vec::new();
+    if let Some(media_type_value) = media_type {
+        sql.push_str(" WHERE m.type = ?");
+        values.push(Value::Text(media_type_value.to_string()));
+    }
+
+    sql.push_str(" GROUP BY m.id ORDER BY m.id DESC;");
+
+    let mut stmt = conn
+        .prepare(&sql)
+        .context("failed to prepare get_all_media_with_type query")?;
+
+    let rows = stmt
+        .query_map(params_from_iter(values), |row| {
+            Ok(MediaItem {
+                id: row.get(0)?,
+                path: row.get(1)?,
+                filename: row.get(2)?,
+                media_type: row.get(3)?,
+                is_favorite: row.get::<_, i64>(4)? != 0,
+                tags: parse_tags(row.get::<_, String>(5)?),
+            })
+        })
+        .context("failed to execute get_all_media_with_type query")?;
+
+    let mut items = Vec::new();
+    for row in rows {
+        items.push(row.context("failed to parse media row")?);
+    }
+    Ok(items)
+}
+
+fn normalize_media_type(media_type: Option<String>) -> Result<Option<String>, String> {
+    let Some(raw) = media_type else {
+        return Ok(None);
+    };
+    let normalized = raw.trim().to_lowercase();
+    if normalized.is_empty() || normalized == "all" {
+        return Ok(None);
+    }
+    if normalized == "image" || normalized == "video" {
+        return Ok(Some(normalized));
+    }
+    Err(format!("unsupported media_type: {raw}"))
 }

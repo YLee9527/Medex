@@ -48,10 +48,12 @@ type AppState = {
   mediaItems: MediaItem[];
   selectedMediaId: string;
   viewMode: 'grid' | 'list';
+  mediaTypeFilter: 'all' | 'image' | 'video';
   clickNav: (navId: string) => void;
   clickTag: (tagId: string) => void;
   clickMedia: (mediaId: string) => void;
   setViewMode: (mode: 'grid' | 'list') => void;
+  setMediaTypeFilter: (mode: 'all' | 'image' | 'video') => void;
   changeSelectedMediaTag: (tagId: string, action: 'add' | 'remove') => void;
   toggleFavorite: (mediaId: string) => void;
   deleteMedia: (mediaId: string) => void;
@@ -142,6 +144,7 @@ export const useAppStore = create<AppState>((set) => ({
   mediaItems: initialMediaItems,
   selectedMediaId: '',
   viewMode: 'grid',
+  mediaTypeFilter: 'all',
   clickNav: (navId) => {
     console.log('nav clicked:', navId);
     set((state) => ({
@@ -169,6 +172,7 @@ export const useAppStore = create<AppState>((set) => ({
     set({ selectedMediaId: mediaId });
   },
   setViewMode: (mode) => set({ viewMode: mode }),
+  setMediaTypeFilter: (mode) => set({ mediaTypeFilter: mode }),
   changeSelectedMediaTag: (tagId, action) =>
     set((state) => {
       if (!state.selectedMediaId) {

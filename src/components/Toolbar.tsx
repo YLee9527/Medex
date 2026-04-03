@@ -1,8 +1,8 @@
 export interface ToolbarProps {
   activeTags: string[];
   resultCount: number;
-  viewMode: 'grid' | 'list';
-  onViewModeChange: (mode: 'grid' | 'list') => void;
+  mediaType: 'all' | 'image' | 'video';
+  onMediaTypeChange: (mode: 'all' | 'image' | 'video') => void;
   onSelectFolder: () => void;
   loading?: boolean;
 }
@@ -10,8 +10,8 @@ export interface ToolbarProps {
 export default function Toolbar({
   activeTags,
   resultCount,
-  viewMode,
-  onViewModeChange,
+  mediaType,
+  onMediaTypeChange,
   onSelectFolder,
   loading = false
 }: ToolbarProps) {
@@ -31,6 +31,20 @@ export default function Toolbar({
       </div>
 
       <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 rounded-[6px] bg-black/20 p-1">
+          {(['all', 'image', 'video'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => onMediaTypeChange(mode)}
+              className={`rounded-[6px] px-2 py-1 text-xs transition-colors ${
+                mediaType === mode ? 'bg-[#444444] text-white' : 'text-white/70 hover:bg-[#555555] hover:text-white'
+              }`}
+            >
+              {mode === 'all' ? 'All' : mode === 'image' ? 'Image' : 'Video'}
+            </button>
+          ))}
+        </div>
         <button
           type="button"
           onClick={onSelectFolder}
@@ -38,34 +52,6 @@ export default function Toolbar({
           className="rounded-[6px] bg-[#444444] px-3 py-1.5 text-xs text-white transition-colors hover:bg-[#555555] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? '扫描中...' : '选择文件夹'}
-        </button>
-        <button
-          type="button"
-          onClick={() => onViewModeChange('grid')}
-          className={`flex h-8 w-8 items-center justify-center rounded-[6px] text-white transition-colors ${
-            viewMode === 'grid' ? 'bg-[#444444] text-white' : 'bg-transparent text-white/70 hover:bg-[#555555]'
-          }`}
-          aria-label="Grid View"
-          aria-pressed={viewMode === 'grid'}
-          title="Grid"
-        >
-          <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
-            <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          onClick={() => onViewModeChange('list')}
-          className={`flex h-8 w-8 items-center justify-center rounded-[6px] text-white transition-colors ${
-            viewMode === 'list' ? 'bg-[#444444] text-white' : 'bg-transparent text-white/70 hover:bg-[#555555]'
-          }`}
-          aria-label="List View"
-          aria-pressed={viewMode === 'list'}
-          title="List"
-        >
-          <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
-            <path d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h16v2H4v-2z" />
-          </svg>
         </button>
       </div>
     </div>

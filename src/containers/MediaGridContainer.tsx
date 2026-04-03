@@ -18,7 +18,7 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
   const toggleFavorite = useAppStore((state) => state.toggleFavorite);
   const addTagToMediaLocal = useAppStore((state) => state.addTagToMediaLocal);
   const removeTagFromMediaLocal = useAppStore((state) => state.removeTagFromMediaLocal);
-  const viewMode = useAppStore((state) => state.viewMode);
+  const mediaTypeFilter = useAppStore((state) => state.mediaTypeFilter);
   const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb);
 
   const handleToggleFavorite = async (mediaId: string) => {
@@ -50,9 +50,10 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
     const timer = window.setTimeout(() => {
       const fetchFilteredMedia = async () => {
         try {
-          const rows = selectedTagNames.length
-            ? await invoke<DbMediaItem[]>('filter_media_by_tags', { tagNames: selectedTagNames })
-            : await invoke<DbMediaItem[]>('get_all_media');
+          const rows = await invoke<DbMediaItem[]>('filter_media', {
+            tagNames: selectedTagNames,
+            mediaType: mediaTypeFilter === 'all' ? null : mediaTypeFilter
+          });
 
           const mapped: MediaItem[] = rows.map((row) => ({
             id: String(row.id),
@@ -76,7 +77,7 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
     }, 220);
 
     return () => window.clearTimeout(timer);
-  }, [selectedTagKey, setMediaItemsFromDb]);
+  }, [selectedTagKey, mediaTypeFilter, setMediaItemsFromDb]);
 
   const mediaList: MediaCardProps[] = useMemo(() => {
     const navFilteredMediaItems = mediaItems.filter((item) => {
@@ -104,7 +105,7 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
       onToggleFavorite={handleToggleFavorite}
       onTagAdded={addTagToMediaLocal}
       onTagRemoved={removeTagFromMediaLocal}
-      viewMode={viewMode}
+      viewMode="grid"
     />
   );
 }

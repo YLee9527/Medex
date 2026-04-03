@@ -14,8 +14,8 @@ interface ScanProgressPayload {
 export default function ToolbarContainer() {
   const tags = useAppStore((state) => state.tags);
   const mediaItems = useAppStore((state) => state.mediaItems);
-  const viewMode = useAppStore((state) => state.viewMode);
-  const setViewMode = useAppStore((state) => state.setViewMode);
+  const mediaTypeFilter = useAppStore((state) => state.mediaTypeFilter);
+  const setMediaTypeFilter = useAppStore((state) => state.setMediaTypeFilter);
   const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb);
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
@@ -29,13 +29,15 @@ export default function ToolbarContainer() {
 
   const activeTags = tags.filter((tag) => tag.selected).map((tag) => tag.name);
 
-  const handleViewModeChange = (mode: 'grid' | 'list') => {
-    console.log('toolbar view mode:', mode);
-    setViewMode(mode);
+  const handleMediaTypeChange = (mode: 'all' | 'image' | 'video') => {
+    setMediaTypeFilter(mode);
   };
 
   const loadAllMedia = async () => {
-    const rows = await invoke<DbMediaItem[]>('get_all_media');
+    const rows = await invoke<DbMediaItem[]>('filter_media', {
+      tagNames: activeTags,
+      mediaType: mediaTypeFilter === 'all' ? null : mediaTypeFilter
+    });
     const mapped: MediaItem[] = rows.map((row) => ({
       id: String(row.id),
       path: row.path,
@@ -145,8 +147,8 @@ export default function ToolbarContainer() {
       <Toolbar
         activeTags={activeTags}
         resultCount={mediaItems.length}
-        viewMode={viewMode}
-        onViewModeChange={handleViewModeChange}
+        mediaType={mediaTypeFilter}
+        onMediaTypeChange={handleMediaTypeChange}
         onSelectFolder={handleSelectFolder}
         loading={loading}
       />

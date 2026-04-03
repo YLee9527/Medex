@@ -17,6 +17,7 @@ fn main() {
             services::scanner::scan_and_index,
             services::scanner::get_all_media,
             services::scanner::filter_media_by_tags,
+            services::scanner::filter_media,
             services::scanner::set_media_favorite,
             services::tags::get_all_tags,
             services::tags::get_all_tags_with_count,
