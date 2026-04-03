@@ -95,6 +95,11 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
                 controls
                 preload="metadata"
                 playsInline
+                onLoadedData={(e) => {
+                  const el = e.currentTarget;
+                  el.currentTime = 0.001;
+                  el.pause();
+                }}
               />
             ) : media.thumbnail ? (
               <img
@@ -199,6 +204,6 @@ function toPreviewSrc(src: string): string {
   const isAbsoluteWindows = /^[A-Za-z]:\\/.test(src);
 
   if (isRemote) return src;
-  if (isAbsoluteUnix || isAbsoluteWindows) return convertFileSrc(src, 'asset');
+  if (isAbsoluteUnix || isAbsoluteWindows) return convertFileSrc(src);
   return src;
 }

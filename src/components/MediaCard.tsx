@@ -35,28 +35,35 @@ function MediaCard({
   const previewSrc = toPreviewSrc(thumbnail);
   const videoSrc = toPreviewSrc(path || thumbnail);
   const [imageFailed, setImageFailed] = useState(false);
-  const [hovered, setHovered] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const showImage = mediaType !== 'video' && previewSrc && !imageFailed;
-  const shouldMountVideo = mediaType === 'video' && isGrid && (hovered || selected);
+  const shouldShowVideo = mediaType === 'video' && !!videoSrc && !videoFailed;
 
   return (
-    <button
-      type="button"
-      onClick={() => onClick(id)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={`group overflow-hidden rounded-[8px] bg-[#242424] text-left text-[#EAEAEA] transition-colors ${
+      <button
+        type="button"
+        onClick={() => onClick(id)}
+        className={`group overflow-hidden rounded-[8px] bg-[#242424] text-left text-[#EAEAEA] transition-colors ${
         selected ? 'border-2 border-blue-500' : 'border border-white/10 hover:border-white/20'
       } ${widthClass} ${isGrid ? 'h-[220px]' : 'h-auto'}`}
     >
       <div className={`relative w-full overflow-hidden ${isGrid ? 'h-[150px] shrink-0' : 'aspect-video'}`}>
-        {shouldMountVideo && videoSrc ? (
+        {shouldShowVideo ? (
           <video
             src={videoSrc}
             className="h-full w-full object-cover"
-            preload="none"
+            preload="metadata"
             muted
             playsInline
+            onLoadedData={(e) => {
+              const el = e.currentTarget;
+              el.currentTime = 0.001;
+              el.pause();
+            }}
+            onError={() => {
+              setVideoFailed(true);
+              console.error('[media-card] video preview failed:', videoSrc);
+            }}
           />
         ) : showImage ? (
           <img
@@ -67,21 +74,21 @@ function MediaCard({
             decoding="async"
             onError={() => setImageFailed(true)}
           />
-        ) : mediaType === 'video' ? (
-          <div className="flex h-full w-full items-center justify-center bg-black/35 text-xs text-white/70">VIDEO</div>
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-black/25 text-xs text-white/60">
             No Preview
           </div>
         )}
 
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#0000004D] opacity-0 transition-opacity group-hover:opacity-100">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-            <svg viewBox="0 0 24 24" className="h-5 w-5 fill-white" aria-hidden="true">
-              <path d="M8 6.5v11l9-5.5-9-5.5z" />
-            </svg>
-          </span>
-        </div>
+        {mediaType === 'video' ? (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#0000004D] opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+              <svg viewBox="0 0 24 24" className="h-5 w-5 fill-white" aria-hidden="true">
+                <path d="M8 6.5v11l9-5.5-9-5.5z" />
+              </svg>
+            </span>
+          </div>
+        ) : null}
       </div>
 
       <div className={`flex flex-col gap-2 p-3 ${isGrid ? 'h-[70px] overflow-hidden' : ''}`}>
@@ -107,10 +114,40 @@ function toPreviewSrc(src: string): string {
   const isAbsoluteWindows = /^[A-Za-z]:\\/.test(src);
 
   if (isRemote) return src;
-  if (isAbsoluteUnix || isAbsoluteWindows) return convertFileSrc(src, 'asset');
+  if (isAbsoluteUnix || isAbsoluteWindows) return convertFileSrc(src);
   return src;
 }
 
 MediaCard.displayName = 'MediaCard';
 
-export default memo(MediaCard);
+function areMediaCardPropsEqual(prev: Readonly<MediaCardProps>, next: Readonly<MediaCardProps>) {
+  if (
+    prev.id !== next.id ||
+    prev.path !== next.path ||
+    prev.thumbnail !== next.thumbnail ||
+    prev.filename !== next.filename ||
+    prev.mediaType !== next.mediaType ||
+    prev.selected !== next.selected ||
+    prev.className !== next.className ||
+    prev.mode !== next.mode ||
+    prev.time !== next.time ||
+    prev.duration !== next.duration ||
+    prev.resolution !== next.resolution ||
+    prev.isFavorite !== next.isFavorite
+  ) {
+    return false;
+  }
+
+  if (prev.tags.length !== next.tags.length) {
+    return false;
+  }
+  for (let i = 0; i < prev.tags.length; i += 1) {
+    if (prev.tags[i] !== next.tags[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export default memo(MediaCard, areMediaCardPropsEqual);
