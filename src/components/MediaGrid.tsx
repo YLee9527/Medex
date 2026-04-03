@@ -12,12 +12,14 @@ import MediaCard, { MediaCardProps } from './MediaCard';
 export interface MediaGridProps {
   mediaList: MediaCardProps[];
   onCardClick: (id: string) => void;
+  onToggleFavorite: (id: string) => void;
   viewMode: 'grid' | 'list';
 }
 
 type GridItemData = {
   mediaList: MediaCardProps[];
   onCardClick: (id: string) => void;
+  onToggleFavorite: (id: string) => void;
   columnCount: number;
 };
 
@@ -36,7 +38,7 @@ const GRID_CELL_HEIGHT = GRID_CARD_HEIGHT + GRID_GAP;
 const LIST_ROW_HEIGHT = 48;
 const LIST_HEADER_HEIGHT = 36;
 
-export default function MediaGrid({ mediaList, onCardClick, viewMode }: MediaGridProps) {
+export default function MediaGrid({ mediaList, onCardClick, onToggleFavorite, viewMode }: MediaGridProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { width, height } = useElementSize(containerRef);
   const listData = useMemo<ListItemData>(() => ({ mediaList, onCardClick }), [mediaList, onCardClick]);
@@ -47,8 +49,8 @@ export default function MediaGrid({ mediaList, onCardClick, viewMode }: MediaGri
   const rowCount = Math.ceil(mediaList.length / columnCount);
   const gridHeight = Math.max(0, height);
   const gridData = useMemo<GridItemData>(
-    () => ({ mediaList, onCardClick, columnCount }),
-    [mediaList, onCardClick, columnCount]
+    () => ({ mediaList, onCardClick, onToggleFavorite, columnCount }),
+    [mediaList, onCardClick, onToggleFavorite, columnCount]
   );
 
   if (viewMode === 'list') {
@@ -110,7 +112,13 @@ const GridCell = memo(function GridCell({ columnIndex, rowIndex, style, data }: 
 
   return (
     <div style={offsetGridCellStyle(style)}>
-      <MediaCard {...item} onClick={data.onCardClick} className="w-[180px]" mode="grid" />
+      <MediaCard
+        {...item}
+        onClick={data.onCardClick}
+        onToggleFavorite={data.onToggleFavorite}
+        className="w-[180px]"
+        mode="grid"
+      />
     </div>
   );
 });

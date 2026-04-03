@@ -14,6 +14,7 @@ export interface MediaCardProps {
   isFavorite?: boolean;
   selected: boolean;
   onClick: (id: string) => void;
+  onToggleFavorite?: (id: string) => void;
   className?: string;
   mode?: 'grid' | 'list';
 }
@@ -25,8 +26,10 @@ function MediaCard({
   filename,
   tags,
   mediaType,
+  isFavorite = false,
   selected,
   onClick,
+  onToggleFavorite,
   className,
   mode = 'grid'
 }: MediaCardProps) {
@@ -48,6 +51,36 @@ function MediaCard({
       } ${widthClass} ${isGrid ? 'h-[220px]' : 'h-auto'}`}
     >
       <div className={`relative w-full overflow-hidden ${isGrid ? 'h-[150px] shrink-0' : 'aspect-video'}`}>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleFavorite?.(id);
+          }}
+          className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white/90 transition-colors hover:bg-black/55"
+          aria-label={isFavorite ? '取消收藏' : '收藏'}
+          title={isFavorite ? '取消收藏' : '收藏'}
+        >
+          {isFavorite ? (
+            <svg viewBox="0 0 24 24" className="h-4 w-4 text-yellow-400" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M12 17.3 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+              />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" className="h-4 w-4 text-white/85" aria-hidden="true">
+              <path
+                d="M12 17.3 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </button>
+
         {shouldShowVideo ? (
           <video
             src={videoSrc}

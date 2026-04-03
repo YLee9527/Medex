@@ -243,10 +243,25 @@ export const useAppStore = create<AppState>((set) => ({
       };
     }),
   setMediaItemsFromDb: (items) =>
-    set((state) => ({
-      mediaItems: items,
-      selectedMediaId: items.some((item) => item.id === state.selectedMediaId) ? state.selectedMediaId : ''
-    })),
+    set((state) => {
+      const previousById = new Map(state.mediaItems.map((item) => [item.id, item]));
+      const merged = items.map((item) => {
+        const previous = previousById.get(item.id);
+        if (!previous) {
+          return item;
+        }
+        return {
+          ...item,
+          isFavorite: previous.isFavorite,
+          isRecent: previous.isRecent
+        };
+      });
+
+      return {
+        mediaItems: merged,
+        selectedMediaId: merged.some((item) => item.id === state.selectedMediaId) ? state.selectedMediaId : ''
+      };
+    }),
   setTagsFromDb: (items) =>
     set((state) => {
       const selectedByName = new Set(state.tags.filter((tag) => tag.selected).map((tag) => tag.name));

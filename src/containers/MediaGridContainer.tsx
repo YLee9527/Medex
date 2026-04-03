@@ -11,6 +11,7 @@ export default function MediaGridContainer() {
   const tags = useAppStore((state) => state.tags);
   const selectedMediaId = useAppStore((state) => state.selectedMediaId);
   const clickMedia = useAppStore((state) => state.clickMedia);
+  const toggleFavorite = useAppStore((state) => state.toggleFavorite);
   const viewMode = useAppStore((state) => state.viewMode);
   const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb);
 
@@ -70,5 +71,12 @@ export default function MediaGridContainer() {
     }));
   }, [activeNavId, mediaItems, selectedMediaId]);
 
-  return <MediaGrid mediaList={mediaList} onCardClick={clickMedia} viewMode={viewMode} />;
+  return (
+    <MediaGrid
+      mediaList={mediaList}
+      onCardClick={clickMedia}
+      onToggleFavorite={toggleFavorite}
+      viewMode={viewMode}
+    />
+  );
 }
