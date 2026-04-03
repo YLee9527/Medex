@@ -23,7 +23,7 @@ export default function ToolbarContainer() {
     const mapped: MediaItem[] = rows.map((row) => ({
       id: String(row.id),
       path: row.path,
-      thumbnail: convertFileSrc(row.path, 'asset'),
+      thumbnail: row.type === 'image' ? convertFileSrc(row.path, 'asset') : '',
       filename: row.filename,
       tags: [],
       time: '',

@@ -1,7 +1,9 @@
+import { memo, useState } from 'react';
 import { convertFileSrc } from '@tauri-apps/api/core';
 
 export interface MediaCardProps {
   id: string;
+  path?: string;
   thumbnail: string;
   filename: string;
   tags: string[];
@@ -16,11 +18,13 @@ export interface MediaCardProps {
   mode?: 'grid' | 'list';
 }
 
-export default function MediaCard({
+function MediaCard({
   id,
+  path,
   thumbnail,
   filename,
   tags,
+  mediaType,
   selected,
   onClick,
   className,
@@ -29,18 +33,42 @@ export default function MediaCard({
   const widthClass = className ?? 'w-[180px]';
   const isGrid = mode === 'grid';
   const previewSrc = toPreviewSrc(thumbnail);
+  const videoSrc = toPreviewSrc(path || thumbnail);
+  const [imageFailed, setImageFailed] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const showImage = mediaType !== 'video' && previewSrc && !imageFailed;
+  const shouldMountVideo = mediaType === 'video' && isGrid && (hovered || selected);
 
   return (
     <button
       type="button"
       onClick={() => onClick(id)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className={`group overflow-hidden rounded-[8px] bg-[#242424] text-left text-[#EAEAEA] transition-colors ${
         selected ? 'border-2 border-blue-500' : 'border border-white/10 hover:border-white/20'
       } ${widthClass} ${isGrid ? 'h-[220px]' : 'h-auto'}`}
     >
       <div className={`relative w-full overflow-hidden ${isGrid ? 'h-[150px] shrink-0' : 'aspect-video'}`}>
-        {previewSrc ? (
-          <img src={previewSrc} alt={filename} className="h-full w-full object-cover" />
+        {shouldMountVideo && videoSrc ? (
+          <video
+            src={videoSrc}
+            className="h-full w-full object-cover"
+            preload="none"
+            muted
+            playsInline
+          />
+        ) : showImage ? (
+          <img
+            src={previewSrc}
+            alt={filename}
+            className="h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
+            onError={() => setImageFailed(true)}
+          />
+        ) : mediaType === 'video' ? (
+          <div className="flex h-full w-full items-center justify-center bg-black/35 text-xs text-white/70">VIDEO</div>
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-black/25 text-xs text-white/60">
             No Preview
@@ -82,3 +110,7 @@ function toPreviewSrc(src: string): string {
   if (isAbsoluteUnix || isAbsoluteWindows) return convertFileSrc(src, 'asset');
   return src;
 }
+
+MediaCard.displayName = 'MediaCard';
+
+export default memo(MediaCard);

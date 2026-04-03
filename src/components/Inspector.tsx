@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { convertFileSrc } from '@tauri-apps/api/core';
 import { MediaCardProps } from './MediaCard';
 
 export interface InspectorProps {
@@ -10,6 +11,7 @@ export interface InspectorProps {
 
 export default function Inspector({ media, onTagChange, onToggleFavorite, onDeleteMedia }: InspectorProps) {
   const [newTag, setNewTag] = useState('');
+  const previewSrc = media ? toPreviewSrc(media.path || media.thumbnail) : '';
 
   const handleRemoveTag = (tagId: string) => {
     console.log('inspector tag change:', tagId, 'remove');
@@ -37,7 +39,15 @@ export default function Inspector({ media, onTagChange, onToggleFavorite, onDele
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-4 rounded-lg border border-white/10 p-3">
           <div className="group relative aspect-video w-full overflow-hidden rounded-md bg-black/30">
-            {media.thumbnail ? (
+            {media.mediaType === 'video' && previewSrc ? (
+              <video
+                src={previewSrc}
+                className="h-full w-full object-cover"
+                controls
+                preload="metadata"
+                playsInline
+              />
+            ) : media.thumbnail ? (
               <img
                 src={media.thumbnail}
                 alt={media.filename}
@@ -130,4 +140,15 @@ export default function Inspector({ media, onTagChange, onToggleFavorite, onDele
       )}
     </aside>
   );
+}
+
+function toPreviewSrc(src: string): string {
+  if (!src) return '';
+  const isRemote = src.startsWith('http://') || src.startsWith('https://') || src.startsWith('asset:');
+  const isAbsoluteUnix = src.startsWith('/');
+  const isAbsoluteWindows = /^[A-Za-z]:\\/.test(src);
+
+  if (isRemote) return src;
+  if (isAbsoluteUnix || isAbsoluteWindows) return convertFileSrc(src, 'asset');
+  return src;
 }

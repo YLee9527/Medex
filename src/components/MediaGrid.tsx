@@ -35,7 +35,9 @@ export default function MediaGrid({ mediaList, onCardClick, viewMode }: MediaGri
                 <span className="h-6 w-8 overflow-hidden rounded bg-black/30">
                   {item.thumbnail ? (
                     <img src={toPreviewSrc(item.thumbnail)} alt={item.filename} className="h-full w-full object-cover" />
-                  ) : null}
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-[10px] text-white/70">MEDIA</span>
+                  )}
                 </span>
               </span>
               <span className="truncate">{item.filename}</span>
