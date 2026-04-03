@@ -10,6 +10,7 @@ export type SidebarTagItem = {
   id: string;
   name: string;
   selected: boolean;
+  mediaCount: number;
 };
 
 export type MediaItem = {
@@ -36,6 +37,7 @@ export type DbMediaItem = {
 export type DbTagItem = {
   id: number;
   name: string;
+  mediaCount?: number;
 };
 
 type AppState = {
@@ -62,10 +64,10 @@ const initialNavItems: SidebarNavItem[] = [
 ];
 
 const initialTags: SidebarTagItem[] = [
-  { id: 'ui', name: 'UI', selected: false },
-  { id: 'assets', name: '素材', selected: false },
-  { id: 'cat', name: '猫', selected: false },
-  { id: 'night', name: '夜晚', selected: false }
+  { id: 'ui', name: 'UI', selected: false, mediaCount: 0 },
+  { id: 'assets', name: '素材', selected: false, mediaCount: 0 },
+  { id: 'cat', name: '猫', selected: false, mediaCount: 0 },
+  { id: 'night', name: '夜晚', selected: false, mediaCount: 0 }
 ];
 
 const initialMediaItems: MediaItem[] = [
@@ -206,7 +208,8 @@ export const useAppStore = create<AppState>((set) => ({
           {
             id: makeTagId(normalizedTagName) || `tag-${Date.now()}`,
             name: normalizedTagName,
-            selected: false
+            selected: false,
+            mediaCount: 0
           }
         ];
       }
@@ -269,7 +272,8 @@ export const useAppStore = create<AppState>((set) => ({
         tags: items.map((item) => ({
           id: String(item.id),
           name: item.name,
-          selected: selectedByName.has(item.name)
+          selected: selectedByName.has(item.name),
+          mediaCount: item.mediaCount ?? 0
         }))
       };
     })

@@ -18,6 +18,9 @@ fn main() {
             services::scanner::get_all_media,
             services::scanner::filter_media_by_tags,
             services::tags::get_all_tags,
+            services::tags::get_all_tags_with_count,
+            services::tags::create_tag,
+            services::tags::delete_tag,
             services::tags::add_tag_to_media,
             services::tags::remove_tag_from_media,
             services::tags::get_tags_by_media
