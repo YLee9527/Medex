@@ -57,17 +57,17 @@ pub fn init_db(app_handle: &tauri::AppHandle) -> Result<()> {
 
 pub fn with_connection<T, F>(f: F) -> Result<T>
 where
-    F: FnOnce(&Connection) -> Result<T>,
+    F: FnOnce(&mut Connection) -> Result<T>,
 {
     let conn = DB_CONN
         .get()
         .ok_or_else(|| anyhow!("database is not initialized"))?;
 
-    let guard = conn
+    let mut guard = conn
         .lock()
         .map_err(|err| anyhow!("failed to lock sqlite connection: {err}"))?;
 
-    f(&guard)
+    f(&mut guard)
 }
 
 fn resolve_db_path(app_handle: &tauri::AppHandle) -> Result<PathBuf> {
