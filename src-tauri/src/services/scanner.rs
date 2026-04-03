@@ -3,6 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Context, Result};
 use rusqlite::{params, Connection};
+use serde::Serialize;
 use walkdir::WalkDir;
 
 #[derive(Debug, Clone)]
@@ -104,6 +105,15 @@ pub fn insert_media_batch(conn: &mut Connection, files: Vec<MediaFile>) -> Resul
     Ok(())
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct MediaItem {
+    pub id: i64,
+    pub path: String,
+    pub filename: String,
+    #[serde(rename = "type")]
+    pub media_type: String,
+}
+
 #[tauri::command]
 pub fn scan_and_index(path: String, app_handle: tauri::AppHandle) -> Result<String, String> {
     println!("[scanner] scan_and_index called, path={path}");
@@ -115,6 +125,33 @@ pub fn scan_and_index(path: String, app_handle: tauri::AppHandle) -> Result<Stri
     crate::db::with_connection(|conn| insert_media_batch(conn, files)).map_err(|e| e.to_string())?;
 
     Ok(format!("扫描完成，共导入 {} 个文件", scanned_count))
+}
+
+#[tauri::command]
+pub fn get_all_media() -> Result<Vec<MediaItem>, String> {
+    crate::db::with_connection(|conn| {
+        let mut stmt = conn
+            .prepare("SELECT id, path, filename, type FROM media ORDER BY id DESC;")
+            .context("failed to prepare media query")?;
+
+        let rows = stmt
+            .query_map([], |row| {
+                Ok(MediaItem {
+                    id: row.get(0)?,
+                    path: row.get(1)?,
+                    filename: row.get(2)?,
+                    media_type: row.get(3)?,
+                })
+            })
+            .context("failed to execute media query")?;
+
+        let mut items = Vec::new();
+        for row in rows {
+            items.push(row.context("failed to parse media row")?);
+        }
+        Ok(items)
+    })
+    .map_err(|err| err.to_string())
 }
 
 fn media_type_from_path(path: &Path) -> Option<&'static str> {

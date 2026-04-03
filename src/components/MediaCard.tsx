@@ -1,3 +1,5 @@
+import { convertFileSrc } from '@tauri-apps/api/core';
+
 export interface MediaCardProps {
   id: string;
   thumbnail: string;
@@ -26,6 +28,7 @@ export default function MediaCard({
 }: MediaCardProps) {
   const widthClass = className ?? 'w-[180px]';
   const isGrid = mode === 'grid';
+  const previewSrc = toPreviewSrc(thumbnail);
 
   return (
     <button
@@ -36,8 +39,8 @@ export default function MediaCard({
       } ${widthClass} ${isGrid ? 'h-[220px]' : 'h-auto'}`}
     >
       <div className={`relative w-full overflow-hidden ${isGrid ? 'h-[150px] shrink-0' : 'aspect-video'}`}>
-        {thumbnail ? (
-          <img src={thumbnail} alt={filename} className="h-full w-full object-cover" />
+        {previewSrc ? (
+          <img src={previewSrc} alt={filename} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-black/25 text-xs text-white/60">
             No Preview
@@ -67,4 +70,15 @@ export default function MediaCard({
       </div>
     </button>
   );
+}
+
+function toPreviewSrc(src: string): string {
+  if (!src) return '';
+  const isRemote = src.startsWith('http://') || src.startsWith('https://') || src.startsWith('asset:');
+  const isAbsoluteUnix = src.startsWith('/');
+  const isAbsoluteWindows = /^[A-Za-z]:\\/.test(src);
+
+  if (isRemote) return src;
+  if (isAbsoluteUnix || isAbsoluteWindows) return convertFileSrc(src, 'asset');
+  return src;
 }

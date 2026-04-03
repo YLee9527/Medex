@@ -3,5 +3,10 @@
   "identifier": "default",
   "description": "Default capability for Medex desktop app",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": [
+    "core:default",
+    "dialog:default",
+    "dialog:allow-open",
+    "dialog:allow-message"
+  ]
 }

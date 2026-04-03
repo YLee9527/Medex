@@ -14,6 +14,7 @@ export type SidebarTagItem = {
 
 export type MediaItem = {
   id: string;
+  path: string;
   thumbnail: string;
   filename: string;
   tags: string[];
@@ -23,6 +24,13 @@ export type MediaItem = {
   resolution: string;
   isFavorite: boolean;
   isRecent: boolean;
+};
+
+export type DbMediaItem = {
+  id: number;
+  path: string;
+  filename: string;
+  type: string;
 };
 
 type AppState = {
@@ -38,6 +46,7 @@ type AppState = {
   changeSelectedMediaTag: (tagId: string, action: 'add' | 'remove') => void;
   toggleFavorite: (mediaId: string) => void;
   deleteMedia: (mediaId: string) => void;
+  setMediaItemsFromDb: (items: MediaItem[]) => void;
 };
 
 const initialNavItems: SidebarNavItem[] = [
@@ -56,6 +65,7 @@ const initialTags: SidebarTagItem[] = [
 const initialMediaItems: MediaItem[] = [
   {
     id: 'media-1',
+    path: '/placeholder/media-1.mp4',
     thumbnail: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=80',
     filename: 'city-night-clip.mp4',
     tags: ['夜晚', '城市', '素材'],
@@ -68,6 +78,7 @@ const initialMediaItems: MediaItem[] = [
   },
   {
     id: 'media-2',
+    path: '/placeholder/media-2.jpg',
     thumbnail: 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=600&q=80',
     filename: 'cat-closeup.jpg',
     tags: ['猫', '宠物', 'UI'],
@@ -80,6 +91,7 @@ const initialMediaItems: MediaItem[] = [
   },
   {
     id: 'media-3',
+    path: '/placeholder/media-3.png',
     thumbnail: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80',
     filename: 'dashboard-reference.png',
     tags: ['UI', '设计', '参考'],
@@ -92,6 +104,7 @@ const initialMediaItems: MediaItem[] = [
   },
   {
     id: 'media-4',
+    path: '/placeholder/media-4.mov',
     thumbnail: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80',
     filename: 'forest-atmosphere.mov',
     tags: ['自然', '夜晚', '素材'],
@@ -222,5 +235,10 @@ export const useAppStore = create<AppState>((set) => ({
         selectedMediaId: state.selectedMediaId === mediaId ? '' : state.selectedMediaId,
         tags: state.tags.filter((tag) => usedTagNames.has(tag.name))
       };
-    })
+    }),
+  setMediaItemsFromDb: (items) =>
+    set((state) => ({
+      mediaItems: items,
+      selectedMediaId: items.some((item) => item.id === state.selectedMediaId) ? state.selectedMediaId : ''
+    }))
 }));

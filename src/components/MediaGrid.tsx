@@ -1,3 +1,4 @@
+import { convertFileSrc } from '@tauri-apps/api/core';
 import MediaCard, { MediaCardProps } from './MediaCard';
 
 export interface MediaGridProps {
@@ -32,7 +33,9 @@ export default function MediaGrid({ mediaList, onCardClick, viewMode }: MediaGri
             >
               <span className="flex items-center">
                 <span className="h-6 w-8 overflow-hidden rounded bg-black/30">
-                  {item.thumbnail ? <img src={item.thumbnail} alt={item.filename} className="h-full w-full object-cover" /> : null}
+                  {item.thumbnail ? (
+                    <img src={toPreviewSrc(item.thumbnail)} alt={item.filename} className="h-full w-full object-cover" />
+                  ) : null}
                 </span>
               </span>
               <span className="truncate">{item.filename}</span>
@@ -63,4 +66,15 @@ export default function MediaGrid({ mediaList, onCardClick, viewMode }: MediaGri
       ))}
     </div>
   );
+}
+
+function toPreviewSrc(src: string): string {
+  if (!src) return '';
+  const isRemote = src.startsWith('http://') || src.startsWith('https://') || src.startsWith('asset:');
+  const isAbsoluteUnix = src.startsWith('/');
+  const isAbsoluteWindows = /^[A-Za-z]:\\/.test(src);
+
+  if (isRemote) return src;
+  if (isAbsoluteUnix || isAbsoluteWindows) return convertFileSrc(src, 'asset');
+  return src;
 }

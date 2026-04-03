@@ -2,9 +2,17 @@ export interface ToolbarProps {
   activeTags: string[];
   viewMode: 'grid' | 'list';
   onViewModeChange: (mode: 'grid' | 'list') => void;
+  onSelectFolder: () => void;
+  loading?: boolean;
 }
 
-export default function Toolbar({ activeTags, viewMode, onViewModeChange }: ToolbarProps) {
+export default function Toolbar({
+  activeTags,
+  viewMode,
+  onViewModeChange,
+  onSelectFolder,
+  loading = false
+}: ToolbarProps) {
   return (
     <div className="flex h-[60px] items-center justify-between gap-3 rounded-md bg-[#242424] px-3 py-2">
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1 overflow-y-auto">
@@ -20,6 +28,14 @@ export default function Toolbar({ activeTags, viewMode, onViewModeChange }: Tool
       </div>
 
       <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onSelectFolder}
+          disabled={loading}
+          className="rounded-[6px] bg-[#444444] px-3 py-1.5 text-xs text-white transition-colors hover:bg-[#555555] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? '扫描中...' : '选择文件夹'}
+        </button>
         <button
           type="button"
           onClick={() => onViewModeChange('grid')}
