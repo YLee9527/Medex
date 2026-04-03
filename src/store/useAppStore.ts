@@ -33,6 +33,11 @@ export type DbMediaItem = {
   type: string;
 };
 
+export type DbTagItem = {
+  id: number;
+  name: string;
+};
+
 type AppState = {
   navItems: SidebarNavItem[];
   tags: SidebarTagItem[];
@@ -47,6 +52,7 @@ type AppState = {
   toggleFavorite: (mediaId: string) => void;
   deleteMedia: (mediaId: string) => void;
   setMediaItemsFromDb: (items: MediaItem[]) => void;
+  setTagsFromDb: (items: DbTagItem[]) => void;
 };
 
 const initialNavItems: SidebarNavItem[] = [
@@ -240,5 +246,16 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       mediaItems: items,
       selectedMediaId: items.some((item) => item.id === state.selectedMediaId) ? state.selectedMediaId : ''
-    }))
+    })),
+  setTagsFromDb: (items) =>
+    set((state) => {
+      const selectedByName = new Set(state.tags.filter((tag) => tag.selected).map((tag) => tag.name));
+      return {
+        tags: items.map((item) => ({
+          id: String(item.id),
+          name: item.name,
+          selected: selectedByName.has(item.name)
+        }))
+      };
+    })
 }));

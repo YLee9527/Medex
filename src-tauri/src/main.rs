@@ -16,7 +16,11 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             services::scanner::scan_and_index,
             services::scanner::get_all_media,
-            services::scanner::filter_media_by_tags
+            services::scanner::filter_media_by_tags,
+            services::tags::get_all_tags,
+            services::tags::add_tag_to_media,
+            services::tags::remove_tag_from_media,
+            services::tags::get_tags_by_media
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

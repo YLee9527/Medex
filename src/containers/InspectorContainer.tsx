@@ -5,7 +5,6 @@ import { useAppStore } from '../store/useAppStore';
 export default function InspectorContainer() {
   const mediaItems = useAppStore((state) => state.mediaItems);
   const selectedMediaId = useAppStore((state) => state.selectedMediaId);
-  const changeSelectedMediaTag = useAppStore((state) => state.changeSelectedMediaTag);
   const toggleFavorite = useAppStore((state) => state.toggleFavorite);
   const deleteMedia = useAppStore((state) => state.deleteMedia);
 
@@ -22,7 +21,6 @@ export default function InspectorContainer() {
   return (
     <Inspector
       media={media}
-      onTagChange={changeSelectedMediaTag}
       onToggleFavorite={toggleFavorite}
       onDeleteMedia={deleteMedia}
     />

@@ -1,31 +1,80 @@
 import { useState } from 'react';
 import { convertFileSrc } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/core';
 import { MediaCardProps } from './MediaCard';
+import { useEffect } from 'react';
+
+interface Tag {
+  id: number;
+  name: string;
+}
 
 export interface InspectorProps {
   media: MediaCardProps | null;
-  onTagChange: (tagId: string, action: 'add' | 'remove') => void;
   onToggleFavorite: (mediaId: string) => void;
   onDeleteMedia: (mediaId: string) => void;
 }
 
-export default function Inspector({ media, onTagChange, onToggleFavorite, onDeleteMedia }: InspectorProps) {
+export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: InspectorProps) {
   const [newTag, setNewTag] = useState('');
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [loadingTags, setLoadingTags] = useState(false);
   const previewSrc = media ? toPreviewSrc(media.path || media.thumbnail) : '';
+  const mediaId = media ? Number(media.id) : null;
 
-  const handleRemoveTag = (tagId: string) => {
-    console.log('inspector tag change:', tagId, 'remove');
-    onTagChange(tagId, 'remove');
+  const reloadTags = async () => {
+    if (!mediaId) {
+      setTags([]);
+      return;
+    }
+    setLoadingTags(true);
+    try {
+      const result = await invoke<Tag[]>('get_tags_by_media', { mediaId });
+      setTags(result);
+    } catch (error) {
+      console.error('[inspector] get_tags_by_media failed:', error);
+    } finally {
+      setLoadingTags(false);
+    }
+  };
+
+  useEffect(() => {
+    void reloadTags();
+  }, [mediaId]);
+
+  const handleRemoveTag = async (tagId: number) => {
+    if (!mediaId) return;
+      try {
+        await invoke('remove_tag_from_media', { mediaId, tagId });
+        await reloadTags();
+        window.dispatchEvent(new Event('medex:tags-updated'));
+      } catch (error) {
+      console.error('[inspector] remove_tag_from_media failed:', error);
+      window.alert(`删除标签失败：${String(error)}`);
+    }
   };
 
   const handleAddTag = () => {
     const tagValue = newTag.trim();
-    if (!tagValue) {
+    if (!tagValue || !mediaId) {
       return;
     }
-    console.log('inspector tag change:', tagValue, 'add');
-    onTagChange(tagValue, 'add');
-    setNewTag('');
+    if (tags.some((tag) => tag.name.toLowerCase() === tagValue.toLowerCase())) {
+      setNewTag('');
+      return;
+    }
+    const run = async () => {
+      try {
+        await invoke('add_tag_to_media', { mediaId, tagName: tagValue });
+        setNewTag('');
+        await reloadTags();
+        window.dispatchEvent(new Event('medex:tags-updated'));
+      } catch (error) {
+        console.error('[inspector] add_tag_to_media failed:', error);
+        window.alert(`新增标签失败：${String(error)}`);
+      }
+    };
+    void run();
   };
 
   return (
@@ -65,17 +114,18 @@ export default function Inspector({ media, onTagChange, onToggleFavorite, onDele
           <div>
             <p className="mb-2 text-xs text-white/70">标签：</p>
             <div className="flex max-h-28 flex-wrap gap-1 overflow-y-auto">
-              {media.tags.map((tag) => (
+              {tags.map((tag) => (
                 <button
-                  key={tag}
+                  key={tag.id}
                   type="button"
-                  onClick={() => handleRemoveTag(tag)}
+                  onClick={() => void handleRemoveTag(tag.id)}
                   className="rounded-[6px] bg-[#444444] px-2 py-1 text-[12px] leading-4 text-white hover:bg-[#555555]"
                   title="点击删除标签"
                 >
-                  #{tag}
+                  #{tag.name}
                 </button>
               ))}
+              {loadingTags ? <span className="text-xs text-white/50">加载中...</span> : null}
             </div>
           </div>
 
