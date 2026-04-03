@@ -23,6 +23,10 @@ pub struct MediaItem {
     pub media_type: String,
     #[serde(rename = "isFavorite")]
     pub is_favorite: bool,
+    #[serde(rename = "isRecent")]
+    pub is_recent: bool,
+    #[serde(rename = "recentViewedAt")]
+    pub recent_viewed_at: Option<i64>,
     pub tags: Vec<String>,
 }
 
@@ -119,8 +123,10 @@ fn get_all_media_inner(conn: &Connection) -> Result<Vec<MediaItem>> {
                 m.filename,
                 m.type,
                 m.is_favorite,
+                rv.viewed_at,
                 COALESCE(GROUP_CONCAT(t.name, '||'), '') AS tags_concat
              FROM media m
+             LEFT JOIN recent_views rv ON rv.media_id = m.id
              LEFT JOIN media_tags mt ON mt.media_id = m.id
              LEFT JOIN tags t ON t.id = mt.tag_id
              GROUP BY m.id
@@ -136,7 +142,9 @@ fn get_all_media_inner(conn: &Connection) -> Result<Vec<MediaItem>> {
                 filename: row.get(2)?,
                 media_type: row.get(3)?,
                 is_favorite: row.get::<_, i64>(4)? != 0,
-                tags: parse_tags(row.get::<_, String>(5)?),
+                recent_viewed_at: row.get(5)?,
+                is_recent: row.get::<_, Option<i64>>(5)?.is_some(),
+                tags: parse_tags(row.get::<_, String>(6)?),
             })
         })
         .context("failed to execute get_all_media query")?;
@@ -181,6 +189,7 @@ pub fn filter_media(tag_names: Vec<String>, media_type: Option<String>) -> Resul
                 m.filename,
                 m.type,
                 m.is_favorite,
+                rv.viewed_at,
                 COALESCE(GROUP_CONCAT(t2.name, '||'), '') AS tags_concat
              FROM media m
              JOIN (
@@ -193,6 +202,7 @@ pub fn filter_media(tag_names: Vec<String>, media_type: Option<String>) -> Resul
                 GROUP BY m1.id
                 HAVING COUNT(DISTINCT t1.id) = ?
              ) matched ON matched.id = m.id
+             LEFT JOIN recent_views rv ON rv.media_id = m.id
              LEFT JOIN media_tags mt2 ON mt2.media_id = m.id
              LEFT JOIN tags t2 ON t2.id = mt2.tag_id
              GROUP BY m.id
@@ -219,7 +229,9 @@ pub fn filter_media(tag_names: Vec<String>, media_type: Option<String>) -> Resul
                     filename: row.get(2)?,
                     media_type: row.get(3)?,
                     is_favorite: row.get::<_, i64>(4)? != 0,
-                    tags: parse_tags(row.get::<_, String>(5)?),
+                    recent_viewed_at: row.get(5)?,
+                    is_recent: row.get::<_, Option<i64>>(5)?.is_some(),
+                    tags: parse_tags(row.get::<_, String>(6)?),
                 })
             })
             .context("failed to execute filter_media_by_tags query")?;
@@ -309,6 +321,41 @@ pub fn set_media_favorite(media_id: i64, is_favorite: bool) -> Result<(), String
     .map_err(|err| err.to_string())
 }
 
+#[tauri::command]
+pub fn mark_media_viewed(media_id: i64) -> Result<(), String> {
+    crate::db::with_connection(|conn| {
+        let now = current_timestamp_seconds();
+        let tx = conn
+            .transaction()
+            .context("failed to start transaction for mark_media_viewed")?;
+
+        tx.execute(
+            "INSERT INTO recent_views (media_id, viewed_at)
+             VALUES (?, ?)
+             ON CONFLICT(media_id) DO UPDATE SET viewed_at = excluded.viewed_at;",
+            params![media_id, now],
+        )
+        .context("failed to upsert recent view")?;
+
+        tx.execute(
+            "DELETE FROM recent_views
+             WHERE media_id NOT IN (
+               SELECT media_id
+               FROM recent_views
+               ORDER BY viewed_at DESC
+               LIMIT 100
+             );",
+            [],
+        )
+        .context("failed to trim recent views to top 100")?;
+
+        tx.commit()
+            .context("failed to commit mark_media_viewed transaction")?;
+        Ok(())
+    })
+    .map_err(|err| err.to_string())
+}
+
 fn current_timestamp_seconds() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -336,8 +383,10 @@ fn get_all_media_with_type_inner(conn: &Connection, media_type: Option<&str>) ->
             m.filename,
             m.type,
             m.is_favorite,
+            rv.viewed_at,
             COALESCE(GROUP_CONCAT(t.name, '||'), '') AS tags_concat
          FROM media m
+         LEFT JOIN recent_views rv ON rv.media_id = m.id
          LEFT JOIN media_tags mt ON mt.media_id = m.id
          LEFT JOIN tags t ON t.id = mt.tag_id",
     );
@@ -362,7 +411,9 @@ fn get_all_media_with_type_inner(conn: &Connection, media_type: Option<&str>) ->
                 filename: row.get(2)?,
                 media_type: row.get(3)?,
                 is_favorite: row.get::<_, i64>(4)? != 0,
-                tags: parse_tags(row.get::<_, String>(5)?),
+                recent_viewed_at: row.get(5)?,
+                is_recent: row.get::<_, Option<i64>>(5)?.is_some(),
+                tags: parse_tags(row.get::<_, String>(6)?),
             })
         })
         .context("failed to execute get_all_media_with_type query")?;

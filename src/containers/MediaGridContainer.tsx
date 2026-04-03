@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import MediaGrid from '../components/MediaGrid';
 import { MediaCardProps } from '../components/MediaCard';
@@ -46,38 +46,48 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
   );
   const selectedTagKey = useMemo(() => selectedTagNames.join('|'), [selectedTagNames]);
 
+  const fetchFilteredMedia = useCallback(async () => {
+    try {
+      const rows = await invoke<DbMediaItem[]>('filter_media', {
+        tagNames: selectedTagNames,
+        mediaType: mediaTypeFilter === 'all' ? null : mediaTypeFilter
+      });
+
+      const mapped: MediaItem[] = rows.map((row) => ({
+        id: String(row.id),
+        path: row.path,
+        thumbnail: row.type === 'image' ? convertFileSrc(row.path) : '',
+        filename: row.filename,
+        tags: row.tags ?? [],
+        time: '',
+        mediaType: row.type,
+        duration: '--:--',
+        resolution: '未知',
+        isFavorite: row.isFavorite ?? false,
+        isRecent: row.isRecent ?? false,
+        recentViewedAt: row.recentViewedAt ?? null
+      }));
+      setMediaItemsFromDb(mapped);
+    } catch (error) {
+      console.error('[ui] filter media failed:', error);
+    }
+  }, [selectedTagNames, mediaTypeFilter, setMediaItemsFromDb]);
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const fetchFilteredMedia = async () => {
-        try {
-          const rows = await invoke<DbMediaItem[]>('filter_media', {
-            tagNames: selectedTagNames,
-            mediaType: mediaTypeFilter === 'all' ? null : mediaTypeFilter
-          });
-
-          const mapped: MediaItem[] = rows.map((row) => ({
-            id: String(row.id),
-            path: row.path,
-            thumbnail: row.type === 'image' ? convertFileSrc(row.path) : '',
-            filename: row.filename,
-            tags: row.tags ?? [],
-            time: '',
-            mediaType: row.type,
-            duration: '--:--',
-            resolution: '未知',
-            isFavorite: row.isFavorite ?? false,
-            isRecent: false
-          }));
-          setMediaItemsFromDb(mapped);
-        } catch (error) {
-          console.error('[ui] filter media failed:', error);
-        }
-      };
       void fetchFilteredMedia();
     }, 220);
 
     return () => window.clearTimeout(timer);
-  }, [selectedTagKey, mediaTypeFilter, setMediaItemsFromDb]);
+  }, [selectedTagKey, mediaTypeFilter, fetchFilteredMedia]);
+
+  useEffect(() => {
+    const onMediaUpdated = () => {
+      void fetchFilteredMedia();
+    };
+    window.addEventListener('medex:media-updated', onMediaUpdated);
+    return () => window.removeEventListener('medex:media-updated', onMediaUpdated);
+  }, [fetchFilteredMedia]);
 
   const mediaList: MediaCardProps[] = useMemo(() => {
     const navFilteredMediaItems = mediaItems.filter((item) => {
@@ -90,7 +100,12 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
       return true;
     });
 
-    return navFilteredMediaItems.map((item) => ({
+    const sortedItems =
+      activeNavId === 'recent'
+        ? [...navFilteredMediaItems].sort((a, b) => (b.recentViewedAt ?? 0) - (a.recentViewedAt ?? 0))
+        : navFilteredMediaItems;
+
+    return sortedItems.map((item) => ({
       ...item,
       selected: item.id === selectedMediaId,
       onClick: () => {}

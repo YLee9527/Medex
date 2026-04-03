@@ -49,7 +49,8 @@ export default function ToolbarContainer() {
       duration: '--:--',
       resolution: '未知',
       isFavorite: row.isFavorite ?? false,
-      isRecent: false
+      isRecent: row.isRecent ?? false,
+      recentViewedAt: row.recentViewedAt ?? null
     }));
     setMediaItemsFromDb(mapped);
     return mapped.length;

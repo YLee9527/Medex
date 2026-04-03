@@ -31,9 +31,15 @@ CREATE TABLE IF NOT EXISTS media_tags (
     PRIMARY KEY (media_id, tag_id)
 );
 
+CREATE TABLE IF NOT EXISTS recent_views (
+    media_id INTEGER PRIMARY KEY,
+    viewed_at INTEGER NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_media_path ON media(path);
 CREATE INDEX IF NOT EXISTS idx_media_tags_media_id ON media_tags(media_id);
 CREATE INDEX IF NOT EXISTS idx_media_tags_tag_id ON media_tags(tag_id);
+CREATE INDEX IF NOT EXISTS idx_recent_views_viewed_at ON recent_views(viewed_at DESC);
 "#;
 
 pub fn init_db(app_handle: &tauri::AppHandle) -> Result<()> {

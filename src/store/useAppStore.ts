@@ -25,6 +25,7 @@ export type MediaItem = {
   resolution: string;
   isFavorite: boolean;
   isRecent: boolean;
+  recentViewedAt?: number | null;
 };
 
 export type DbMediaItem = {
@@ -33,6 +34,8 @@ export type DbMediaItem = {
   filename: string;
   type: string;
   isFavorite?: boolean;
+  isRecent?: boolean;
+  recentViewedAt?: number | null;
   tags?: string[];
 };
 
@@ -61,6 +64,7 @@ type AppState = {
   setTagsFromDb: (items: DbTagItem[]) => void;
   addTagToMediaLocal: (mediaId: string, tagName: string) => void;
   removeTagFromMediaLocal: (mediaId: string, tagName: string) => void;
+  markMediaViewedLocal: (mediaId: string, viewedAt: number) => void;
 };
 
 const initialNavItems: SidebarNavItem[] = [
@@ -376,5 +380,17 @@ export const useAppStore = create<AppState>((set) => ({
         mediaItems: nextMediaItems,
         tags: nextTags
       };
-    })
+    }),
+  markMediaViewedLocal: (mediaId, viewedAt) =>
+    set((state) => ({
+      mediaItems: state.mediaItems.map((item) =>
+        item.id === mediaId
+          ? {
+              ...item,
+              isRecent: true,
+              recentViewedAt: viewedAt
+            }
+          : item
+      )
+    }))
 }));
