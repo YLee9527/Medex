@@ -6,6 +6,7 @@ import { DbMediaItem, MediaItem, useAppStore } from '../store/useAppStore';
 
 export default function ToolbarContainer() {
   const tags = useAppStore((state) => state.tags);
+  const mediaItems = useAppStore((state) => state.mediaItems);
   const viewMode = useAppStore((state) => state.viewMode);
   const setViewMode = useAppStore((state) => state.setViewMode);
   const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb);
@@ -69,6 +70,7 @@ export default function ToolbarContainer() {
   return (
     <Toolbar
       activeTags={activeTags}
+      resultCount={mediaItems.length}
       viewMode={viewMode}
       onViewModeChange={handleViewModeChange}
       onSelectFolder={handleSelectFolder}

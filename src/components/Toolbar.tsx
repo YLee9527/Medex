@@ -1,5 +1,6 @@
 export interface ToolbarProps {
   activeTags: string[];
+  resultCount: number;
   viewMode: 'grid' | 'list';
   onViewModeChange: (mode: 'grid' | 'list') => void;
   onSelectFolder: () => void;
@@ -8,6 +9,7 @@ export interface ToolbarProps {
 
 export default function Toolbar({
   activeTags,
+  resultCount,
   viewMode,
   onViewModeChange,
   onSelectFolder,
@@ -25,6 +27,7 @@ export default function Toolbar({
         ) : (
           <span className="text-[12px] text-white/60">未选择标签</span>
         )}
+        <span className="ml-2 text-[12px] text-white/60">结果：{resultCount}</span>
       </div>
 
       <div className="flex items-center gap-2">

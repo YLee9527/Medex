@@ -2,7 +2,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Context, Result};
-use rusqlite::{params, Connection};
+use rusqlite::{params, params_from_iter, Connection, ToSql};
 use serde::Serialize;
 use walkdir::WalkDir;
 
@@ -129,13 +129,39 @@ pub fn scan_and_index(path: String, app_handle: tauri::AppHandle) -> Result<Stri
 
 #[tauri::command]
 pub fn get_all_media() -> Result<Vec<MediaItem>, String> {
+    crate::db::with_connection(query_all_media).map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+pub fn filter_media_by_tags(tag_names: Vec<String>) -> Result<Vec<MediaItem>, String> {
     crate::db::with_connection(|conn| {
+        if tag_names.is_empty() {
+            return query_all_media(conn);
+        }
+
+        let placeholders = std::iter::repeat_n("?", tag_names.len()).collect::<Vec<_>>().join(", ");
+        let sql = format!(
+            "SELECT m.id, m.path, m.filename, m.type
+             FROM media m
+             JOIN media_tags mt ON m.id = mt.media_id
+             JOIN tags t ON t.id = mt.tag_id
+             WHERE t.name IN ({})
+             GROUP BY m.id
+             HAVING COUNT(DISTINCT t.id) = ?
+             ORDER BY m.id DESC;",
+            placeholders
+        );
+
+        let mut bind_values: Vec<&dyn ToSql> = tag_names.iter().map(|name| name as &dyn ToSql).collect();
+        let tags_count = tag_names.len() as i64;
+        bind_values.push(&tags_count);
+
         let mut stmt = conn
-            .prepare("SELECT id, path, filename, type FROM media ORDER BY id DESC;")
-            .context("failed to prepare media query")?;
+            .prepare(&sql)
+            .context("failed to prepare filter_media_by_tags query")?;
 
         let rows = stmt
-            .query_map([], |row| {
+            .query_map(params_from_iter(bind_values), |row| {
                 Ok(MediaItem {
                     id: row.get(0)?,
                     path: row.get(1)?,
@@ -143,12 +169,13 @@ pub fn get_all_media() -> Result<Vec<MediaItem>, String> {
                     media_type: row.get(3)?,
                 })
             })
-            .context("failed to execute media query")?;
+            .context("failed to execute filter_media_by_tags query")?;
 
         let mut items = Vec::new();
         for row in rows {
-            items.push(row.context("failed to parse media row")?);
+            items.push(row.context("failed to parse filtered media row")?);
         }
+
         Ok(items)
     })
     .map_err(|err| err.to_string())
@@ -173,4 +200,27 @@ fn current_timestamp_secs() -> Result<i64> {
         .context("system clock is before unix epoch")?
         .as_secs();
     i64::try_from(secs).context("timestamp overflow converting to i64")
+}
+
+fn query_all_media(conn: &mut Connection) -> Result<Vec<MediaItem>> {
+    let mut stmt = conn
+        .prepare("SELECT id, path, filename, type FROM media ORDER BY id DESC;")
+        .context("failed to prepare get_all_media query")?;
+
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(MediaItem {
+                id: row.get(0)?,
+                path: row.get(1)?,
+                filename: row.get(2)?,
+                media_type: row.get(3)?,
+            })
+        })
+        .context("failed to execute get_all_media query")?;
+
+    let mut items = Vec::new();
+    for row in rows {
+        items.push(row.context("failed to parse media row")?);
+    }
+    Ok(items)
 }
