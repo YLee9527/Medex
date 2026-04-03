@@ -16,8 +16,18 @@ export interface MediaGridProps {
   onToggleFavorite: (id: string) => void;
   onTagAdded: (mediaId: string, tagName: string) => void;
   onTagRemoved: (mediaId: string, tagName: string) => void;
+  thumbnails: Record<string, string>;
+  onVisibleRangeChange?: (range: RenderRange) => void;
   viewMode: 'grid' | 'list';
 }
+
+export type RenderRange = {
+  firstVisibleIndex: number;
+  lastVisibleIndex: number;
+  firstOverscanIndex: number;
+  lastOverscanIndex: number;
+  columnCount: number;
+};
 
 type GridItemData = {
   mediaList: MediaCardProps[];
@@ -26,6 +36,7 @@ type GridItemData = {
   onToggleFavorite: (id: string) => void;
   onTagAdded: (mediaId: string, tagName: string) => void;
   onTagRemoved: (mediaId: string, tagName: string) => void;
+  thumbnails: Record<string, string>;
   columnCount: number;
 };
 
@@ -33,6 +44,7 @@ type ListItemData = {
   mediaList: MediaCardProps[];
   onCardClick: (id: string) => void;
   onCardDoubleClick: (id: string) => void;
+  thumbnails: Record<string, string>;
 };
 
 const GRID_CARD_WIDTH = 180;
@@ -52,13 +64,15 @@ export default function MediaGrid({
   onToggleFavorite,
   onTagAdded,
   onTagRemoved,
+  thumbnails,
+  onVisibleRangeChange,
   viewMode
 }: MediaGridProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { width, height } = useElementSize(containerRef);
   const listData = useMemo<ListItemData>(
-    () => ({ mediaList, onCardClick, onCardDoubleClick }),
-    [mediaList, onCardClick, onCardDoubleClick]
+    () => ({ mediaList, onCardClick, onCardDoubleClick, thumbnails }),
+    [mediaList, onCardClick, onCardDoubleClick, thumbnails]
   );
 
   const availableWidth = Math.max(1, width - GRID_PADDING * 2);
@@ -67,8 +81,26 @@ export default function MediaGrid({
   const rowCount = Math.ceil(mediaList.length / columnCount);
   const gridHeight = Math.max(0, height);
   const gridData = useMemo<GridItemData>(
-    () => ({ mediaList, onCardClick, onCardDoubleClick, onToggleFavorite, onTagAdded, onTagRemoved, columnCount }),
-    [mediaList, onCardClick, onCardDoubleClick, onToggleFavorite, onTagAdded, onTagRemoved, columnCount]
+    () => ({
+      mediaList,
+      onCardClick,
+      onCardDoubleClick,
+      onToggleFavorite,
+      onTagAdded,
+      onTagRemoved,
+      thumbnails,
+      columnCount
+    }),
+    [
+      mediaList,
+      onCardClick,
+      onCardDoubleClick,
+      onToggleFavorite,
+      onTagAdded,
+      onTagRemoved,
+      thumbnails,
+      columnCount
+    ]
   );
 
   if (viewMode === 'list') {
@@ -91,6 +123,15 @@ export default function MediaGrid({
             itemSize={LIST_ROW_HEIGHT}
             itemData={listData}
             overscanCount={8}
+            onItemsRendered={({ overscanStartIndex, overscanStopIndex, visibleStartIndex, visibleStopIndex }) => {
+              onVisibleRangeChange?.({
+                firstVisibleIndex: visibleStartIndex,
+                lastVisibleIndex: visibleStopIndex,
+                firstOverscanIndex: overscanStartIndex,
+                lastOverscanIndex: overscanStopIndex,
+                columnCount: 1
+              });
+            }}
           >
             {ListRow}
           </FixedSizeList>
@@ -112,6 +153,29 @@ export default function MediaGrid({
           itemData={gridData}
           overscanRowCount={3}
           overscanColumnCount={1}
+          onItemsRendered={({
+            overscanColumnStartIndex,
+            overscanColumnStopIndex,
+            overscanRowStartIndex,
+            overscanRowStopIndex,
+            visibleColumnStartIndex,
+            visibleColumnStopIndex,
+            visibleRowStartIndex,
+            visibleRowStopIndex
+          }) => {
+            const firstVisibleIndex = visibleRowStartIndex * columnCount + visibleColumnStartIndex;
+            const lastVisibleIndex = visibleRowStopIndex * columnCount + visibleColumnStopIndex;
+            const firstOverscanIndex = overscanRowStartIndex * columnCount + overscanColumnStartIndex;
+            const lastOverscanIndex = overscanRowStopIndex * columnCount + overscanColumnStopIndex;
+
+            onVisibleRangeChange?.({
+              firstVisibleIndex,
+              lastVisibleIndex,
+              firstOverscanIndex,
+              lastOverscanIndex,
+              columnCount
+            });
+          }}
         >
           {GridCell}
         </FixedSizeGrid>
@@ -137,6 +201,7 @@ const GridCell = memo(function GridCell({ columnIndex, rowIndex, style, data }: 
         onToggleFavorite={data.onToggleFavorite}
         onTagAdded={data.onTagAdded}
         onTagRemoved={data.onTagRemoved}
+        videoThumbnail={item.path ? data.thumbnails[item.path] : undefined}
         className="w-[180px]"
         mode="grid"
       />
@@ -149,6 +214,7 @@ const ListRow = memo(function ListRow({ index, style, data }: ListChildComponent
   if (!item) {
     return null;
   }
+  const videoThumb = item.path ? data.thumbnails[item.path] : '';
 
   return (
     <div style={style} className="px-0.5 py-1">
@@ -163,7 +229,15 @@ const ListRow = memo(function ListRow({ index, style, data }: ListChildComponent
         <span className="flex items-center">
           <span className="h-6 w-8 overflow-hidden rounded bg-black/30">
             {item.thumbnail ? (
-              <img src={toPreviewSrc(item.thumbnail)} alt={item.filename} className="h-full w-full object-cover" loading="lazy" />
+              item.mediaType === 'video' ? (
+                videoThumb ? (
+                  <img src={toPreviewSrc(videoThumb)} alt={item.filename} className="h-full w-full object-cover" loading="lazy" />
+                ) : (
+                  <span className="flex h-full w-full animate-pulse items-center justify-center text-[10px] text-white/70">...</span>
+                )
+              ) : (
+                <img src={toPreviewSrc(item.thumbnail)} alt={item.filename} className="h-full w-full object-cover" loading="lazy" />
+              )
             ) : (
               <span className="flex h-full w-full items-center justify-center text-[10px] text-white/70">MEDIA</span>
             )}

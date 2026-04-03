@@ -1,4 +1,4 @@
-import { DragEvent, memo, useState } from 'react';
+import { DragEvent, memo, useEffect, useState } from 'react';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { invoke } from '@tauri-apps/api/core';
 import { useDrop } from 'react-dnd';
@@ -22,6 +22,7 @@ export interface MediaCardProps {
   onToggleFavorite?: (id: string) => void;
   onTagAdded?: (mediaId: string, tagName: string) => void;
   onTagRemoved?: (mediaId: string, tagName: string) => void;
+  videoThumbnail?: string;
   className?: string;
   mode?: 'grid' | 'list';
 }
@@ -45,6 +46,7 @@ function MediaCard({
   onToggleFavorite,
   onTagAdded,
   onTagRemoved,
+  videoThumbnail,
   className,
   mode = 'grid'
 }: MediaCardProps) {
@@ -53,12 +55,16 @@ function MediaCard({
   const widthClass = className ?? 'w-[180px]';
   const isGrid = mode === 'grid';
   const previewSrc = toPreviewSrc(thumbnail);
-  const videoSrc = toPreviewSrc(path || thumbnail);
+  const resolvedVideoThumbnail = videoThumbnail ? toPreviewSrc(videoThumbnail) : '';
   const [imageFailed, setImageFailed] = useState(false);
-  const [videoFailed, setVideoFailed] = useState(false);
+  const [videoThumbLoaded, setVideoThumbLoaded] = useState(false);
   const [isNativeOver, setIsNativeOver] = useState(false);
   const showImage = mediaType !== 'video' && previewSrc && !imageFailed;
-  const shouldShowVideo = mediaType === 'video' && !!videoSrc && !videoFailed;
+
+  useEffect(() => {
+    setVideoThumbLoaded(false);
+  }, [resolvedVideoThumbnail]);
+
   const handleDropTag = async (item: DragTagItem) => {
     const mediaIdNum = Number(id);
     if (!Number.isFinite(mediaIdNum)) {
@@ -222,23 +228,24 @@ function MediaCard({
           )}
         </button>
 
-        {shouldShowVideo ? (
-          <video
-            src={videoSrc}
-            className="h-full w-full object-cover"
-            preload="metadata"
-            muted
-            playsInline
-            onLoadedData={(e) => {
-              const el = e.currentTarget;
-              el.currentTime = 0.001;
-              el.pause();
-            }}
-            onError={() => {
-              setVideoFailed(true);
-              console.error('[media-card] video preview failed:', videoSrc);
-            }}
-          />
+        {mediaType === 'video' ? (
+          resolvedVideoThumbnail ? (
+            <img
+              src={resolvedVideoThumbnail}
+              alt={filename}
+              className={`h-full w-full object-cover transition-opacity duration-200 ${
+                videoThumbLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              loading="lazy"
+              decoding="async"
+              onLoad={() => setVideoThumbLoaded(true)}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-black/30 text-[11px] text-white/70">
+              <div className="h-full w-full animate-pulse bg-white/5" />
+              <span className="absolute">生成缩略图...</span>
+            </div>
+          )
         ) : showImage ? (
           <img
             src={previewSrc}
@@ -344,6 +351,7 @@ function areMediaCardPropsEqual(prev: Readonly<MediaCardProps>, next: Readonly<M
     prev.thumbnail !== next.thumbnail ||
     prev.filename !== next.filename ||
     prev.mediaType !== next.mediaType ||
+    prev.videoThumbnail !== next.videoThumbnail ||
     prev.selected !== next.selected ||
     prev.className !== next.className ||
     prev.mode !== next.mode ||

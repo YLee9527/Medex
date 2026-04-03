@@ -2,6 +2,7 @@
 
 mod db;
 mod services;
+mod thumbnail;
 
 fn main() {
     tauri::Builder::default()
@@ -9,6 +10,10 @@ fn main() {
         .setup(|app| {
             if let Err(err) = db::init_db(app.handle()) {
                 eprintln!("failed to initialize database: {err:#}");
+                return Err(Box::<dyn std::error::Error>::from(err));
+            }
+            if let Err(err) = thumbnail::init(app.handle()) {
+                eprintln!("failed to initialize thumbnail system: {err:#}");
                 return Err(Box::<dyn std::error::Error>::from(err));
             }
             Ok(())
@@ -26,7 +31,8 @@ fn main() {
             services::tags::delete_tag,
             services::tags::add_tag_to_media,
             services::tags::remove_tag_from_media,
-            services::tags::get_tags_by_media
+            services::tags::get_tags_by_media,
+            thumbnail::request_thumbnail
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
