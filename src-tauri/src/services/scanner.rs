@@ -21,6 +21,7 @@ pub struct MediaItem {
     pub filename: String,
     #[serde(rename = "type")]
     pub media_type: String,
+    pub tags: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -109,7 +110,19 @@ pub fn insert_media_batch(conn: &mut Connection, files: Vec<MediaFile>) -> Resul
 
 fn get_all_media_inner(conn: &Connection) -> Result<Vec<MediaItem>> {
     let mut stmt = conn
-        .prepare("SELECT id, path, filename, type FROM media ORDER BY id DESC;")
+        .prepare(
+            "SELECT
+                m.id,
+                m.path,
+                m.filename,
+                m.type,
+                COALESCE(GROUP_CONCAT(t.name, '||'), '') AS tags_concat
+             FROM media m
+             LEFT JOIN media_tags mt ON mt.media_id = m.id
+             LEFT JOIN tags t ON t.id = mt.tag_id
+             GROUP BY m.id
+             ORDER BY m.id DESC;",
+        )
         .context("failed to prepare get_all_media query")?;
 
     let rows = stmt
@@ -119,6 +132,7 @@ fn get_all_media_inner(conn: &Connection) -> Result<Vec<MediaItem>> {
                 path: row.get(1)?,
                 filename: row.get(2)?,
                 media_type: row.get(3)?,
+                tags: parse_tags(row.get::<_, String>(4)?),
             })
         })
         .context("failed to execute get_all_media query")?;
@@ -145,13 +159,25 @@ pub fn filter_media_by_tags(tag_names: Vec<String>) -> Result<Vec<MediaItem>, St
 
         let placeholders = vec!["?"; tag_names.len()].join(",");
         let sql = format!(
-            "SELECT m.id, m.path, m.filename, m.type
+            "SELECT
+                m.id,
+                m.path,
+                m.filename,
+                m.type,
+                COALESCE(GROUP_CONCAT(t2.name, '||'), '') AS tags_concat
              FROM media m
-             JOIN media_tags mt ON m.id = mt.media_id
-             JOIN tags t ON t.id = mt.tag_id
-             WHERE t.name IN ({})
+             JOIN (
+                SELECT m1.id
+                FROM media m1
+                JOIN media_tags mt1 ON m1.id = mt1.media_id
+                JOIN tags t1 ON t1.id = mt1.tag_id
+                WHERE t1.name IN ({})
+                GROUP BY m1.id
+                HAVING COUNT(DISTINCT t1.id) = ?
+             ) matched ON matched.id = m.id
+             LEFT JOIN media_tags mt2 ON mt2.media_id = m.id
+             LEFT JOIN tags t2 ON t2.id = mt2.tag_id
              GROUP BY m.id
-             HAVING COUNT(DISTINCT t.id) = ?
              ORDER BY m.id DESC;",
             placeholders
         );
@@ -170,6 +196,7 @@ pub fn filter_media_by_tags(tag_names: Vec<String>) -> Result<Vec<MediaItem>, St
                     path: row.get(1)?,
                     filename: row.get(2)?,
                     media_type: row.get(3)?,
+                    tags: parse_tags(row.get::<_, String>(4)?),
                 })
             })
             .context("failed to execute filter_media_by_tags query")?;
@@ -251,4 +278,16 @@ fn current_timestamp_seconds() -> i64 {
         .duration_since(UNIX_EPOCH)
         .map(|duration| duration.as_secs() as i64)
         .unwrap_or_default()
+}
+
+fn parse_tags(tags_concat: String) -> Vec<String> {
+    if tags_concat.trim().is_empty() {
+        return Vec::new();
+    }
+    tags_concat
+        .split("||")
+        .map(str::trim)
+        .filter(|tag| !tag.is_empty())
+        .map(ToString::to_string)
+        .collect()
 }

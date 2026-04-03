@@ -42,6 +42,14 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
     void reloadTags();
   }, [mediaId]);
 
+  useEffect(() => {
+    const onUpdated = () => {
+      void reloadTags();
+    };
+    window.addEventListener('medex:media-tags-updated', onUpdated);
+    return () => window.removeEventListener('medex:media-tags-updated', onUpdated);
+  }, [mediaId]);
+
   const handleRemoveTag = async (tagId: number) => {
     if (!mediaId) return;
       try {

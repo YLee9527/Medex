@@ -41,7 +41,7 @@ export default function ToolbarContainer() {
       path: row.path,
       thumbnail: row.type === 'image' ? convertFileSrc(row.path) : '',
       filename: row.filename,
-      tags: [],
+      tags: row.tags ?? [],
       time: '',
       mediaType: row.type,
       duration: '--:--',

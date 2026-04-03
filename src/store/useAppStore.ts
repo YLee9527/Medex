@@ -32,6 +32,7 @@ export type DbMediaItem = {
   path: string;
   filename: string;
   type: string;
+  tags?: string[];
 };
 
 export type DbTagItem = {
@@ -55,6 +56,8 @@ type AppState = {
   deleteMedia: (mediaId: string) => void;
   setMediaItemsFromDb: (items: MediaItem[]) => void;
   setTagsFromDb: (items: DbTagItem[]) => void;
+  addTagToMediaLocal: (mediaId: string, tagName: string) => void;
+  removeTagFromMediaLocal: (mediaId: string, tagName: string) => void;
 };
 
 const initialNavItems: SidebarNavItem[] = [
@@ -255,6 +258,7 @@ export const useAppStore = create<AppState>((set) => ({
         }
         return {
           ...item,
+          tags: previous.tags,
           isFavorite: previous.isFavorite,
           isRecent: previous.isRecent
         };
@@ -275,6 +279,99 @@ export const useAppStore = create<AppState>((set) => ({
           selected: selectedByName.has(item.name),
           mediaCount: item.mediaCount ?? 0
         }))
+      };
+    }),
+  addTagToMediaLocal: (mediaId, tagName) =>
+    set((state) => {
+      const normalized = tagName.trim();
+      if (!normalized) {
+        return state;
+      }
+
+      let shouldIncreaseTagCount = false;
+      const nextMediaItems = state.mediaItems.map((item) => {
+        if (item.id !== mediaId) {
+          return item;
+        }
+        if (item.tags.includes(normalized)) {
+          return item;
+        }
+        shouldIncreaseTagCount = true;
+        return {
+          ...item,
+          tags: [...item.tags, normalized]
+        };
+      });
+
+      if (!shouldIncreaseTagCount) {
+        return state;
+      }
+
+      let hasTag = false;
+      const nextTags = state.tags.map((tag) => {
+        if (tag.name !== normalized) {
+          return tag;
+        }
+        hasTag = true;
+        return {
+          ...tag,
+          mediaCount: (tag.mediaCount ?? 0) + 1
+        };
+      });
+
+      return {
+        mediaItems: nextMediaItems,
+        tags: hasTag
+          ? nextTags
+          : [
+              ...nextTags,
+              {
+                id: makeTagId(normalized) || `tag-${Date.now()}`,
+                name: normalized,
+                selected: false,
+                mediaCount: 1
+              }
+            ]
+      };
+    }),
+  removeTagFromMediaLocal: (mediaId, tagName) =>
+    set((state) => {
+      const normalized = tagName.trim();
+      if (!normalized) {
+        return state;
+      }
+
+      let removed = false;
+      const nextMediaItems = state.mediaItems.map((item) => {
+        if (item.id !== mediaId) {
+          return item;
+        }
+        if (!item.tags.includes(normalized)) {
+          return item;
+        }
+        removed = true;
+        return {
+          ...item,
+          tags: item.tags.filter((tag) => tag !== normalized)
+        };
+      });
+
+      if (!removed) {
+        return state;
+      }
+
+      const nextTags = state.tags.map((tag) =>
+        tag.name === normalized
+          ? {
+              ...tag,
+              mediaCount: Math.max(0, (tag.mediaCount ?? 0) - 1)
+            }
+          : tag
+      );
+
+      return {
+        mediaItems: nextMediaItems,
+        tags: nextTags
       };
     })
 }));

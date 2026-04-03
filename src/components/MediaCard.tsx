@@ -1,5 +1,9 @@
-import { memo, useState } from 'react';
+import { DragEvent, memo, useState } from 'react';
 import { convertFileSrc } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/core';
+import { useDrop } from 'react-dnd';
+import { DND_TAG_TYPE, DragTagItem } from './TagItem';
+import { useTagDragStore } from '../store/useTagDragStore';
 
 export interface MediaCardProps {
   id: string;
@@ -15,9 +19,16 @@ export interface MediaCardProps {
   selected: boolean;
   onClick: (id: string) => void;
   onToggleFavorite?: (id: string) => void;
+  onTagAdded?: (mediaId: string, tagName: string) => void;
+  onTagRemoved?: (mediaId: string, tagName: string) => void;
   className?: string;
   mode?: 'grid' | 'list';
 }
+
+type DbTag = {
+  id: number;
+  name: string;
+};
 
 function MediaCard({
   id,
@@ -30,26 +41,153 @@ function MediaCard({
   selected,
   onClick,
   onToggleFavorite,
+  onTagAdded,
+  onTagRemoved,
   className,
   mode = 'grid'
 }: MediaCardProps) {
+  const draggingTag = useTagDragStore((state) => state.draggingTag);
+  const endTagDrag = useTagDragStore((state) => state.endDrag);
   const widthClass = className ?? 'w-[180px]';
   const isGrid = mode === 'grid';
   const previewSrc = toPreviewSrc(thumbnail);
   const videoSrc = toPreviewSrc(path || thumbnail);
   const [imageFailed, setImageFailed] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
+  const [isNativeOver, setIsNativeOver] = useState(false);
   const showImage = mediaType !== 'video' && previewSrc && !imageFailed;
   const shouldShowVideo = mediaType === 'video' && !!videoSrc && !videoFailed;
+  const handleDropTag = async (item: DragTagItem) => {
+    const mediaIdNum = Number(id);
+    if (!Number.isFinite(mediaIdNum)) {
+      console.error('[media-card] invalid media id for drop:', id);
+      return;
+    }
+    try {
+      await invoke('add_tag_to_media', {
+        mediaId: mediaIdNum,
+        tagName: item.tagName
+      });
+      onTagAdded?.(id, item.tagName);
+      window.dispatchEvent(new Event('medex:tags-updated'));
+      window.dispatchEvent(new Event('medex:media-tags-updated'));
+    } catch (error) {
+      console.error('[media-card] add_tag_to_media failed:', error);
+      window.alert(`打标签失败：${String(error)}`);
+    }
+  };
+
+  const handleRemoveTag = async (tagName: string) => {
+    const mediaIdNum = Number(id);
+    if (!Number.isFinite(mediaIdNum)) {
+      return;
+    }
+    try {
+      const dbTags = await invoke<DbTag[]>('get_tags_by_media', { mediaId: mediaIdNum });
+      const matched = dbTags.find((tag) => tag.name === tagName);
+      if (!matched) {
+        return;
+      }
+      await invoke('remove_tag_from_media', { mediaId: mediaIdNum, tagId: matched.id });
+      onTagRemoved?.(id, tagName);
+      window.dispatchEvent(new Event('medex:tags-updated'));
+      window.dispatchEvent(new Event('medex:media-tags-updated'));
+    } catch (error) {
+      console.error('[media-card] remove_tag_from_media failed:', error);
+      window.alert(`移除标签失败：${String(error)}`);
+    }
+  };
+
+  const [{ isOver, canDrop }, dropRef] = useDrop(
+    () => ({
+      accept: DND_TAG_TYPE,
+      canDrop: () => mode === 'grid',
+      drop: (item: DragTagItem) => {
+        void handleDropTag(item);
+      },
+      collect: (monitor) => ({
+        isOver: monitor.isOver({ shallow: true }),
+        canDrop: monitor.canDrop()
+      })
+    }),
+    [id, mode, onTagAdded]
+  );
+
+  const handleNativeDrop = (event: DragEvent<HTMLDivElement>) => {
+    if (mode !== 'grid') {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    setIsNativeOver(false);
+
+    const raw =
+      event.dataTransfer.getData('application/x-medex-tag') ||
+      event.dataTransfer.getData('text/plain');
+    if (!raw) {
+      return;
+    }
+    try {
+      const parsed = JSON.parse(raw) as Partial<DragTagItem>;
+      if (typeof parsed.tagName === 'string' && parsed.tagName.trim()) {
+        void handleDropTag({
+          type: DND_TAG_TYPE,
+          tagId: typeof parsed.tagId === 'number' ? parsed.tagId : 0,
+          tagName: parsed.tagName
+        });
+      }
+    } catch (error) {
+      console.error('[media-card] parse native dropped tag failed:', error);
+    }
+  };
+
+  const handleNativeDragOver = (event: DragEvent<HTMLDivElement>) => {
+    if (mode !== 'grid') {
+      return;
+    }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+    if (!isNativeOver) {
+      setIsNativeOver(true);
+    }
+  };
 
   return (
+    <div
+      ref={dropRef}
+      onDragOver={handleNativeDragOver}
+      onDragEnter={() => setIsNativeOver(true)}
+      onDragLeave={() => setIsNativeOver(false)}
+      onDrop={handleNativeDrop}
+      onMouseEnter={() => {
+        if (draggingTag) {
+          setIsNativeOver(true);
+        }
+      }}
+      onMouseLeave={() => setIsNativeOver(false)}
+      onMouseUp={() => {
+        if (mode !== 'grid' || !draggingTag) {
+          return;
+        }
+        void handleDropTag({
+          type: DND_TAG_TYPE,
+          tagId: draggingTag.tagId,
+          tagName: draggingTag.tagName
+        });
+        endTagDrag();
+      }}
+    >
       <button
         type="button"
         onClick={() => onClick(id)}
         className={`group overflow-hidden rounded-[8px] bg-[#242424] text-left text-[#EAEAEA] transition-colors ${
-        selected ? 'border-2 border-blue-500' : 'border border-white/10 hover:border-white/20'
+        isNativeOver || (isOver && canDrop)
+          ? 'border-2 border-blue-500'
+          : selected
+            ? 'border-2 border-blue-500'
+            : 'border border-white/10 hover:border-white/20'
       } ${widthClass} ${isGrid ? 'h-[220px]' : 'h-auto'}`}
-    >
+      >
       <div className={`relative w-full overflow-hidden ${isGrid ? 'h-[150px] shrink-0' : 'aspect-video'}`}>
         <button
           type="button"
@@ -122,6 +260,12 @@ function MediaCard({
             </span>
           </div>
         ) : null}
+
+        {isNativeOver || (isOver && canDrop) ? (
+          <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/45">
+            <span className="rounded-md bg-blue-500/90 px-2 py-1 text-xs text-white">释放以添加标签</span>
+          </div>
+        ) : null}
       </div>
 
       <div className={`flex flex-col gap-2 p-3 ${isGrid ? 'h-[70px] overflow-hidden' : ''}`}>
@@ -129,16 +273,42 @@ function MediaCard({
           {filename}
         </p>
         {isGrid ? (
-          <p className="truncate text-[12px] leading-4 text-white/75">
-            {tags.length > 0 ? tags.map((tag) => `#${tag}`).join(' ') : '暂无标签'}
-          </p>
+          <div className="flex flex-nowrap items-center gap-1 overflow-hidden">
+            {tags.length > 0 ? (
+              tags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void handleRemoveTag(tag);
+                  }}
+                  className="max-w-full truncate rounded bg-white/10 px-2 py-0.5 text-[12px] leading-4 text-white/80 transition-colors hover:bg-[#555555]"
+                  title={`点击删除 #${tag}`}
+                >
+                  #{tag}
+                </button>
+              ))
+            ) : (
+              <span className="truncate text-[12px] leading-4 text-white/55">暂无标签</span>
+            )}
+          </div>
         ) : (
           <div className="flex max-h-[56px] flex-wrap gap-1 overflow-y-auto">
             {tags.length > 0 ? (
               tags.map((tag) => (
-                <span key={tag} className="rounded bg-white/10 px-2 py-0.5 text-[12px] leading-4 text-white/80">
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void handleRemoveTag(tag);
+                  }}
+                  className="rounded bg-white/10 px-2 py-0.5 text-[12px] leading-4 text-white/80 transition-colors hover:bg-[#555555]"
+                  title={`点击删除 #${tag}`}
+                >
                   #{tag}
-                </span>
+                </button>
               ))
             ) : (
               <span className="text-[12px] leading-4 text-white/55">暂无标签</span>
@@ -146,7 +316,8 @@ function MediaCard({
           </div>
         )}
       </div>
-    </button>
+      </button>
+    </div>
   );
 }
 

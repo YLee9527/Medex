@@ -12,6 +12,8 @@ export default function MediaGridContainer() {
   const selectedMediaId = useAppStore((state) => state.selectedMediaId);
   const clickMedia = useAppStore((state) => state.clickMedia);
   const toggleFavorite = useAppStore((state) => state.toggleFavorite);
+  const addTagToMediaLocal = useAppStore((state) => state.addTagToMediaLocal);
+  const removeTagFromMediaLocal = useAppStore((state) => state.removeTagFromMediaLocal);
   const viewMode = useAppStore((state) => state.viewMode);
   const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb);
 
@@ -20,6 +22,7 @@ export default function MediaGridContainer() {
     () => tags.filter((tag) => tag.selected).map((tag) => tag.name),
     [tags]
   );
+  const selectedTagKey = useMemo(() => selectedTagNames.join('|'), [selectedTagNames]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -34,7 +37,7 @@ export default function MediaGridContainer() {
             path: row.path,
             thumbnail: row.type === 'image' ? convertFileSrc(row.path) : '',
             filename: row.filename,
-            tags: [],
+            tags: row.tags ?? [],
             time: '',
             mediaType: row.type,
             duration: '--:--',
@@ -51,7 +54,7 @@ export default function MediaGridContainer() {
     }, 220);
 
     return () => window.clearTimeout(timer);
-  }, [selectedTagNames, setMediaItemsFromDb]);
+  }, [selectedTagKey, setMediaItemsFromDb]);
 
   const mediaList: MediaCardProps[] = useMemo(() => {
     const navFilteredMediaItems = mediaItems.filter((item) => {
@@ -76,6 +79,8 @@ export default function MediaGridContainer() {
       mediaList={mediaList}
       onCardClick={clickMedia}
       onToggleFavorite={toggleFavorite}
+      onTagAdded={addTagToMediaLocal}
+      onTagRemoved={removeTagFromMediaLocal}
       viewMode={viewMode}
     />
   );

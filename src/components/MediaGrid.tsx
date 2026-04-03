@@ -13,6 +13,8 @@ export interface MediaGridProps {
   mediaList: MediaCardProps[];
   onCardClick: (id: string) => void;
   onToggleFavorite: (id: string) => void;
+  onTagAdded: (mediaId: string, tagName: string) => void;
+  onTagRemoved: (mediaId: string, tagName: string) => void;
   viewMode: 'grid' | 'list';
 }
 
@@ -20,6 +22,8 @@ type GridItemData = {
   mediaList: MediaCardProps[];
   onCardClick: (id: string) => void;
   onToggleFavorite: (id: string) => void;
+  onTagAdded: (mediaId: string, tagName: string) => void;
+  onTagRemoved: (mediaId: string, tagName: string) => void;
   columnCount: number;
 };
 
@@ -38,7 +42,14 @@ const GRID_CELL_HEIGHT = GRID_CARD_HEIGHT + GRID_GAP;
 const LIST_ROW_HEIGHT = 48;
 const LIST_HEADER_HEIGHT = 36;
 
-export default function MediaGrid({ mediaList, onCardClick, onToggleFavorite, viewMode }: MediaGridProps) {
+export default function MediaGrid({
+  mediaList,
+  onCardClick,
+  onToggleFavorite,
+  onTagAdded,
+  onTagRemoved,
+  viewMode
+}: MediaGridProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { width, height } = useElementSize(containerRef);
   const listData = useMemo<ListItemData>(() => ({ mediaList, onCardClick }), [mediaList, onCardClick]);
@@ -49,8 +60,8 @@ export default function MediaGrid({ mediaList, onCardClick, onToggleFavorite, vi
   const rowCount = Math.ceil(mediaList.length / columnCount);
   const gridHeight = Math.max(0, height);
   const gridData = useMemo<GridItemData>(
-    () => ({ mediaList, onCardClick, onToggleFavorite, columnCount }),
-    [mediaList, onCardClick, onToggleFavorite, columnCount]
+    () => ({ mediaList, onCardClick, onToggleFavorite, onTagAdded, onTagRemoved, columnCount }),
+    [mediaList, onCardClick, onToggleFavorite, onTagAdded, onTagRemoved, columnCount]
   );
 
   if (viewMode === 'list') {
@@ -116,6 +127,8 @@ const GridCell = memo(function GridCell({ columnIndex, rowIndex, style, data }: 
         {...item}
         onClick={data.onCardClick}
         onToggleFavorite={data.onToggleFavorite}
+        onTagAdded={data.onTagAdded}
+        onTagRemoved={data.onTagRemoved}
         className="w-[180px]"
         mode="grid"
       />
