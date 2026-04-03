@@ -12,6 +12,7 @@ import MediaCard, { MediaCardProps } from './MediaCard';
 export interface MediaGridProps {
   mediaList: MediaCardProps[];
   onCardClick: (id: string) => void;
+  onCardDoubleClick: (id: string) => void;
   onToggleFavorite: (id: string) => void;
   onTagAdded: (mediaId: string, tagName: string) => void;
   onTagRemoved: (mediaId: string, tagName: string) => void;
@@ -21,6 +22,7 @@ export interface MediaGridProps {
 type GridItemData = {
   mediaList: MediaCardProps[];
   onCardClick: (id: string) => void;
+  onCardDoubleClick: (id: string) => void;
   onToggleFavorite: (id: string) => void;
   onTagAdded: (mediaId: string, tagName: string) => void;
   onTagRemoved: (mediaId: string, tagName: string) => void;
@@ -30,6 +32,7 @@ type GridItemData = {
 type ListItemData = {
   mediaList: MediaCardProps[];
   onCardClick: (id: string) => void;
+  onCardDoubleClick: (id: string) => void;
 };
 
 const GRID_CARD_WIDTH = 180;
@@ -45,6 +48,7 @@ const LIST_HEADER_HEIGHT = 36;
 export default function MediaGrid({
   mediaList,
   onCardClick,
+  onCardDoubleClick,
   onToggleFavorite,
   onTagAdded,
   onTagRemoved,
@@ -52,7 +56,10 @@ export default function MediaGrid({
 }: MediaGridProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { width, height } = useElementSize(containerRef);
-  const listData = useMemo<ListItemData>(() => ({ mediaList, onCardClick }), [mediaList, onCardClick]);
+  const listData = useMemo<ListItemData>(
+    () => ({ mediaList, onCardClick, onCardDoubleClick }),
+    [mediaList, onCardClick, onCardDoubleClick]
+  );
 
   const availableWidth = Math.max(1, width - GRID_PADDING * 2);
   const rawColumns = Math.floor((availableWidth + GRID_GAP) / GRID_CELL_WIDTH);
@@ -60,8 +67,8 @@ export default function MediaGrid({
   const rowCount = Math.ceil(mediaList.length / columnCount);
   const gridHeight = Math.max(0, height);
   const gridData = useMemo<GridItemData>(
-    () => ({ mediaList, onCardClick, onToggleFavorite, onTagAdded, onTagRemoved, columnCount }),
-    [mediaList, onCardClick, onToggleFavorite, onTagAdded, onTagRemoved, columnCount]
+    () => ({ mediaList, onCardClick, onCardDoubleClick, onToggleFavorite, onTagAdded, onTagRemoved, columnCount }),
+    [mediaList, onCardClick, onCardDoubleClick, onToggleFavorite, onTagAdded, onTagRemoved, columnCount]
   );
 
   if (viewMode === 'list') {
@@ -126,6 +133,7 @@ const GridCell = memo(function GridCell({ columnIndex, rowIndex, style, data }: 
       <MediaCard
         {...item}
         onClick={data.onCardClick}
+        onDoubleClick={data.onCardDoubleClick}
         onToggleFavorite={data.onToggleFavorite}
         onTagAdded={data.onTagAdded}
         onTagRemoved={data.onTagRemoved}
@@ -147,6 +155,7 @@ const ListRow = memo(function ListRow({ index, style, data }: ListChildComponent
       <button
         type="button"
         onClick={() => data.onCardClick(item.id)}
+        onDoubleClick={() => data.onCardDoubleClick(item.id)}
         className={`grid h-full w-full grid-cols-[90px_2fr_2fr_1fr_80px] items-center gap-2 rounded-[8px] px-3 py-2 text-left text-sm transition-colors ${
           item.selected ? 'bg-[#444444] text-white' : 'bg-[#242424] text-white/85 hover:bg-[#555555]'
         }`}

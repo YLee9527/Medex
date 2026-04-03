@@ -18,6 +18,7 @@ export interface MediaCardProps {
   isFavorite?: boolean;
   selected: boolean;
   onClick: (id: string) => void;
+  onDoubleClick?: (id: string) => void;
   onToggleFavorite?: (id: string) => void;
   onTagAdded?: (mediaId: string, tagName: string) => void;
   onTagRemoved?: (mediaId: string, tagName: string) => void;
@@ -40,6 +41,7 @@ function MediaCard({
   isFavorite = false,
   selected,
   onClick,
+  onDoubleClick,
   onToggleFavorite,
   onTagAdded,
   onTagRemoved,
@@ -180,6 +182,7 @@ function MediaCard({
       <button
         type="button"
         onClick={() => onClick(id)}
+        onDoubleClick={() => onDoubleClick?.(id)}
         className={`group overflow-hidden rounded-[8px] bg-[#242424] text-left text-[#EAEAEA] transition-colors ${
         isNativeOver || (isOver && canDrop)
           ? 'border-2 border-blue-500'
@@ -349,6 +352,10 @@ function areMediaCardPropsEqual(prev: Readonly<MediaCardProps>, next: Readonly<M
     prev.resolution !== next.resolution ||
     prev.isFavorite !== next.isFavorite
   ) {
+    return false;
+  }
+
+  if (prev.onDoubleClick !== next.onDoubleClick) {
     return false;
   }
 

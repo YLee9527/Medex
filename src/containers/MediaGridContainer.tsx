@@ -5,7 +5,11 @@ import { MediaCardProps } from '../components/MediaCard';
 import { DbMediaItem, MediaItem, useAppStore } from '../store/useAppStore';
 import { useEffect } from 'react';
 
-export default function MediaGridContainer() {
+interface MediaGridContainerProps {
+  onOpenViewer: (mediaId: string) => void;
+}
+
+export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerProps) {
   const mediaItems = useAppStore((state) => state.mediaItems);
   const navItems = useAppStore((state) => state.navItems);
   const tags = useAppStore((state) => state.tags);
@@ -96,6 +100,7 @@ export default function MediaGridContainer() {
     <MediaGrid
       mediaList={mediaList}
       onCardClick={clickMedia}
+      onCardDoubleClick={onOpenViewer}
       onToggleFavorite={handleToggleFavorite}
       onTagAdded={addTagToMediaLocal}
       onTagRemoved={removeTagFromMediaLocal}
