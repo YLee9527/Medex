@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
@@ -18,11 +18,14 @@ export default function ToolbarContainer() {
   const setViewMode = useAppStore((state) => state.setViewMode);
   const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb);
   const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
   const [scanProgress, setScanProgress] = useState<ScanProgressPayload>({
     current: 0,
     total: 0,
     filename: ''
   });
+  const scanInFlightRef = useRef(false);
+  const doneHandledRef = useRef(false);
 
   const activeTags = tags.filter((tag) => tag.selected).map((tag) => tag.name);
 
@@ -61,12 +64,17 @@ export default function ToolbarContainer() {
       }
 
       setLoading(true);
+      setStatusMessage('');
+      scanInFlightRef.current = true;
+      doneHandledRef.current = false;
       setScanProgress({ current: 0, total: 0, filename: '' });
       console.log('[ui] selected folder:', selected);
       await invoke('scan_and_index', { path: selected });
     } catch (error) {
       console.error('[ui] scan failed:', error);
       window.alert(`扫描失败：${String(error)}`);
+      scanInFlightRef.current = false;
+      doneHandledRef.current = true;
       setLoading(false);
     }
   };
@@ -76,33 +84,53 @@ export default function ToolbarContainer() {
   }, []);
 
   useEffect(() => {
+    let disposed = false;
     let unlisten: (() => void) | null = null;
     const setup = async () => {
-      unlisten = await listen<ScanProgressPayload>('scan_progress', (event) => {
+      const fn = await listen<ScanProgressPayload>('scan_progress', (event) => {
         setScanProgress(event.payload);
       });
+      if (disposed) {
+        fn();
+        return;
+      }
+      unlisten = fn;
     };
     void setup();
     return () => {
+      disposed = true;
       if (unlisten) unlisten();
     };
   }, []);
 
   useEffect(() => {
+    let disposed = false;
     let unlisten: (() => void) | null = null;
     const setup = async () => {
-      unlisten = await listen('scan_done', async () => {
+      const fn = await listen('scan_done', async () => {
+        if (!scanInFlightRef.current || doneHandledRef.current) {
+          return;
+        }
+        doneHandledRef.current = true;
+        scanInFlightRef.current = false;
         setLoading(false);
         try {
           const count = await loadAllMedia();
-          window.alert(`扫描完成，当前共 ${count} 个媒体文件`);
+          setStatusMessage(`扫描完成，当前共 ${count} 个媒体文件`);
+          window.setTimeout(() => setStatusMessage(''), 2800);
         } catch (error) {
           console.error('[ui] refresh after scan failed:', error);
         }
       });
+      if (disposed) {
+        fn();
+        return;
+      }
+      unlisten = fn;
     };
     void setup();
     return () => {
+      disposed = true;
       if (unlisten) unlisten();
     };
   }, []);
@@ -122,6 +150,11 @@ export default function ToolbarContainer() {
         onSelectFolder={handleSelectFolder}
         loading={loading}
       />
+      {statusMessage ? (
+        <div className="mt-2 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+          {statusMessage}
+        </div>
+      ) : null}
       {loading ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm">
           <div className="w-[360px] rounded-lg border border-white/10 bg-[#1E1E1E] p-4 text-[#EAEAEA]">

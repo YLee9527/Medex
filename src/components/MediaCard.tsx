@@ -92,16 +92,26 @@ function MediaCard({
       </div>
 
       <div className={`flex flex-col gap-2 p-3 ${isGrid ? 'h-[70px] overflow-hidden' : ''}`}>
-        <p className="overflow-hidden text-[14px] leading-5 text-[#EAEAEA] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
+        <p className={`text-[14px] leading-5 text-[#EAEAEA] ${isGrid ? 'truncate' : 'overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]'}`}>
           {filename}
         </p>
-        <div className={`flex flex-wrap gap-1 ${isGrid ? 'max-h-6 overflow-hidden' : 'max-h-[56px] overflow-y-auto'}`}>
-          {tags.map((tag) => (
-            <span key={tag} className="rounded bg-white/10 px-2 py-0.5 text-[12px] leading-4 text-white/80">
-              #{tag}
-            </span>
-          ))}
-        </div>
+        {isGrid ? (
+          <p className="truncate text-[12px] leading-4 text-white/75">
+            {tags.length > 0 ? tags.map((tag) => `#${tag}`).join(' ') : '暂无标签'}
+          </p>
+        ) : (
+          <div className="flex max-h-[56px] flex-wrap gap-1 overflow-y-auto">
+            {tags.length > 0 ? (
+              tags.map((tag) => (
+                <span key={tag} className="rounded bg-white/10 px-2 py-0.5 text-[12px] leading-4 text-white/80">
+                  #{tag}
+                </span>
+              ))
+            ) : (
+              <span className="text-[12px] leading-4 text-white/55">暂无标签</span>
+            )}
+          </div>
+        )}
       </div>
     </button>
   );
