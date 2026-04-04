@@ -62,3 +62,7 @@ coverage/
 Thumbs.db
 .Spotlight-V100
 .Trashes
+
+# Key
+.tauriupdate.key
+.tauriupdate.key.pub
