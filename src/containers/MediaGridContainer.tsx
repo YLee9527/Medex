@@ -158,6 +158,10 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
         // 触发全局事件更新
         window.dispatchEvent(new Event('medex:tags-updated'));
         window.dispatchEvent(new Event('medex:media-tags-updated'));
+        
+        // 清空选中状态
+        setSelectedIds(new Set());
+        lastSelectedIndex.current = null;
       } catch (error) {
         console.error('[ui] batch tags operation failed:', error);
         window.alert(`批量标签操作失败：${String(error)}`);
