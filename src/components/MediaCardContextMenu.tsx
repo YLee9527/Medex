@@ -28,15 +28,19 @@ export default function MediaCardContextMenu({
   onTagsApplied
 }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const initialTagsRef = useRef<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [adjustedPosition, setAdjustedPosition] = useState({ x, y });
+  const [isClosing, setIsClosing] = useState(false);
 
   // 初始化选中状态（回显媒体已有标签）
   useEffect(() => {
     if (visible) {
+      initialTagsRef.current = [...mediaTags];
       setSelectedTags([...mediaTags]);
       setSearchQuery('');
+      setIsClosing(false);
     }
   }, [visible, mediaTags]);
 
@@ -45,7 +49,7 @@ export default function MediaCardContextMenu({
     if (!visible) return;
 
     const menuWidth = 280;
-    const menuHeight = Math.min(400, allTags.length * 36 + 120);
+    const menuHeight = Math.min(320, allTags.length * 36 + 80);
     const padding = 16;
 
     let adjustedX = x;
@@ -67,44 +71,23 @@ export default function MediaCardContextMenu({
     setAdjustedPosition({ x: adjustedX, y: adjustedY });
   }, [visible, x, y, allTags.length]);
 
-  // 点击外部关闭
-  useEffect(() => {
-    if (!visible) return;
+  // 关闭时自动提交
+  const closeAndSubmit = useCallback(async () => {
+    if (isClosing) return;
+    setIsClosing(true);
 
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
+    const added = selectedTags.filter((t) => !initialTagsRef.current.includes(t));
+    const removed = initialTagsRef.current.filter((t) => !selectedTags.includes(t));
 
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
+    if (added.length > 0 || removed.length > 0) {
+      await applyTagChanges(added, removed);
+    }
 
-    // 延迟添加事件监听，避免立即触发关闭
-    const timer = setTimeout(() => {
-      window.addEventListener('click', handleClickOutside);
-      window.addEventListener('keydown', handleEscape);
-    }, 100);
+    onClose();
+  }, [selectedTags, onClose, isClosing]);
 
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('click', handleClickOutside);
-      window.removeEventListener('keydown', handleEscape);
-    };
-  }, [visible, onClose]);
-
-  const toggleTag = useCallback((tagName: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tagName)
-        ? prev.filter((t) => t !== tagName)
-        : [...prev, tagName]
-    );
-  }, []);
-
-  const applyTags = useCallback(async () => {
+  // 应用标签变化
+  const applyTagChanges = async (added: string[], removed: string[]) => {
     if (!mediaId) return;
 
     const mediaIdNum = Number(mediaId);
@@ -113,143 +96,130 @@ export default function MediaCardContextMenu({
       return;
     }
 
-    const addedTags: string[] = [];
-    const removedTags: string[] = [];
-
     try {
       // 添加新选中的标签
-      for (const tagName of selectedTags) {
-        if (!mediaTags.includes(tagName)) {
-          await invoke('add_tag_to_media', {
-            mediaId: mediaIdNum,
-            tagName
-          });
-          addedTags.push(tagName);
-        }
+      for (const tagName of added) {
+        await invoke('add_tag_to_media', {
+          mediaId: mediaIdNum,
+          tagName
+        });
       }
 
       // 移除取消选中的标签
-      for (const tagName of mediaTags) {
-        if (!selectedTags.includes(tagName)) {
-          // 需要先获取标签ID
-          const dbTags = await invoke<{ id: number; name: string }[]>('get_tags_by_media', {
-            mediaId: mediaIdNum
+      for (const tagName of removed) {
+        const dbTags = await invoke<{ id: number; name: string }[]>('get_tags_by_media', {
+          mediaId: mediaIdNum
+        });
+        const matched = dbTags.find((tag) => tag.name === tagName);
+        if (matched) {
+          await invoke('remove_tag_from_media', {
+            mediaId: mediaIdNum,
+            tagId: matched.id
           });
-          const matched = dbTags.find((tag) => tag.name === tagName);
-          if (matched) {
-            await invoke('remove_tag_from_media', {
-              mediaId: mediaIdNum,
-              tagId: matched.id
-            });
-            removedTags.push(tagName);
-          }
         }
       }
 
-      onTagsApplied(mediaId, addedTags, removedTags);
-      onClose();
+      onTagsApplied(mediaId, added, removed);
     } catch (error) {
       console.error('[context-menu] apply tags failed:', error);
-      window.alert(`应用标签失败：${String(error)}`);
     }
-  }, [mediaId, mediaTags, selectedTags, onTagsApplied, onClose]);
+  };
+
+  // 点击外部关闭
+  useEffect(() => {
+    if (!visible) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        void closeAndSubmit();
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        void closeAndSubmit();
+      }
+    };
+
+    // 延迟添加事件监听，避免立即触发关闭
+    const timer = setTimeout(() => {
+      window.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('keydown', handleEscape);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [visible, closeAndSubmit]);
+
+  const toggleTag = useCallback((tagName: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tagName) ? prev.filter((t) => t !== tagName) : [...prev, tagName]
+    );
+  }, []);
 
   // 过滤标签（支持搜索）
-  const filteredTags = allTags.filter((tag) =>
-    tag.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredTags = allTags.filter((tag) => tag.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   if (!visible) return null;
 
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 w-[280px] rounded-lg border border-white/10 bg-[#1E1E1E] p-3 shadow-2xl"
+      className="fixed z-50 w-[280px] rounded-lg border border-white/10 bg-[#1E1E1E] p-3 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
       style={{ top: adjustedPosition.y, left: adjustedPosition.x }}
       onClick={(e) => e.stopPropagation()}
     >
       {/* 标题 */}
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-sm font-medium text-white/90">选择标签</span>
-        <span className="text-xs text-white/50">{selectedTags.length} 已选</span>
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-xs font-medium text-white/50">标签</span>
+        <span className="text-xs text-white/40">{selectedTags.length} 已选</span>
       </div>
 
       {/* 搜索框 */}
-      <div className="mb-2">
+      <div className="mb-3">
         <input
           type="text"
           placeholder="搜索标签..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white placeholder-white/40 outline-none transition-colors focus:border-blue-500/50 focus:bg-white/10"
+          className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white placeholder-white/40 outline-none transition-all duration-150 focus:border-blue-500/50 focus:bg-white/10"
         />
       </div>
 
-      {/* 标签列表 */}
-      <div className="max-h-[240px] overflow-y-auto rounded-md border border-white/5 bg-black/20">
+      {/* 标签列表 - Chip 风格 */}
+      <div className="max-h-[240px] overflow-y-auto">
         {filteredTags.length > 0 ? (
-          filteredTags.map((tag) => {
-            const isSelected = selectedTags.includes(tag.name);
-            return (
-              <label
-                key={tag.id}
-                className="flex cursor-pointer items-center gap-2 px-3 py-2 transition-colors hover:bg-white/5"
-              >
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => toggleTag(tag.name)}
-                  className="h-4 w-4 cursor-pointer rounded border-white/20 bg-white/10 text-blue-500 focus:ring-blue-500/50"
-                />
-                <span
-                  className={`flex-1 text-sm ${
-                    isSelected ? 'text-white' : 'text-white/70'
-                  }`}
+          <div className="flex flex-wrap gap-2">
+            {filteredTags.map((tag) => {
+              const isSelected = selectedTags.includes(tag.name);
+              return (
+                <button
+                  key={tag.id}
+                  type="button"
+                  onClick={() => toggleTag(tag.name)}
+                  className={`
+                    h-7 px-3 text-sm rounded-md cursor-pointer transition-all duration-150
+                    active:scale-95
+                    ${
+                      isSelected
+                        ? 'bg-blue-500 text-white hover:bg-blue-400'
+                        : 'bg-white/[0.06] text-white/70 hover:bg-white/[0.12]'
+                    }
+                  `}
                 >
                   {tag.name}
-                </span>
-                {isSelected && (
-                  <svg
-                    className="h-4 w-4 text-blue-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                )}
-              </label>
-            );
-          })
+                </button>
+              );
+            })}
+          </div>
         ) : (
-          <div className="px-3 py-4 text-center text-sm text-white/40">
+          <div className="py-4 text-center text-sm text-white/40">
             {searchQuery ? '未找到匹配的标签' : '暂无标签'}
           </div>
         )}
-      </div>
-
-      {/* 操作按钮 */}
-      <div className="mt-3 flex gap-2">
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-        >
-          取消
-        </button>
-        <button
-          type="button"
-          onClick={applyTags}
-          disabled={selectedTags.length === 0 && mediaTags.length === 0}
-          className="flex-1 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          确认
-        </button>
       </div>
     </div>
   );
