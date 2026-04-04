@@ -46,7 +46,7 @@ export default function MediaCardContextMenu({
       setSearchQuery('');
       setIsClosing(false);
     }
-  }, [visible, mediaTags, commonTags]);
+  }, [visible, mediaTags]);
 
   // 边界处理：防止菜单超出屏幕
   useEffect(() => {
