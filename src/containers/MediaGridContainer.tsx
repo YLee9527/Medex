@@ -42,37 +42,128 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
   const queuedSet = useRef<Set<string>>(new Set());
   const taskQueue = useRef<ThumbnailTask[]>([]);
 
+  // 多选状态
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const lastSelectedIndex = useRef<number | null>(null);
+
   // Context Menu 状态
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [contextMenuMediaId, setContextMenuMediaId] = useState<string>('');
 
-  const handleContextMenu = useCallback((e: React.MouseEvent, mediaId: string) => {
-    e.preventDefault();
-    setContextMenuPosition({ x: e.clientX, y: e.clientY });
-    setContextMenuMediaId(mediaId);
-    setContextMenuVisible(true);
+  // 处理卡片点击（支持多选）
+  const handleCardClick = useCallback(
+    (e: React.MouseEvent, mediaId: string, index: number) => {
+      // 查找当前媒体在列表中的索引
+      if (e.metaKey || e.ctrlKey) {
+        // Ctrl/Cmd + 点击：多选切换
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          if (next.has(mediaId)) {
+            next.delete(mediaId);
+          } else {
+            next.add(mediaId);
+          }
+          return next;
+        });
+        lastSelectedIndex.current = index;
+      } else if (e.shiftKey && lastSelectedIndex.current !== null) {
+        // Shift + 点击：连续选择
+        const start = lastSelectedIndex.current;
+        const end = index;
+        const [min, max] = [start, end].sort((a, b) => a - b);
+        // 使用 mediaItems 获取当前显示的媒体列表
+        const ids = mediaItems.slice(min, max + 1).map((m) => m.id);
+        setSelectedIds(new Set(ids));
+        lastSelectedIndex.current = index;
+      } else {
+        // 单击：单选
+        setSelectedIds(new Set([mediaId]));
+        lastSelectedIndex.current = index;
+        clickMedia(mediaId);
+      }
+    },
+    [mediaItems, clickMedia]
+  );
+
+  // 点击背景取消选择
+  const handleBackgroundClick = useCallback(() => {
+    setSelectedIds(new Set());
+    lastSelectedIndex.current = null;
   }, []);
+
+  // ESC 清空选择
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedIds(new Set());
+        lastSelectedIndex.current = null;
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, []);
+
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent, mediaId: string) => {
+      e.preventDefault();
+      // 如果右键点击的媒体未被选中，先选中它（单选）
+      if (!selectedIds.has(mediaId)) {
+        setSelectedIds(new Set([mediaId]));
+      }
+      setContextMenuPosition({ x: e.clientX, y: e.clientY });
+      setContextMenuMediaId(mediaId);
+      setContextMenuVisible(true);
+    },
+    [selectedIds]
+  );
 
   const handleContextMenuClose = useCallback(() => {
     setContextMenuVisible(false);
     setContextMenuMediaId('');
   }, []);
 
+  // 获取选中的媒体列表
+  const selectedMediaList = useMemo(() => {
+    return mediaItems.filter((item) => selectedIds.has(item.id));
+  }, [mediaItems, selectedIds]);
+
+  // 计算共有标签（交集）
+  const commonTags = useMemo(() => {
+    if (selectedMediaList.length === 0) return [];
+    const firstTags = new Set(selectedMediaList[0].tags);
+    return selectedMediaList.slice(1).reduce((acc, item) => {
+      return acc.filter((tag) => item.tags.includes(tag));
+    }, Array.from(firstTags));
+  }, [selectedMediaList]);
+
+  // 批量应用标签
   const handleTagsApplied = useCallback(
-    (mediaId: string, addedTags: string[], removedTags: string[]) => {
-      // 更新本地状态
-      addedTags.forEach((tagName) => {
-        addTagToMediaLocal(mediaId, tagName);
-      });
-      removedTags.forEach((tagName) => {
-        removeTagFromMediaLocal(mediaId, tagName);
-      });
-      // 触发全局事件更新
-      window.dispatchEvent(new Event('medex:tags-updated'));
-      window.dispatchEvent(new Event('medex:media-tags-updated'));
+    async (mediaId: string, addedTags: string[], removedTags: string[]) => {
+      // 获取所有选中的媒体 ID（批量操作）
+      const idsToProcess = selectedIds.size > 0 ? Array.from(selectedIds) : [mediaId];
+
+      try {
+        // 批量添加标签
+        for (const id of idsToProcess) {
+          for (const tagName of addedTags) {
+            await invoke('add_tag_to_media', { mediaId: Number(id), tagName });
+            addTagToMediaLocal(id, tagName);
+          }
+          for (const tagName of removedTags) {
+            await invoke('remove_tag_from_media', { mediaId: Number(id), tagName });
+            removeTagFromMediaLocal(id, tagName);
+          }
+        }
+        // 触发全局事件更新
+        window.dispatchEvent(new Event('medex:tags-updated'));
+        window.dispatchEvent(new Event('medex:media-tags-updated'));
+      } catch (error) {
+        console.error('[ui] batch tags operation failed:', error);
+        window.alert(`批量标签操作失败：${String(error)}`);
+      }
     },
-    [addTagToMediaLocal, removeTagFromMediaLocal]
+    [selectedIds, addTagToMediaLocal, removeTagFromMediaLocal, invoke]
   );
 
   const contextMenuMedia = useMemo(() => {
@@ -161,10 +252,10 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
 
     return sortedItems.map((item) => ({
       ...item,
-      selected: item.id === selectedMediaId,
+      selected: selectedIds.has(item.id),
       onClick: () => {}
     }));
-  }, [activeNavId, mediaItems, selectedMediaId]);
+  }, [mediaItems, selectedIds]);
 
   useEffect(() => {
     thumbnailMapRef.current = thumbnails;
@@ -324,12 +415,14 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
     <>
       <MediaGrid
         mediaList={mediaList}
-        onCardClick={clickMedia}
+        selectedIds={selectedIds}
+        onCardClick={handleCardClick}
         onCardDoubleClick={onOpenViewer}
         onToggleFavorite={handleToggleFavorite}
         onTagAdded={addTagToMediaLocal}
         onTagRemoved={removeTagFromMediaLocal}
         onCardContextMenu={handleContextMenu}
+        onBackgroundClick={handleBackgroundClick}
         thumbnails={thumbnails}
         onVisibleRangeChange={handleVisibleRangeChange}
         viewMode="grid"

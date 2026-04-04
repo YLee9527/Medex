@@ -13,6 +13,8 @@ export interface ContextMenuProps {
   mediaId: string;
   mediaTags: string[];
   allTags: Tag[];
+  selectedCount?: number;
+  commonTags?: string[];
   onClose: () => void;
   onTagsApplied: (mediaId: string, addedTags: string[], removedTags: string[]) => void;
 }
@@ -24,6 +26,8 @@ export default function MediaCardContextMenu({
   mediaId,
   mediaTags,
   allTags,
+  selectedCount = 0,
+  commonTags = [],
   onClose,
   onTagsApplied
 }: ContextMenuProps) {
@@ -34,7 +38,7 @@ export default function MediaCardContextMenu({
   const [adjustedPosition, setAdjustedPosition] = useState({ x, y });
   const [isClosing, setIsClosing] = useState(false);
 
-  // 初始化选中状态（回显媒体已有标签）
+  // 初始化选中状态（回显媒体已有标签或多选时的共有标签）
   useEffect(() => {
     if (visible) {
       initialTagsRef.current = [...mediaTags];
@@ -42,7 +46,7 @@ export default function MediaCardContextMenu({
       setSearchQuery('');
       setIsClosing(false);
     }
-  }, [visible, mediaTags]);
+  }, [visible, mediaTags, commonTags]);
 
   // 边界处理：防止菜单超出屏幕
   useEffect(() => {
@@ -174,7 +178,9 @@ export default function MediaCardContextMenu({
     >
       {/* 标题 */}
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs font-medium text-white/50">标签</span>
+        <span className="text-xs font-medium text-white/50">
+          {selectedCount > 0 ? `批量标签 (${selectedCount}项)` : '标签'}
+        </span>
         <span className="text-xs text-white/40">{selectedTags.length} 已选</span>
       </div>
 

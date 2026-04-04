@@ -14,7 +14,7 @@ export interface MediaCardProps {
   resolution?: string;
   isFavorite?: boolean;
   selected: boolean;
-  onClick: (id: string) => void;
+  onClick: (e: React.MouseEvent, id: string) => void;
   onDoubleClick?: (id: string) => void;
   onToggleFavorite?: (id: string) => void;
   onTagRemoved?: (mediaId: string, tagName: string) => void;
@@ -83,7 +83,7 @@ function MediaCard({
   return (
     <button
       type="button"
-      onClick={() => onClick(id)}
+      onClick={(e) => onClick(e, id)}
       onDoubleClick={() => onDoubleClick?.(id)}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -91,10 +91,15 @@ function MediaCard({
       }}
       className={`group overflow-hidden rounded-[8px] bg-[#242424] text-left text-[#EAEAEA] transition-colors ${
         selected
-          ? 'border-2 border-blue-500'
+          ? 'ring-2 ring-blue-500'
           : 'border border-white/10 hover:border-white/20'
       } ${widthClass} ${isGrid ? 'h-[220px]' : 'h-auto'}`}
     >
+      {/* 选中遮罩 */}
+      {selected && (
+        <div className="absolute inset-0 bg-blue-500/20 pointer-events-none" />
+      )}
+      
       <div className={`relative w-full overflow-hidden ${isGrid ? 'h-[150px] shrink-0' : 'aspect-video'}`}>
         <button
           type="button"

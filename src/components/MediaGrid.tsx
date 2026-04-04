@@ -11,12 +11,14 @@ import MediaCard, { MediaCardProps } from './MediaCard';
 
 export interface MediaGridProps {
   mediaList: MediaCardProps[];
-  onCardClick: (id: string) => void;
+  selectedIds: Set<string>;
+  onCardClick: (e: React.MouseEvent, id: string, index: number) => void;
   onCardDoubleClick: (id: string) => void;
   onToggleFavorite: (id: string) => void;
   onTagAdded: (mediaId: string, tagName: string) => void;
   onTagRemoved: (mediaId: string, tagName: string) => void;
   onCardContextMenu?: (e: React.MouseEvent, mediaId: string) => void;
+  onBackgroundClick?: () => void;
   thumbnails: Record<string, string>;
   onVisibleRangeChange?: (range: RenderRange) => void;
   viewMode: 'grid' | 'list';
@@ -32,7 +34,8 @@ export type RenderRange = {
 
 type GridItemData = {
   mediaList: MediaCardProps[];
-  onCardClick: (id: string) => void;
+  selectedIds: Set<string>;
+  onCardClick: (e: React.MouseEvent, id: string, index: number) => void;
   onCardDoubleClick: (id: string) => void;
   onToggleFavorite: (id: string) => void;
   onTagAdded: (mediaId: string, tagName: string) => void;
@@ -44,7 +47,8 @@ type GridItemData = {
 
 type ListItemData = {
   mediaList: MediaCardProps[];
-  onCardClick: (id: string) => void;
+  selectedIds: Set<string>;
+  onCardClick: (e: React.MouseEvent, id: string, index: number) => void;
   onCardDoubleClick: (id: string) => void;
   thumbnails: Record<string, string>;
 };
@@ -61,12 +65,14 @@ const LIST_HEADER_HEIGHT = 36;
 
 export default function MediaGrid({
   mediaList,
+  selectedIds,
   onCardClick,
   onCardDoubleClick,
   onToggleFavorite,
   onTagAdded,
   onTagRemoved,
   onCardContextMenu,
+  onBackgroundClick,
   thumbnails,
   onVisibleRangeChange,
   viewMode
@@ -74,8 +80,8 @@ export default function MediaGrid({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { width, height } = useElementSize(containerRef);
   const listData = useMemo<ListItemData>(
-    () => ({ mediaList, onCardClick, onCardDoubleClick, thumbnails }),
-    [mediaList, onCardClick, onCardDoubleClick, thumbnails]
+    () => ({ mediaList, selectedIds, onCardClick, onCardDoubleClick, thumbnails }),
+    [mediaList, selectedIds, onCardClick, onCardDoubleClick, thumbnails]
   );
 
   const availableWidth = Math.max(1, width - GRID_PADDING * 2);
@@ -86,6 +92,7 @@ export default function MediaGrid({
   const gridData = useMemo<GridItemData>(
     () => ({
       mediaList,
+      selectedIds,
       onCardClick,
       onCardDoubleClick,
       onToggleFavorite,
@@ -97,6 +104,7 @@ export default function MediaGrid({
     }),
     [
       mediaList,
+      selectedIds,
       onCardClick,
       onCardDoubleClick,
       onToggleFavorite,
@@ -107,6 +115,13 @@ export default function MediaGrid({
       columnCount
     ]
   );
+
+  // 点击背景取消选择
+  const handleBackgroundClick = (e: React.MouseEvent) => {
+    if (e.target === containerRef.current) {
+      onBackgroundClick?.();
+    }
+  };
 
   if (viewMode === 'list') {
     const listHeight = Math.max(0, height - LIST_HEADER_HEIGHT);
@@ -197,11 +212,14 @@ const GridCell = memo(function GridCell({ columnIndex, rowIndex, style, data }: 
     return null;
   }
 
+  const isSelected = data.selectedIds.has(item.id);
+
   return (
     <div style={offsetGridCellStyle(style)}>
       <MediaCard
         {...item}
-        onClick={data.onCardClick}
+        selected={isSelected}
+        onClick={(e) => data.onCardClick(e, item.id, index)}
         onDoubleClick={data.onCardDoubleClick}
         onToggleFavorite={data.onToggleFavorite}
         onTagRemoved={data.onTagRemoved}
@@ -220,15 +238,16 @@ const ListRow = memo(function ListRow({ index, style, data }: ListChildComponent
     return null;
   }
   const videoThumb = item.path ? data.thumbnails[item.path] : '';
+  const isSelected = data.selectedIds.has(item.id);
 
   return (
     <div style={style} className="px-0.5 py-1">
       <button
         type="button"
-        onClick={() => data.onCardClick(item.id)}
+        onClick={(e) => data.onCardClick(e, item.id, index)}
         onDoubleClick={() => data.onCardDoubleClick(item.id)}
         className={`grid h-full w-full grid-cols-[90px_2fr_2fr_1fr_80px] items-center gap-2 rounded-[8px] px-3 py-2 text-left text-sm transition-colors ${
-          item.selected ? 'bg-[#444444] text-white' : 'bg-[#242424] text-white/85 hover:bg-[#555555]'
+          isSelected ? 'bg-[#444444] text-white ring-2 ring-blue-500' : 'bg-[#242424] text-white/85 hover:bg-[#555555]'
         }`}
       >
         <span className="flex items-center">
