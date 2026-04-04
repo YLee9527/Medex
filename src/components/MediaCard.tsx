@@ -1,9 +1,6 @@
-import { DragEvent, memo, useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { invoke } from '@tauri-apps/api/core';
-import { useDrop } from 'react-dnd';
-import { DND_TAG_TYPE, DragTagItem } from './TagItem';
-import { useTagDragStore } from '../store/useTagDragStore';
 
 export interface MediaCardProps {
   id: string;
@@ -20,7 +17,6 @@ export interface MediaCardProps {
   onClick: (id: string) => void;
   onDoubleClick?: (id: string) => void;
   onToggleFavorite?: (id: string) => void;
-  onTagAdded?: (mediaId: string, tagName: string) => void;
   onTagRemoved?: (mediaId: string, tagName: string) => void;
   onContextMenu?: (e: React.MouseEvent, mediaId: string) => void;
   videoThumbnail?: string;
@@ -45,47 +41,23 @@ function MediaCard({
   onClick,
   onDoubleClick,
   onToggleFavorite,
-  onTagAdded,
   onTagRemoved,
   onContextMenu,
   videoThumbnail,
   className,
   mode = 'grid'
 }: MediaCardProps) {
-  const draggingTag = useTagDragStore((state) => state.draggingTag);
-  const endTagDrag = useTagDragStore((state) => state.endDrag);
   const widthClass = className ?? 'w-[180px]';
   const isGrid = mode === 'grid';
   const previewSrc = toPreviewSrc(thumbnail);
   const resolvedVideoThumbnail = videoThumbnail ? toPreviewSrc(videoThumbnail) : '';
   const [imageFailed, setImageFailed] = useState(false);
   const [videoThumbLoaded, setVideoThumbLoaded] = useState(false);
-  const [isNativeOver, setIsNativeOver] = useState(false);
   const showImage = mediaType !== 'video' && previewSrc && !imageFailed;
 
   useEffect(() => {
     setVideoThumbLoaded(false);
   }, [resolvedVideoThumbnail]);
-
-  const handleDropTag = async (item: DragTagItem) => {
-    const mediaIdNum = Number(id);
-    if (!Number.isFinite(mediaIdNum)) {
-      console.error('[media-card] invalid media id for drop:', id);
-      return;
-    }
-    try {
-      await invoke('add_tag_to_media', {
-        mediaId: mediaIdNum,
-        tagName: item.tagName
-      });
-      onTagAdded?.(id, item.tagName);
-      window.dispatchEvent(new Event('medex:tags-updated'));
-      window.dispatchEvent(new Event('medex:media-tags-updated'));
-    } catch (error) {
-      console.error('[media-card] add_tag_to_media failed:', error);
-      window.alert(`打标签失败：${String(error)}`);
-    }
-  };
 
   const handleRemoveTag = async (tagName: string) => {
     const mediaIdNum = Number(id);
@@ -108,101 +80,21 @@ function MediaCard({
     }
   };
 
-  const [{ isOver, canDrop }, dropRef] = useDrop(
-    () => ({
-      accept: DND_TAG_TYPE,
-      canDrop: () => mode === 'grid',
-      drop: (item: DragTagItem) => {
-        void handleDropTag(item);
-      },
-      collect: (monitor) => ({
-        isOver: monitor.isOver({ shallow: true }),
-        canDrop: monitor.canDrop()
-      })
-    }),
-    [id, mode, onTagAdded]
-  );
-
-  const handleNativeDrop = (event: DragEvent<HTMLDivElement>) => {
-    if (mode !== 'grid') {
-      return;
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    setIsNativeOver(false);
-
-    const raw =
-      event.dataTransfer.getData('application/x-medex-tag') ||
-      event.dataTransfer.getData('text/plain');
-    if (!raw) {
-      return;
-    }
-    try {
-      const parsed = JSON.parse(raw) as Partial<DragTagItem>;
-      if (typeof parsed.tagName === 'string' && parsed.tagName.trim()) {
-        void handleDropTag({
-          type: DND_TAG_TYPE,
-          tagId: typeof parsed.tagId === 'number' ? parsed.tagId : 0,
-          tagName: parsed.tagName
-        });
-      }
-    } catch (error) {
-      console.error('[media-card] parse native dropped tag failed:', error);
-    }
-  };
-
-  const handleNativeDragOver = (event: DragEvent<HTMLDivElement>) => {
-    if (mode !== 'grid') {
-      return;
-    }
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'copy';
-    if (!isNativeOver) {
-      setIsNativeOver(true);
-    }
-  };
-
   return (
-    <div
-      ref={dropRef}
-      onDragOver={handleNativeDragOver}
-      onDragEnter={() => setIsNativeOver(true)}
-      onDragLeave={() => setIsNativeOver(false)}
-      onDrop={handleNativeDrop}
-      onMouseEnter={() => {
-        if (draggingTag) {
-          setIsNativeOver(true);
-        }
+    <button
+      type="button"
+      onClick={() => onClick(id)}
+      onDoubleClick={() => onDoubleClick?.(id)}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onContextMenu?.(e, id);
       }}
-      onMouseLeave={() => setIsNativeOver(false)}
-      onMouseUp={() => {
-        if (mode !== 'grid' || !draggingTag) {
-          return;
-        }
-        void handleDropTag({
-          type: DND_TAG_TYPE,
-          tagId: draggingTag.tagId,
-          tagName: draggingTag.tagName
-        });
-        endTagDrag();
-      }}
-    >
-      <button
-        type="button"
-        onClick={() => onClick(id)}
-        onDoubleClick={() => onDoubleClick?.(id)}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          onContextMenu?.(e, id);
-        }}
-        className={`group overflow-hidden rounded-[8px] bg-[#242424] text-left text-[#EAEAEA] transition-colors ${
-        isNativeOver || (isOver && canDrop)
+      className={`group overflow-hidden rounded-[8px] bg-[#242424] text-left text-[#EAEAEA] transition-colors ${
+        selected
           ? 'border-2 border-blue-500'
-          : selected
-            ? 'border-2 border-blue-500'
-            : 'border border-white/10 hover:border-white/20'
+          : 'border border-white/10 hover:border-white/20'
       } ${widthClass} ${isGrid ? 'h-[220px]' : 'h-auto'}`}
-      >
+    >
       <div className={`relative w-full overflow-hidden ${isGrid ? 'h-[150px] shrink-0' : 'aspect-video'}`}>
         <button
           type="button"
@@ -276,12 +168,6 @@ function MediaCard({
             </span>
           </div>
         ) : null}
-
-        {isNativeOver || (isOver && canDrop) ? (
-          <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/45">
-            <span className="rounded-md bg-blue-500/90 px-2 py-1 text-xs text-white">释放以添加标签</span>
-          </div>
-        ) : null}
       </div>
 
       <div className={`flex flex-col gap-2 p-3 ${isGrid ? 'h-[70px] overflow-hidden' : ''}`}>
@@ -332,8 +218,7 @@ function MediaCard({
           </div>
         )}
       </div>
-      </button>
-    </div>
+    </button>
   );
 }
 

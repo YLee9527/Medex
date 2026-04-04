@@ -204,7 +204,6 @@ const GridCell = memo(function GridCell({ columnIndex, rowIndex, style, data }: 
         onClick={data.onCardClick}
         onDoubleClick={data.onCardDoubleClick}
         onToggleFavorite={data.onToggleFavorite}
-        onTagAdded={data.onTagAdded}
         onTagRemoved={data.onTagRemoved}
         onContextMenu={data.onCardContextMenu}
         videoThumbnail={item.path ? data.thumbnails[item.path] : undefined}

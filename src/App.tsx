@@ -2,9 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import Main from './components/Main';
 import SidebarContainer from './containers/SidebarContainer';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-import TagDragOverlay from './components/TagDragOverlay';
 import MediaViewer from './components/MediaViewer';
 import { useAppStore } from './store/useAppStore';
 
@@ -60,12 +57,9 @@ export default function App() {
   }, [viewerOpen, currentIndex, viewerMediaList.length]);
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="flex h-screen min-w-[1200px] overflow-hidden bg-medexMain text-medexText">
-        <SidebarContainer />
-        <Main onOpenViewer={handleOpenViewer} />
-      </div>
-      <TagDragOverlay />
+    <div className="flex h-screen min-w-[1200px] overflow-hidden bg-medexMain text-medexText">
+      <SidebarContainer />
+      <Main onOpenViewer={handleOpenViewer} />
       <MediaViewer
         open={viewerOpen}
         mediaList={viewerMediaList}
@@ -73,6 +67,6 @@ export default function App() {
         onClose={handleCloseViewer}
         onChangeIndex={setCurrentIndex}
       />
-    </DndProvider>
+    </div>
   );
 }
