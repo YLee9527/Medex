@@ -29,6 +29,17 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "externalBin": ["binaries/ffmpeg"]
+    "externalBin": ["binaries/ffmpeg"],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/your-org/medex/releases/latest/download/latest.json"
+      ],
+      "dialog": false,
+      "pubkey": "YOUR_UPDATER_PUBKEY_HERE"
+    }
   }
 }

@@ -3,6 +3,9 @@
 mod db;
 mod services;
 mod thumbnail;
+mod menu;
+
+use tauri::menu::{MenuItem, Submenu, Menu};
 
 fn main() {
     tauri::Builder::default()
@@ -16,6 +19,30 @@ fn main() {
                 eprintln!("failed to initialize thumbnail system: {err:#}");
                 return Err(Box::<dyn std::error::Error>::from(err));
             }
+            
+            // 创建并设置菜单
+            let about_item = MenuItem::with_id(app.handle(), "about", "About Medex", true, None::<&str>)?;
+            let settings_item = MenuItem::with_id(app.handle(), "settings", "设置", true, None::<&str>)?;
+            let check_update_item = MenuItem::with_id(app.handle(), "check_update", "检查更新", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app.handle(), "quit", "Quit", true, None::<&str>)?;
+
+            let submenu = Submenu::with_items(app.handle(), "Medex", true, &[
+                &about_item,
+                &settings_item,
+                &check_update_item,
+                &tauri::menu::PredefinedMenuItem::separator(app.handle())?,
+                &quit_item,
+            ])?;
+
+            let menu = Menu::with_items(app.handle(), &[&submenu])?;
+            app.set_menu(menu)?;
+            
+            // 监听菜单事件
+            let app_handle = app.handle().clone();
+            app.on_menu_event(move |app, event| {
+                menu::handle_menu_event(app_handle.clone(), event);
+            });
+            
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
