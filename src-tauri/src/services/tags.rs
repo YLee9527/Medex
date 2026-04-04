@@ -176,19 +176,8 @@ pub fn remove_tag_from_media(media_id: i64, tag_id: i64) -> Result<(), String> {
         )
         .context("failed to delete media_tags relation")?;
 
-        let is_tag_used_elsewhere: Option<i64> = tx
-            .query_row(
-                "SELECT 1 FROM media_tags WHERE tag_id = ? LIMIT 1;",
-                params![tag_id],
-                |row| row.get(0),
-            )
-            .optional()
-            .context("failed to check remaining tag usages")?;
-
-        if is_tag_used_elsewhere.is_none() {
-            tx.execute("DELETE FROM tags WHERE id = ?;", params![tag_id])
-                .context("failed to cleanup unused tag")?;
-        }
+        // 不再自动删除标签，即使该标签下没有媒体了
+        // 标签只能通过 delete_tag 命令手动删除
 
         tx.commit()
             .context("failed to commit transaction for remove_tag_from_media")?;

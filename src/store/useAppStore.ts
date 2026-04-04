@@ -210,7 +210,6 @@ export const useAppStore = create<AppState>((set) => ({
         };
       });
 
-      const tagStillUsed = nextMediaItems.some((item) => item.tags.includes(normalizedTagName));
       const hasTagInSidebar = state.tags.some((tag) => tag.name === normalizedTagName);
 
       let nextTags = state.tags;
@@ -226,9 +225,8 @@ export const useAppStore = create<AppState>((set) => ({
         ];
       }
 
-      if (action === 'remove' && !tagStillUsed) {
-        nextTags = nextTags.filter((tag) => tag.name !== normalizedTagName);
-      }
+      // 移除标签时不再自动删除标签，即使该标签下没有媒体了
+      // 标签只能通过 Sidebar 中的删除按钮手动删除
 
       return {
         mediaItems: nextMediaItems,
@@ -249,12 +247,12 @@ export const useAppStore = create<AppState>((set) => ({
   deleteMedia: (mediaId) =>
     set((state) => {
       const nextMediaItems = state.mediaItems.filter((item) => item.id !== mediaId);
-      const usedTagNames = new Set(nextMediaItems.flatMap((item) => item.tags));
+      // 不再自动删除标签，标签只能通过 Sidebar 中的删除按钮手动删除
 
       return {
         mediaItems: nextMediaItems,
         selectedMediaId: state.selectedMediaId === mediaId ? '' : state.selectedMediaId,
-        tags: state.tags.filter((tag) => usedTagNames.has(tag.name))
+        tags: state.tags
       };
     }),
   setMediaItemsFromDb: (items) =>
