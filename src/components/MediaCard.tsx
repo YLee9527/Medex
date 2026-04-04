@@ -22,6 +22,7 @@ export interface MediaCardProps {
   onToggleFavorite?: (id: string) => void;
   onTagAdded?: (mediaId: string, tagName: string) => void;
   onTagRemoved?: (mediaId: string, tagName: string) => void;
+  onContextMenu?: (e: React.MouseEvent, mediaId: string) => void;
   videoThumbnail?: string;
   className?: string;
   mode?: 'grid' | 'list';
@@ -46,6 +47,7 @@ function MediaCard({
   onToggleFavorite,
   onTagAdded,
   onTagRemoved,
+  onContextMenu,
   videoThumbnail,
   className,
   mode = 'grid'
@@ -189,6 +191,10 @@ function MediaCard({
         type="button"
         onClick={() => onClick(id)}
         onDoubleClick={() => onDoubleClick?.(id)}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          onContextMenu?.(e, id);
+        }}
         className={`group overflow-hidden rounded-[8px] bg-[#242424] text-left text-[#EAEAEA] transition-colors ${
         isNativeOver || (isOver && canDrop)
           ? 'border-2 border-blue-500'

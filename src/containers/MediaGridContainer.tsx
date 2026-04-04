@@ -3,6 +3,7 @@ import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import MediaGrid, { RenderRange } from '../components/MediaGrid';
 import { MediaCardProps } from '../components/MediaCard';
+import MediaCardContextMenu from '../components/MediaCardContextMenu';
 import { DbMediaItem, MediaItem, useAppStore } from '../store/useAppStore';
 import { useEffect } from 'react';
 
@@ -40,6 +41,47 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
   const requestingSet = useRef<Set<string>>(new Set());
   const queuedSet = useRef<Set<string>>(new Set());
   const taskQueue = useRef<ThumbnailTask[]>([]);
+
+  // Context Menu 状态
+  const [contextMenuVisible, setContextMenuVisible] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [contextMenuMediaId, setContextMenuMediaId] = useState<string>('');
+
+  const handleContextMenu = useCallback((e: React.MouseEvent, mediaId: string) => {
+    e.preventDefault();
+    setContextMenuPosition({ x: e.clientX, y: e.clientY });
+    setContextMenuMediaId(mediaId);
+    setContextMenuVisible(true);
+  }, []);
+
+  const handleContextMenuClose = useCallback(() => {
+    setContextMenuVisible(false);
+    setContextMenuMediaId('');
+  }, []);
+
+  const handleTagsApplied = useCallback(
+    (mediaId: string, addedTags: string[], removedTags: string[]) => {
+      // 更新本地状态
+      addedTags.forEach((tagName) => {
+        addTagToMediaLocal(mediaId, tagName);
+      });
+      removedTags.forEach((tagName) => {
+        removeTagFromMediaLocal(mediaId, tagName);
+      });
+      // 触发全局事件更新
+      window.dispatchEvent(new Event('medex:tags-updated'));
+      window.dispatchEvent(new Event('medex:media-tags-updated'));
+    },
+    [addTagToMediaLocal, removeTagFromMediaLocal]
+  );
+
+  const contextMenuMedia = useMemo(() => {
+    return mediaItems.find((item) => item.id === contextMenuMediaId);
+  }, [mediaItems, contextMenuMediaId]);
+
+  const allTagsForMenu = useMemo(() => {
+    return tags.map((tag) => ({ id: Number(tag.id), name: tag.name }));
+  }, [tags]);
 
   const handleToggleFavorite = async (mediaId: string) => {
     const target = mediaItems.find((item) => item.id === mediaId);
@@ -279,16 +321,29 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
   }, [fetchFilteredMedia]);
 
   return (
-    <MediaGrid
-      mediaList={mediaList}
-      onCardClick={clickMedia}
-      onCardDoubleClick={onOpenViewer}
-      onToggleFavorite={handleToggleFavorite}
-      onTagAdded={addTagToMediaLocal}
-      onTagRemoved={removeTagFromMediaLocal}
-      thumbnails={thumbnails}
-      onVisibleRangeChange={handleVisibleRangeChange}
-      viewMode="grid"
-    />
+    <>
+      <MediaGrid
+        mediaList={mediaList}
+        onCardClick={clickMedia}
+        onCardDoubleClick={onOpenViewer}
+        onToggleFavorite={handleToggleFavorite}
+        onTagAdded={addTagToMediaLocal}
+        onTagRemoved={removeTagFromMediaLocal}
+        onCardContextMenu={handleContextMenu}
+        thumbnails={thumbnails}
+        onVisibleRangeChange={handleVisibleRangeChange}
+        viewMode="grid"
+      />
+      <MediaCardContextMenu
+        visible={contextMenuVisible}
+        x={contextMenuPosition.x}
+        y={contextMenuPosition.y}
+        mediaId={contextMenuMediaId}
+        mediaTags={contextMenuMedia?.tags ?? []}
+        allTags={allTagsForMenu}
+        onClose={handleContextMenuClose}
+        onTagsApplied={handleTagsApplied}
+      />
+    </>
   );
 }

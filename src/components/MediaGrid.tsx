@@ -16,6 +16,7 @@ export interface MediaGridProps {
   onToggleFavorite: (id: string) => void;
   onTagAdded: (mediaId: string, tagName: string) => void;
   onTagRemoved: (mediaId: string, tagName: string) => void;
+  onCardContextMenu?: (e: React.MouseEvent, mediaId: string) => void;
   thumbnails: Record<string, string>;
   onVisibleRangeChange?: (range: RenderRange) => void;
   viewMode: 'grid' | 'list';
@@ -36,6 +37,7 @@ type GridItemData = {
   onToggleFavorite: (id: string) => void;
   onTagAdded: (mediaId: string, tagName: string) => void;
   onTagRemoved: (mediaId: string, tagName: string) => void;
+  onCardContextMenu?: (e: React.MouseEvent, mediaId: string) => void;
   thumbnails: Record<string, string>;
   columnCount: number;
 };
@@ -64,6 +66,7 @@ export default function MediaGrid({
   onToggleFavorite,
   onTagAdded,
   onTagRemoved,
+  onCardContextMenu,
   thumbnails,
   onVisibleRangeChange,
   viewMode
@@ -88,6 +91,7 @@ export default function MediaGrid({
       onToggleFavorite,
       onTagAdded,
       onTagRemoved,
+      onCardContextMenu,
       thumbnails,
       columnCount
     }),
@@ -98,6 +102,7 @@ export default function MediaGrid({
       onToggleFavorite,
       onTagAdded,
       onTagRemoved,
+      onCardContextMenu,
       thumbnails,
       columnCount
     ]
@@ -201,6 +206,7 @@ const GridCell = memo(function GridCell({ columnIndex, rowIndex, style, data }: 
         onToggleFavorite={data.onToggleFavorite}
         onTagAdded={data.onTagAdded}
         onTagRemoved={data.onTagRemoved}
+        onContextMenu={data.onCardContextMenu}
         videoThumbnail={item.path ? data.thumbnails[item.path] : undefined}
         className="w-[180px]"
         mode="grid"
