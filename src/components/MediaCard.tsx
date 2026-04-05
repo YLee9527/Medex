@@ -306,6 +306,11 @@ function areMediaCardPropsEqual(prev: Readonly<MediaCardProps>, next: Readonly<M
     }
   }
 
+  // 检查 theme 是否变化
+  if (prev.theme !== next.theme) {
+    return false;
+  }
+
   return true;
 }
 
