@@ -9,14 +9,102 @@
 /* 深色主题（默认） */
 :root,
 [data-theme='dark'] {
-  color: #eaeaea;
-  background-color: #101010;
+  /* 基础背景色 */
+  --medex-background: #101010;
+  --medex-sidebar: #1E1E1E;
+  --medex-main: #101010;
+  --medex-inspector: #1E1E1E;
+  --medex-card: #242424;
+  --medex-toolbar: #242424;
+  
+  /* 文本颜色 */
+  --medex-text: #EAEAEA;
+  --medex-text-secondary: rgba(255, 255, 255, 0.85);
+  --medex-text-tertiary: rgba(255, 255, 255, 0.60);
+  
+  /* 边框颜色 */
+  --medex-border: rgba(255, 255, 255, 0.20);
+  --medex-border-light: rgba(255, 255, 255, 0.10);
+  
+  /* 交互色 */
+  --medex-hover: rgba(255, 255, 255, 0.10);
+  --medex-active: #444444;
+  --medex-selected: #444444;
+  --medex-selection-overlay: rgba(59, 130, 246, 0.20);
+  
+  /* 输入框 */
+  --medex-input-bg: rgba(0, 0, 0, 0.20);
+  --medex-input-border: rgba(255, 255, 255, 0.15);
+  --medex-input-focus-border: rgba(255, 255, 255, 0.30);
+  
+  /* 标签 */
+  --medex-tag-bg: rgba(255, 255, 255, 0.10);
+  --medex-tag-hover: #555555;
+  
+  /* 按钮 */
+  --medex-button-bg: #444444;
+  --medex-button-hover: #555555;
+  
+  /* 遮罩层 */
+  --medex-overlay: rgba(0, 0, 0, 0.40);
+  
+  /* 功能色 */
+  --medex-favorite: #FCD34D;
+  --medex-highlight: #3B82F6;
+  --medex-progress: #4A90E2;
+  
+  color: var(--medex-text);
+  background-color: var(--medex-background);
 }
 
 /* 浅色主题 */
 [data-theme='light'] {
-  color: #1a1a1a;
-  background-color: #ffffff;
+  /* 基础背景色 */
+  --medex-background: #FFFFFF;
+  --medex-sidebar: #F5F5F5;
+  --medex-main: #FAFAFA;
+  --medex-inspector: #F5F5F5;
+  --medex-card: #FFFFFF;
+  --medex-toolbar: #FFFFFF;
+  
+  /* 文本颜色 */
+  --medex-text: #1A1A1A;
+  --medex-text-secondary: rgba(0, 0, 0, 0.75);
+  --medex-text-tertiary: rgba(0, 0, 0, 0.50);
+  
+  /* 边框颜色 */
+  --medex-border: rgba(0, 0, 0, 0.20);
+  --medex-border-light: rgba(0, 0, 0, 0.10);
+  
+  /* 交互色 */
+  --medex-hover: rgba(0, 0, 0, 0.05);
+  --medex-active: #E0E0E0;
+  --medex-selected: #E0E0E0;
+  --medex-selection-overlay: rgba(37, 99, 235, 0.15);
+  
+  /* 输入框 */
+  --medex-input-bg: #FFFFFF;
+  --medex-input-border: rgba(0, 0, 0, 0.15);
+  --medex-input-focus-border: rgba(0, 0, 0, 0.30);
+  
+  /* 标签 */
+  --medex-tag-bg: rgba(0, 0, 0, 0.08);
+  --medex-tag-hover: #E5E5E5;
+  
+  /* 按钮 */
+  --medex-button-bg: #E0E0E0;
+  --medex-button-hover: #D0D0D0;
+  
+  /* 遮罩层 */
+  --medex-overlay: rgba(0, 0, 0, 0.30);
+  
+  /* 功能色 */
+  --medex-favorite: #F59E0B;
+  --medex-highlight: #2563EB;
+  --medex-progress: #3B82F6;
+  
+  color: var(--medex-text);
+  background-color: var(--medex-background);
 }
 
 * {
@@ -29,7 +117,11 @@ body,
   width: 100%;
   min-height: 100%;
   margin: 0;
+<<<<<<< HEAD
   background: var(--medex-background, #101010);
+=======
+  background: var(--medex-background);
+>>>>>>> 397ed58 (feat: 实现完整的主题系统)
 }
 
 /* 主题过渡动画 */

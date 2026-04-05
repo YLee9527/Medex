@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { MediaItem } from '../store/useAppStore';
+import { useThemeContext } from '../contexts/ThemeContext';
 
 export interface MediaViewerProps {
   open: boolean;
@@ -17,6 +18,7 @@ export default function MediaViewer({
   onClose,
   onChangeIndex
 }: MediaViewerProps) {
+  const { theme } = useThemeContext();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const safeIndex = useMemo(() => {
     if (mediaList.length === 0) {
@@ -67,13 +69,23 @@ export default function MediaViewer({
   const src = toViewerSrc(media.path || media.thumbnail);
 
   return (
-    <div className="fixed inset-0 z-[1200] bg-black/95 text-white transition-opacity duration-200">
+    <div 
+      className="fixed inset-0 z-[1200] transition-opacity duration-200"
+      style={{ backgroundColor: theme.overlay }}
+    >
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-5 top-5 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/90 transition-colors hover:bg-white/20"
+        className="absolute right-5 top-5 z-20 flex h-10 w-10 items-center justify-center rounded-full transition-colors"
+        style={{ backgroundColor: theme.hover, color: theme.textSecondary }}
         aria-label="Close Viewer"
         title="关闭"
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = theme.hover;
+        }}
       >
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M18 6L6 18M6 6l12 12" />
@@ -84,8 +96,21 @@ export default function MediaViewer({
         type="button"
         onClick={handlePrev}
         disabled={safeIndex <= 0}
-        className="absolute left-4 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-35"
+        className="absolute left-4 top-1/2 z-20 -translate-y-1/2 rounded-full p-3 transition-colors disabled:cursor-not-allowed"
+        style={{ 
+          backgroundColor: theme.hover,
+          color: theme.textSecondary,
+          opacity: safeIndex <= 0 ? 0.35 : 1
+        }}
         aria-label="Previous Media"
+        onMouseEnter={(e) => {
+          if (safeIndex > 0) {
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = theme.hover;
+        }}
       >
         <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M15 18l-6-6 6-6" />
@@ -96,8 +121,21 @@ export default function MediaViewer({
         type="button"
         onClick={handleNext}
         disabled={safeIndex >= mediaList.length - 1}
-        className="absolute right-4 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-35"
+        className="absolute right-4 top-1/2 z-20 -translate-y-1/2 rounded-full p-3 transition-colors disabled:cursor-not-allowed"
+        style={{ 
+          backgroundColor: theme.hover,
+          color: theme.textSecondary,
+          opacity: safeIndex >= mediaList.length - 1 ? 0.35 : 1
+        }}
         aria-label="Next Media"
+        onMouseEnter={(e) => {
+          if (safeIndex < mediaList.length - 1) {
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = theme.hover;
+        }}
       >
         <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 6l6 6-6 6" />

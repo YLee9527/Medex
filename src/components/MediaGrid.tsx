@@ -8,6 +8,7 @@ import {
   ListChildComponentProps
 } from 'react-window';
 import MediaCard, { MediaCardProps } from './MediaCard';
+import { ThemeColors } from '../theme/theme';
 
 export interface MediaGridProps {
   mediaList: MediaCardProps[];
@@ -22,6 +23,7 @@ export interface MediaGridProps {
   thumbnails: Record<string, string>;
   onVisibleRangeChange?: (range: RenderRange) => void;
   viewMode: 'grid' | 'list';
+  theme: ThemeColors;
 }
 
 export type RenderRange = {
@@ -43,6 +45,7 @@ type GridItemData = {
   onCardContextMenu?: (e: React.MouseEvent, mediaId: string) => void;
   thumbnails: Record<string, string>;
   columnCount: number;
+  theme: ThemeColors;
 };
 
 type ListItemData = {
@@ -51,6 +54,7 @@ type ListItemData = {
   onCardClick: (e: React.MouseEvent, id: string, index: number) => void;
   onCardDoubleClick: (id: string) => void;
   thumbnails: Record<string, string>;
+  theme: ThemeColors;
 };
 
 const GRID_CARD_WIDTH = 180;
@@ -75,13 +79,14 @@ export default function MediaGrid({
   onBackgroundClick,
   thumbnails,
   onVisibleRangeChange,
-  viewMode
+  viewMode,
+  theme
 }: MediaGridProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { width, height } = useElementSize(containerRef);
   const listData = useMemo<ListItemData>(
-    () => ({ mediaList, selectedIds, onCardClick, onCardDoubleClick, thumbnails }),
-    [mediaList, selectedIds, onCardClick, onCardDoubleClick, thumbnails]
+    () => ({ mediaList, selectedIds, onCardClick, onCardDoubleClick, thumbnails, theme }),
+    [mediaList, selectedIds, onCardClick, onCardDoubleClick, thumbnails, theme]
   );
 
   const availableWidth = Math.max(1, width - GRID_PADDING * 2);
@@ -100,7 +105,8 @@ export default function MediaGrid({
       onTagRemoved,
       onCardContextMenu,
       thumbnails,
-      columnCount
+      columnCount,
+      theme
     }),
     [
       mediaList,
@@ -112,7 +118,8 @@ export default function MediaGrid({
       onTagRemoved,
       onCardContextMenu,
       thumbnails,
-      columnCount
+      columnCount,
+      theme
     ]
   );
 
@@ -232,7 +239,7 @@ const GridCell = memo(function GridCell({ columnIndex, rowIndex, style, data }: 
   );
 });
 
-const ListRow = memo(function ListRow({ index, style, data }: ListChildComponentProps<ListItemData>) {
+const ListRow = memo(function ListRow({ index, style, data }: ListChildComponentProps<ListItemData & { theme: ThemeColors }>) {
   const item = data.mediaList[index];
   if (!item) {
     return null;
@@ -246,31 +253,44 @@ const ListRow = memo(function ListRow({ index, style, data }: ListChildComponent
         type="button"
         onClick={(e) => data.onCardClick(e, item.id, index)}
         onDoubleClick={() => data.onCardDoubleClick(item.id)}
-        className={`grid h-full w-full grid-cols-[90px_2fr_2fr_1fr_80px] items-center gap-2 rounded-[8px] px-3 py-2 text-left text-sm transition-colors ${
-          isSelected ? 'bg-[#444444] text-white ring-2 ring-blue-500' : 'bg-[#242424] text-white/85 hover:bg-[#555555]'
-        }`}
+        className="grid h-full w-full grid-cols-[90px_2fr_2fr_1fr_80px] items-center gap-2 rounded-[8px] px-3 py-2 text-left text-sm transition-colors"
+        style={{
+          backgroundColor: isSelected ? data.theme.selected : data.theme.card,
+          color: isSelected ? data.theme.text : data.theme.textSecondary,
+          outline: isSelected ? `2px solid ${data.theme.highlight}` : 'none',
+        }}
+        onMouseEnter={(e) => {
+          if (!isSelected) {
+            e.currentTarget.style.backgroundColor = data.theme.hover;
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isSelected) {
+            e.currentTarget.style.backgroundColor = data.theme.card;
+          }
+        }}
       >
         <span className="flex items-center">
-          <span className="h-6 w-8 overflow-hidden rounded bg-black/30">
+          <span className="h-6 w-8 overflow-hidden rounded" style={{ backgroundColor: data.theme.overlay }}>
             {item.thumbnail ? (
               item.mediaType === 'video' ? (
                 videoThumb ? (
                   <img src={toPreviewSrc(videoThumb)} alt={item.filename} className="h-full w-full object-cover" loading="lazy" />
                 ) : (
-                  <span className="flex h-full w-full animate-pulse items-center justify-center text-[10px] text-white/70">...</span>
+                  <span className="flex h-full w-full animate-pulse items-center justify-center text-[10px]" style={{ color: data.theme.textTertiary }}>...</span>
                 )
               ) : (
                 <img src={toPreviewSrc(item.thumbnail)} alt={item.filename} className="h-full w-full object-cover" loading="lazy" />
               )
             ) : (
-              <span className="flex h-full w-full items-center justify-center text-[10px] text-white/70">MEDIA</span>
+              <span className="flex h-full w-full items-center justify-center text-[10px]" style={{ color: data.theme.textTertiary }}>MEDIA</span>
             )}
           </span>
         </span>
         <span className="truncate">{item.filename}</span>
-        <span className="truncate text-xs text-white/80">{item.tags.map((tag) => `#${tag}`).join(' ')}</span>
-        <span className="text-xs text-white/70">{item.time ?? '-'}</span>
-        <span className="text-xs uppercase text-white/70">{item.mediaType ?? '-'}</span>
+        <span className="truncate text-xs" style={{ color: data.theme.textSecondary }}>{item.tags.map((tag) => `#${tag}`).join(' ')}</span>
+        <span className="text-xs" style={{ color: data.theme.textTertiary }}>{item.time ?? '-'}</span>
+        <span className="text-xs uppercase" style={{ color: data.theme.textTertiary }}>{item.mediaType ?? '-'}</span>
       </button>
     </div>
   );

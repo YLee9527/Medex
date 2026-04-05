@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { check } from '@tauri-apps/plugin-updater';
+import { useThemeContext } from '../contexts/ThemeContext';
 import { CheckingView } from './views/CheckingView';
 import { AvailableView } from './views/AvailableView';
 import { LatestView } from './views/LatestView';
@@ -25,6 +26,7 @@ export interface UpdateInfo {
 const CURRENT_VERSION = '1.0.0';
 
 export default function UpdatePage() {
+  const { theme } = useThemeContext();
   const [status, setStatus] = useState<UpdateStatus>('idle');
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -90,9 +92,9 @@ export default function UpdatePage() {
   function renderContent() {
     switch (status) {
       case 'idle':
-        return <IdleView onCheck={checkForUpdates} />;
+        return <IdleView onCheck={checkForUpdates} theme={theme} />;
       case 'checking':
-        return <CheckingView />;
+        return <CheckingView theme={theme} />;
       case 'available':
         return (
           <AvailableView
@@ -100,18 +102,19 @@ export default function UpdatePage() {
             updateInfo={updateInfo!}
             onUpdate={handleUpdate}
             onLater={() => setStatus('idle')}
+            theme={theme}
           />
         );
       case 'latest':
-        return <LatestView onRecheck={checkForUpdates} />;
+        return <LatestView onRecheck={checkForUpdates} theme={theme} />;
       case 'downloading':
-        return <DownloadingView />;
+        return <DownloadingView theme={theme} />;
       case 'downloaded':
-        return <ReadyView onRestart={restartApp} />;
+        return <ReadyView onRestart={restartApp} theme={theme} />;
       case 'error':
-        return <ErrorView message={errorMessage} onRetry={checkForUpdates} />;
+        return <ErrorView message={errorMessage} onRetry={checkForUpdates} theme={theme} />;
       default:
-        return <IdleView onCheck={checkForUpdates} />;
+        return <IdleView onCheck={checkForUpdates} theme={theme} />;
     }
   }
 

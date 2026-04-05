@@ -22,7 +22,7 @@ export default function Toolbar({
   return (
     <div 
       className="flex h-[60px] items-center justify-between gap-3 rounded-md px-3 py-2"
-      style={{ backgroundColor: '#242424' }}
+      style={{ backgroundColor: theme.toolbar }}
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1 overflow-y-auto">
         {activeTags.length > 0 ? (

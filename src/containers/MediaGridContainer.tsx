@@ -6,6 +6,7 @@ import { MediaCardProps } from '../components/MediaCard';
 import MediaCardContextMenu from '../components/MediaCardContextMenu';
 import { DbMediaItem, MediaItem, useAppStore } from '../store/useAppStore';
 import { useEffect } from 'react';
+import { useThemeContext } from '../contexts/ThemeContext';
 
 interface MediaGridContainerProps {
   onOpenViewer: (mediaId: string) => void;
@@ -36,6 +37,7 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
   const removeTagFromMediaLocal = useAppStore((state) => state.removeTagFromMediaLocal);
   const mediaTypeFilter = useAppStore((state) => state.mediaTypeFilter);
   const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb);
+  const { theme } = useThemeContext();
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
   const thumbnailMapRef = useRef<Record<string, string>>({});
   const requestingSet = useRef<Set<string>>(new Set());
@@ -257,9 +259,10 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
     return sortedItems.map((item) => ({
       ...item,
       selected: selectedIds.has(item.id),
-      onClick: () => {}
+      onClick: () => {},
+      theme
     }));
-  }, [mediaItems, selectedIds, activeNavId]);
+  }, [mediaItems, selectedIds, activeNavId, theme]);
 
   useEffect(() => {
     thumbnailMapRef.current = thumbnails;
@@ -430,6 +433,7 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
         thumbnails={thumbnails}
         onVisibleRangeChange={handleVisibleRangeChange}
         viewMode="grid"
+        theme={theme}
       />
       <MediaCardContextMenu
         visible={contextMenuVisible}

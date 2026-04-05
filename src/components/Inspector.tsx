@@ -3,6 +3,7 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import { invoke } from '@tauri-apps/api/core';
 import { MediaCardProps } from './MediaCard';
 import { useEffect } from 'react';
+import { useThemeContext } from '../contexts/ThemeContext';
 
 interface Tag {
   id: number;
@@ -16,6 +17,7 @@ export interface InspectorProps {
 }
 
 export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: InspectorProps) {
+  const { theme } = useThemeContext();
   const [newTag, setNewTag] = useState('');
   const [tags, setTags] = useState<Tag[]>([]);
   const [loadingTags, setLoadingTags] = useState(false);
@@ -86,16 +88,32 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
   };
 
   return (
-    <aside className="flex h-full w-[320px] shrink-0 flex-col overflow-hidden border-l border-white/10 bg-[#1E1E1E] p-4 text-[#EAEAEA]">
+    <aside 
+      className="flex h-full w-[320px] shrink-0 flex-col overflow-hidden border-l p-4"
+      style={{ 
+        backgroundColor: theme.sidebar,
+        borderColor: theme.borderLight,
+        color: theme.text
+      }}
+    >
       <h2 className="mb-4 text-base font-medium">Inspector</h2>
 
       {!media ? (
-        <div className="flex h-[220px] items-center justify-center rounded-lg border border-dashed border-white/20 p-4 text-sm text-white/70">
+        <div 
+          className="flex h-[220px] items-center justify-center rounded-lg border border-dashed p-4 text-sm"
+          style={{ 
+            borderColor: theme.borderLight,
+            color: theme.textSecondary
+          }}
+        >
           请选择一个媒体查看详情
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-4 rounded-lg border border-white/10 p-3">
-          <div className="group relative aspect-video w-full overflow-hidden rounded-md bg-black/30">
+        <div 
+          className="flex min-h-0 flex-1 flex-col gap-4 rounded-lg border p-3"
+          style={{ borderColor: theme.borderLight }}
+        >
+          <div className="group relative aspect-video w-full overflow-hidden rounded-md">
             {media.mediaType === 'video' && previewSrc ? (
               <video
                 src={previewSrc}
@@ -116,33 +134,48 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
                 className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-xs text-white/60">No Preview</div>
+              <div 
+                className="flex h-full w-full items-center justify-center text-xs"
+                style={{ color: theme.textTertiary }}
+              >
+                No Preview
+              </div>
             )}
           </div>
 
           <div>
-            <p className="text-[14px] leading-5 text-[#EAEAEA]">{media.filename}</p>
+            <p className="text-[14px] leading-5" style={{ color: theme.text }}>{media.filename}</p>
           </div>
 
           <div>
-            <p className="mb-2 text-xs text-white/70">标签：</p>
+            <p className="mb-2 text-xs" style={{ color: theme.textSecondary }}>标签：</p>
             <div className="flex max-h-28 flex-wrap gap-1 overflow-y-auto">
               {tags.map((tag) => (
                 <button
                   key={tag.id}
                   type="button"
                   onClick={() => void handleRemoveTag(tag.id)}
-                  className="rounded-[6px] bg-[#444444] px-2 py-1 text-[12px] leading-4 text-white hover:bg-[#555555]"
+                  className="rounded-[6px] px-2 py-1 text-[12px] leading-4 transition-colors"
+                  style={{ 
+                    backgroundColor: theme.tagBg,
+                    color: theme.text,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.tagHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.tagBg;
+                  }}
                   title="点击删除标签"
                 >
                   #{tag.name}
                 </button>
               ))}
-              {loadingTags ? <span className="text-xs text-white/50">加载中...</span> : null}
+              {loadingTags ? <span className="text-xs" style={{ color: theme.textTertiary }}>加载中...</span> : null}
             </div>
           </div>
 
-          <div className="text-xs text-white/70">
+          <div className="text-xs" style={{ color: theme.textSecondary }}>
             <p className="mb-2">信息：</p>
             <ul className="space-y-1">
               <li>- 时长：{media.duration ?? '--:--'}</li>
@@ -151,7 +184,7 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
           </div>
 
           <div className="mt-auto">
-            <p className="mb-2 text-xs text-white/70">操作：</p>
+            <p className="mb-2 text-xs" style={{ color: theme.textSecondary }}>操作：</p>
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-[1fr_auto] gap-2">
                 <input
@@ -164,12 +197,26 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
                     }
                   }}
                   placeholder="输入标签"
-                  className="rounded-md border border-white/15 bg-black/20 px-3 py-2 text-sm text-white outline-none placeholder:text-white/40 focus:border-white/30"
+                  className="rounded-md border px-3 py-2 text-sm outline-none placeholder:text-white/40 focus:border-white/30"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.text
+                  }}
                 />
                 <button
                   type="button"
                   onClick={handleAddTag}
-                  className="rounded-md bg-[#444444] px-3 py-2 text-sm text-white hover:bg-[#555555]"
+                  className="rounded-md px-3 py-2 text-sm text-white transition-colors"
+                  style={{ 
+                    backgroundColor: theme.buttonBg,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.buttonHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.buttonBg;
+                  }}
                 >
                   新增标签
                 </button>
@@ -182,7 +229,16 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
                     console.log('inspector favorite toggle:', media.id);
                     onToggleFavorite(media.id);
                   }}
-                  className="rounded-md bg-[#444444] px-3 py-2 text-left text-sm text-white hover:bg-[#555555]"
+                  className="rounded-md px-3 py-2 text-left text-sm text-white transition-colors"
+                  style={{ 
+                    backgroundColor: theme.buttonBg,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.buttonHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.buttonBg;
+                  }}
                 >
                   {media.isFavorite ? '取消收藏' : '收藏'}
                 </button>
@@ -192,7 +248,10 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
                     console.log('inspector delete media:', media.id);
                     onDeleteMedia(media.id);
                   }}
-                  className="rounded-md bg-red-700/80 px-3 py-2 text-sm text-white hover:bg-red-700"
+                  className="rounded-md px-3 py-2 text-sm text-white transition-colors hover:bg-red-700"
+                  style={{ 
+                    backgroundColor: 'rgba(185, 28, 28, 0.8)'
+                  }}
                 >
                   删除
                 </button>

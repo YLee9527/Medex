@@ -5,10 +5,27 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        medexText: '#EAEAEA',
-        medexSidebar: '#1E1E1E',
-        medexMain: '#101010',
-        medexInspector: '#1E1E1E'
+        medexText: 'var(--medex-text)',
+        medexSidebar: 'var(--medex-sidebar)',
+        medexMain: 'var(--medex-main)',
+        medexInspector: 'var(--medex-inspector)',
+        medexCard: 'var(--medex-card)',
+        medexToolbar: 'var(--medex-toolbar)',
+        medexBorder: 'var(--medex-border)',
+        medexBorderLight: 'var(--medex-border-light)',
+        medexHover: 'var(--medex-hover)',
+        medexActive: 'var(--medex-active)',
+        medexSelected: 'var(--medex-selected)',
+        medexInputBg: 'var(--medex-input-bg)',
+        medexInputBorder: 'var(--medex-input-border)',
+        medexTagBg: 'var(--medex-tag-bg)',
+        medexTagHover: 'var(--medex-tag-hover)',
+        medexButtonBg: 'var(--medex-button-bg)',
+        medexButtonHover: 'var(--medex-button-hover)',
+        medexOverlay: 'var(--medex-overlay)',
+        medexFavorite: 'var(--medex-favorite)',
+        medexHighlight: 'var(--medex-highlight)',
+        medexProgress: 'var(--medex-progress)'
       }
     }
   },

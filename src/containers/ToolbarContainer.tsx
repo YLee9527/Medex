@@ -157,12 +157,19 @@ export default function ToolbarContainer() {
         theme={theme}
       />
       {statusMessage ? (
-        <div className="mt-2 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+        <div 
+          className="mt-2 rounded-md border px-3 py-2 text-xs"
+          style={{ 
+            borderColor: `${theme.highlight}30`,
+            backgroundColor: `${theme.highlight}10`,
+            color: theme.highlight
+          }}
+        >
           {statusMessage}
         </div>
       ) : null}
       {loading ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" style={{ backgroundColor: theme.overlay }}>
           <div 
             className="w-[360px] rounded-lg border p-4"
             style={{ 
@@ -175,7 +182,7 @@ export default function ToolbarContainer() {
             <div className="mb-3 h-2 w-full overflow-hidden rounded" style={{ backgroundColor: theme.hover }}>
               <div
                 className="h-full rounded transition-all duration-200"
-                style={{ width: `${progressPercent}%`, backgroundColor: '#4A90E2' }}
+                style={{ width: `${progressPercent}%`, backgroundColor: theme.progress }}
               />
             </div>
             <div className="space-y-1 text-xs" style={{ color: theme.textSecondary }}>

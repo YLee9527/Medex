@@ -1,6 +1,7 @@
 import { memo, useEffect, useState } from 'react';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { invoke } from '@tauri-apps/api/core';
+import { ThemeColors } from '../theme/theme';
 
 export interface MediaCardProps {
   id: string;
@@ -22,6 +23,7 @@ export interface MediaCardProps {
   videoThumbnail?: string;
   className?: string;
   mode?: 'grid' | 'list';
+  theme: ThemeColors;
 }
 
 type DbTag = {
@@ -45,7 +47,8 @@ function MediaCard({
   onContextMenu,
   videoThumbnail,
   className,
-  mode = 'grid'
+  mode = 'grid',
+  theme
 }: MediaCardProps) {
   const widthClass = className ?? 'w-[180px]';
   const isGrid = mode === 'grid';
@@ -89,15 +92,29 @@ function MediaCard({
         e.preventDefault();
         onContextMenu?.(e, id);
       }}
-      className={`group overflow-hidden rounded-[8px] bg-[#242424] text-left text-[#EAEAEA] transition-colors ${
-        selected
-          ? 'ring-2 ring-blue-500'
-          : 'border border-white/10 hover:border-white/20'
+      className={`group overflow-hidden rounded-[8px] text-left transition-colors ${
+        selected 
+          ? 'ring-2 ring-[var(--medex-highlight)]' 
+          : 'border border-[var(--medex-border-light)] hover:border-[var(--medex-border)]'
       } ${widthClass} ${isGrid ? 'h-[220px]' : 'h-auto'}`}
+      style={{
+        backgroundColor: selected ? theme.selected : theme.card,
+        color: theme.text
+      }}
+      onMouseEnter={(e) => {
+        if (!selected) {
+          e.currentTarget.style.backgroundColor = theme.hover;
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!selected) {
+          e.currentTarget.style.backgroundColor = theme.card;
+        }
+      }}
     >
       {/* 选中遮罩 */}
       {selected && (
-        <div className="absolute inset-0 bg-blue-500/20 pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: theme.selectionOverlay }} />
       )}
       
       <div className={`relative w-full overflow-hidden ${isGrid ? 'h-[150px] shrink-0' : 'aspect-video'}`}>
@@ -107,25 +124,27 @@ function MediaCard({
             event.stopPropagation();
             onToggleFavorite?.(id);
           }}
-          className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white/90 transition-colors hover:bg-black/55"
+          className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full transition-colors"
+          style={{ backgroundColor: theme.overlay }}
           aria-label={isFavorite ? '取消收藏' : '收藏'}
           title={isFavorite ? '取消收藏' : '收藏'}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.55)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = theme.overlay;
+          }}
         >
           {isFavorite ? (
-            <svg viewBox="0 0 24 24" className="h-4 w-4 text-yellow-400" aria-hidden="true">
+            <svg viewBox="0 0 24 24" className="h-4 w-4" style={{ color: theme.favorite }} fill="currentColor" aria-hidden="true">
               <path
-                fill="currentColor"
                 d="M12 17.3 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
               />
             </svg>
           ) : (
-            <svg viewBox="0 0 24 24" className="h-4 w-4 text-white/85" aria-hidden="true">
+            <svg viewBox="0 0 24 24" className="h-4 w-4" style={{ color: theme.textSecondary }} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
               <path
                 d="M12 17.3 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinejoin="round"
               />
             </svg>
           )}
@@ -144,8 +163,8 @@ function MediaCard({
               onLoad={() => setVideoThumbLoaded(true)}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-black/30 text-[11px] text-white/70">
-              <div className="h-full w-full animate-pulse bg-white/5" />
+            <div className="flex h-full w-full items-center justify-center text-[11px]" style={{ backgroundColor: theme.overlay, color: theme.textTertiary }}>
+              <div className="h-full w-full animate-pulse" style={{ backgroundColor: theme.hover }} />
               <span className="absolute">生成缩略图...</span>
             </div>
           )
@@ -159,14 +178,17 @@ function MediaCard({
             onError={() => setImageFailed(true)}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-black/25 text-xs text-white/60">
+          <div className="flex h-full w-full items-center justify-center text-xs" style={{ backgroundColor: theme.overlay, color: theme.textTertiary }}>
             No Preview
           </div>
         )}
 
         {mediaType === 'video' ? (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#0000004D] opacity-0 transition-opacity group-hover:opacity-100">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+          <div 
+            className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-full backdrop-blur-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}>
               <svg viewBox="0 0 24 24" className="h-5 w-5 fill-white" aria-hidden="true">
                 <path d="M8 6.5v11l9-5.5-9-5.5z" />
               </svg>
@@ -176,7 +198,7 @@ function MediaCard({
       </div>
 
       <div className={`flex flex-col gap-2 p-3 ${isGrid ? 'h-[70px] overflow-hidden' : ''}`}>
-        <p className={`text-[14px] leading-5 text-[#EAEAEA] ${isGrid ? 'truncate' : 'overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]'}`}>
+        <p className={`text-[14px] leading-5 ${isGrid ? 'truncate' : 'overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]'}`} style={{ color: theme.text }}>
           {filename}
         </p>
         {isGrid ? (
@@ -190,14 +212,21 @@ function MediaCard({
                     event.stopPropagation();
                     void handleRemoveTag(tag);
                   }}
-                  className="max-w-full truncate rounded bg-white/10 px-2 py-0.5 text-[12px] leading-4 text-white/80 transition-colors hover:bg-[#555555]"
+                  className="max-w-full truncate rounded px-2 py-0.5 text-[12px] leading-4 transition-colors"
+                  style={{ backgroundColor: theme.tagBg, color: theme.textSecondary }}
                   title={`点击删除 #${tag}`}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.tagHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.tagBg;
+                  }}
                 >
                   #{tag}
                 </button>
               ))
             ) : (
-              <span className="truncate text-[12px] leading-4 text-white/55">暂无标签</span>
+              <span className="truncate text-[12px] leading-4" style={{ color: theme.textTertiary }}>暂无标签</span>
             )}
           </div>
         ) : (
@@ -211,14 +240,21 @@ function MediaCard({
                     event.stopPropagation();
                     void handleRemoveTag(tag);
                   }}
-                  className="rounded bg-white/10 px-2 py-0.5 text-[12px] leading-4 text-white/80 transition-colors hover:bg-[#555555]"
+                  className="rounded px-2 py-0.5 text-[12px] leading-4 transition-colors"
+                  style={{ backgroundColor: theme.tagBg, color: theme.textSecondary }}
                   title={`点击删除 #${tag}`}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.tagHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.tagBg;
+                  }}
                 >
                   #{tag}
                 </button>
               ))
             ) : (
-              <span className="text-[12px] leading-4 text-white/55">暂无标签</span>
+              <span className="text-[12px] leading-4" style={{ color: theme.textTertiary }}>暂无标签</span>
             )}
           </div>
         )}
@@ -237,8 +273,6 @@ function toPreviewSrc(src: string): string {
   if (isAbsoluteUnix || isAbsoluteWindows) return convertFileSrc(src);
   return src;
 }
-
-MediaCard.displayName = 'MediaCard';
 
 function areMediaCardPropsEqual(prev: Readonly<MediaCardProps>, next: Readonly<MediaCardProps>) {
   if (

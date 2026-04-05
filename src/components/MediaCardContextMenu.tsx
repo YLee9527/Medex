@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useThemeContext } from '../contexts/ThemeContext';
 
 export interface Tag {
   id: number;
@@ -31,6 +32,7 @@ export default function MediaCardContextMenu({
   onClose,
   onTagsApplied
 }: ContextMenuProps) {
+  const { theme } = useThemeContext();
   const menuRef = useRef<HTMLDivElement>(null);
   const initialTagsRef = useRef<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -172,16 +174,21 @@ export default function MediaCardContextMenu({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 w-[280px] rounded-lg border border-white/10 bg-[#1E1E1E] p-3 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
-      style={{ top: adjustedPosition.y, left: adjustedPosition.x }}
+      className="fixed z-50 w-[280px] rounded-lg border p-3 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+      style={{ 
+        top: adjustedPosition.y, 
+        left: adjustedPosition.x,
+        backgroundColor: theme.sidebar,
+        borderColor: theme.borderLight
+      }}
       onClick={(e) => e.stopPropagation()}
     >
       {/* 标题 */}
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs font-medium text-white/50">
+        <span className="text-xs font-medium" style={{ color: theme.textTertiary }}>
           {selectedCount > 0 ? `批量标签 (${selectedCount}项)` : '标签'}
         </span>
-        <span className="text-xs text-white/40">{selectedTags.length} 已选</span>
+        <span className="text-xs" style={{ color: theme.textTertiary }}>{selectedTags.length} 已选</span>
       </div>
 
       {/* 搜索框 */}
@@ -191,7 +198,12 @@ export default function MediaCardContextMenu({
           placeholder="搜索标签..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white placeholder-white/40 outline-none transition-all duration-150 focus:border-blue-500/50 focus:bg-white/10"
+          className="w-full rounded-md border px-3 py-1.5 text-sm outline-none transition-all duration-150"
+          style={{
+            backgroundColor: theme.inputBg,
+            borderColor: theme.inputBorder,
+            color: theme.text,
+          }}
         />
       </div>
 
@@ -211,10 +223,20 @@ export default function MediaCardContextMenu({
                     active:scale-95
                     ${
                       isSelected
-                        ? 'bg-blue-500 text-white hover:bg-blue-400'
-                        : 'bg-white/[0.06] text-white/70 hover:bg-white/[0.12]'
+                        ? 'text-white'
+                        : ''
                     }
                   `}
+                  style={{
+                    backgroundColor: isSelected ? '#3B82F6' : theme.tagBg,
+                    color: isSelected ? '#FFFFFF' : theme.textSecondary,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isSelected ? '#60A5FA' : theme.tagHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = isSelected ? '#3B82F6' : theme.tagBg;
+                  }}
                 >
                   {tag.name}
                 </button>
@@ -222,7 +244,7 @@ export default function MediaCardContextMenu({
             })}
           </div>
         ) : (
-          <div className="py-4 text-center text-sm text-white/40">
+          <div className="py-4 text-center text-sm" style={{ color: theme.textTertiary }}>
             {searchQuery ? '未找到匹配的标签' : '暂无标签'}
           </div>
         )}
