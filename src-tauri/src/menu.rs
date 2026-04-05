@@ -10,7 +10,7 @@ pub fn open_settings_window(app: AppHandle) {
     let _ = WebviewWindowBuilder::new(&app, "settings", WebviewUrl::App("pages/settings.html".into()))
         .title("设置")
         .inner_size(600.0, 500.0)
-        .resizable(true)
+        .resizable(false)
         .build();
 }
 

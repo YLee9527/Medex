@@ -11,7 +11,10 @@ export default function Settings() {
   return (
     <div 
       className="flex flex-col h-screen"
-      style={{ backgroundColor: theme.background, color: theme.text }}
+      style={{ 
+        backgroundColor: theme.background, 
+        color: theme.text
+      }}
     >
       {/* Header */}
       <div 
@@ -75,10 +78,7 @@ export default function Settings() {
                 浅色
               </button>
               <button
-                onClick={() => {
-                  // TODO: 实现跟随系统功能
-                  console.log('跟随系统');
-                }}
+                onClick={() => setTheme('system')}
                 className="px-3 py-1.5 rounded text-xs transition-colors"
                 style={{
                   backgroundColor: themeMode === 'system' ? '#3B82F6' : theme.buttonBg,
