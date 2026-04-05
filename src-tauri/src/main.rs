@@ -10,6 +10,7 @@ use tauri::menu::{MenuItem, Submenu, Menu};
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             if let Err(err) = db::init_db(app.handle()) {
                 eprintln!("failed to initialize database: {err:#}");

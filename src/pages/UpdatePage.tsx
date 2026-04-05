@@ -50,9 +50,16 @@ export default function UpdatePage() {
       } else {
         setStatus('latest');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('check update failed:', error);
-      setErrorMessage(error instanceof Error ? error.message : '检查更新失败');
+      
+      // 如果是 updater 未激活或没有 release，显示友好提示
+      const errorMsg = error?.message || String(error);
+      if (errorMsg.includes('not active') || errorMsg.includes('Could not fetch')) {
+        setErrorMessage('当前版本尚未发布更新。请在发布新版本后重试。');
+      } else {
+        setErrorMessage(errorMsg);
+      }
       setStatus('error');
     }
   }

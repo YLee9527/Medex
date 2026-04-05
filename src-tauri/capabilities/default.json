@@ -2,11 +2,13 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Default capability for Medex desktop app",
-  "windows": ["main"],
+  "windows": ["main", "update", "settings"],
   "permissions": [
     "core:default",
     "dialog:default",
     "dialog:allow-open",
-    "dialog:allow-message"
+    "dialog:allow-message",
+    "updater:default",
+    "updater:allow-check"
   ]
 }
