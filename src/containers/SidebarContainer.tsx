@@ -10,7 +10,7 @@ export default function SidebarContainer() {
   const clickNav = useAppStore((state) => state.clickNav);
   const clickTag = useAppStore((state) => state.clickTag);
   const setTagsFromDb = useAppStore((state) => state.setTagsFromDb);
-  const { theme, themeMode, toggleTheme } = useThemeContext();
+  const { theme } = useThemeContext();
   const [newTagName, setNewTagName] = useState('');
 
   useEffect(() => {
@@ -73,8 +73,6 @@ export default function SidebarContainer() {
       onNavClick={clickNav}
       onTagClick={clickTag}
       theme={theme}
-      themeMode={themeMode}
-      onToggleTheme={toggleTheme}
     />
   );
 }

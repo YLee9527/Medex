@@ -69,7 +69,7 @@ export default function Settings() {
 
 function GeneralSettings({ theme }: { theme: ThemeColors }) {
   const [language, setLanguage] = useState('zh-CN');
-  const [themeMode, setThemeMode] = useState('dark');
+  const { themeMode, toggleTheme } = useThemeContext();
 
   return (
     <div className="space-y-6">
@@ -94,26 +94,47 @@ function GeneralSettings({ theme }: { theme: ThemeColors }) {
         <h2 className="text-lg font-medium mb-4" style={{ color: theme.text }}>主题</h2>
         <div className="flex space-x-4">
           <button
-            onClick={() => setThemeMode('dark')}
+            onClick={() => {
+              if (themeMode === 'light') {
+                toggleTheme();
+              }
+            }}
             className="px-4 py-2 rounded text-sm transition-colors"
             style={{
               backgroundColor: themeMode === 'dark' ? '#3B82F6' : theme.buttonBg,
               color: themeMode === 'dark' ? '#FFFFFF' : theme.textSecondary,
             }}
           >
-            深色
+            <div className="flex items-center">
+              <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+              深色
+            </div>
           </button>
           <button
-            onClick={() => setThemeMode('light')}
+            onClick={() => {
+              if (themeMode === 'dark') {
+                toggleTheme();
+              }
+            }}
             className="px-4 py-2 rounded text-sm transition-colors"
             style={{
               backgroundColor: themeMode === 'light' ? '#3B82F6' : theme.buttonBg,
               color: themeMode === 'light' ? '#FFFFFF' : theme.textSecondary,
             }}
           >
-            浅色
+            <div className="flex items-center">
+              <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              浅色
+            </div>
           </button>
         </div>
+        <p className="mt-2 text-xs" style={{ color: theme.textSecondary }}>
+          当前模式：{themeMode === 'dark' ? '深色主题' : '浅色主题'}
+        </p>
       </div>
 
       <div>
