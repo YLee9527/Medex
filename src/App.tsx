@@ -57,7 +57,7 @@ export default function App() {
   }, [viewerOpen, currentIndex, viewerMediaList.length]);
 
   return (
-    <div className="flex h-screen min-w-[1200px] overflow-hidden bg-medexMain text-medexText">
+    <div className="flex h-screen min-w-[1200px] overflow-hidden">
       <SidebarContainer />
       <Main onOpenViewer={handleOpenViewer} />
       <MediaViewer

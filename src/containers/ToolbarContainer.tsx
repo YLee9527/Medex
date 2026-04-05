@@ -4,6 +4,7 @@ import { listen } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
 import Toolbar from '../components/Toolbar';
 import { DbMediaItem, MediaItem, useAppStore } from '../store/useAppStore';
+import { useThemeContext } from '../contexts/ThemeContext';
 
 interface ScanProgressPayload {
   current: number;
@@ -17,6 +18,7 @@ export default function ToolbarContainer() {
   const mediaTypeFilter = useAppStore((state) => state.mediaTypeFilter);
   const setMediaTypeFilter = useAppStore((state) => state.setMediaTypeFilter);
   const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb);
+  const { theme } = useThemeContext();
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [scanProgress, setScanProgress] = useState<ScanProgressPayload>({
@@ -152,6 +154,7 @@ export default function ToolbarContainer() {
         onMediaTypeChange={handleMediaTypeChange}
         onSelectFolder={handleSelectFolder}
         loading={loading}
+        theme={theme}
       />
       {statusMessage ? (
         <div className="mt-2 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
@@ -159,16 +162,23 @@ export default function ToolbarContainer() {
         </div>
       ) : null}
       {loading ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm">
-          <div className="w-[360px] rounded-lg border border-white/10 bg-[#1E1E1E] p-4 text-[#EAEAEA]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)' }}>
+          <div 
+            className="w-[360px] rounded-lg border p-4"
+            style={{ 
+              backgroundColor: theme.sidebar,
+              color: theme.text,
+              borderColor: theme.borderLight
+            }}
+          >
             <p className="mb-3 text-sm">正在扫描媒体文件...</p>
-            <div className="mb-3 h-2 w-full overflow-hidden rounded bg-white/10">
+            <div className="mb-3 h-2 w-full overflow-hidden rounded" style={{ backgroundColor: theme.hover }}>
               <div
-                className="h-full rounded bg-[#4A90E2] transition-all duration-200"
-                style={{ width: `${progressPercent}%` }}
+                className="h-full rounded transition-all duration-200"
+                style={{ width: `${progressPercent}%`, backgroundColor: '#4A90E2' }}
               />
             </div>
-            <div className="space-y-1 text-xs text-white/70">
+            <div className="space-y-1 text-xs" style={{ color: theme.textSecondary }}>
               <div className="flex items-center justify-between">
                 <span>
                   {scanProgress.current} / {scanProgress.total || 0}

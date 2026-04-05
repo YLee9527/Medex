@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import Settings from './pages/Settings';
 import Update from './pages/Update';
+import { ThemeProvider } from './contexts/ThemeContext';
 import './index.css';
 
 // 根据 URL 路径决定渲染哪个页面
@@ -15,19 +16,25 @@ const renderApp = () => {
   if (pathname.includes('settings.html')) {
     ReactDOM.createRoot(rootElement).render(
       <React.StrictMode>
-        <Settings />
+        <ThemeProvider>
+          <Settings />
+        </ThemeProvider>
       </React.StrictMode>
     );
   } else if (pathname.includes('update.html')) {
     ReactDOM.createRoot(rootElement).render(
       <React.StrictMode>
-        <Update />
+        <ThemeProvider>
+          <Update />
+        </ThemeProvider>
       </React.StrictMode>
     );
   } else {
     ReactDOM.createRoot(rootElement).render(
       <React.StrictMode>
-        <App />
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
       </React.StrictMode>
     );
   }

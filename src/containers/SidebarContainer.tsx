@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import Sidebar from '../components/Sidebar';
 import { DbTagItem, useAppStore } from '../store/useAppStore';
+import { useThemeContext } from '../contexts/ThemeContext';
 
 export default function SidebarContainer() {
   const navItems = useAppStore((state) => state.navItems);
@@ -9,6 +10,7 @@ export default function SidebarContainer() {
   const clickNav = useAppStore((state) => state.clickNav);
   const clickTag = useAppStore((state) => state.clickTag);
   const setTagsFromDb = useAppStore((state) => state.setTagsFromDb);
+  const { theme, themeMode, toggleTheme } = useThemeContext();
   const [newTagName, setNewTagName] = useState('');
 
   useEffect(() => {
@@ -70,6 +72,9 @@ export default function SidebarContainer() {
       onDeleteTag={handleDeleteTag}
       onNavClick={clickNav}
       onTagClick={clickTag}
+      theme={theme}
+      themeMode={themeMode}
+      onToggleTheme={toggleTheme}
     />
   );
 }

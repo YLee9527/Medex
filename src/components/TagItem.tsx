@@ -1,12 +1,14 @@
 import { SidebarTagItem } from '../store/useAppStore';
+import { ThemeColors } from '../theme/theme';
 
 type TagItemProps = {
   tag: SidebarTagItem;
   onTagClick: (tagId: string) => void;
   onDeleteTag: (tagId: string) => void;
+  theme: ThemeColors;
 };
 
-export default function TagItem({ tag, onTagClick, onDeleteTag }: TagItemProps) {
+export default function TagItem({ tag, onTagClick, onDeleteTag, theme }: TagItemProps) {
   const canDelete = tag.selected && (tag.mediaCount ?? 0) === 0;
 
   return (
@@ -14,10 +16,22 @@ export default function TagItem({ tag, onTagClick, onDeleteTag }: TagItemProps) 
       <button
         type="button"
         onClick={() => onTagClick(tag.id)}
-        className={`min-w-0 flex-1 rounded px-3 py-2 text-left text-sm transition-colors ${
-          tag.selected ? 'bg-[#444444] text-[#EAEAEA]' : 'bg-transparent text-white/80 hover:bg-white/10'
-        }`}
+        className="min-w-0 flex-1 rounded px-3 py-2 text-left text-sm transition-colors"
+        style={{
+          backgroundColor: tag.selected ? theme.selected : 'transparent',
+          color: tag.selected ? theme.text : theme.textSecondary,
+        }}
         title={`${tag.name}（媒体数：${tag.mediaCount ?? 0}）`}
+        onMouseEnter={(e) => {
+          if (!tag.selected) {
+            e.currentTarget.style.backgroundColor = theme.hover;
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!tag.selected) {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }
+        }}
       >
         <span className="block truncate">#{tag.name}</span>
       </button>
@@ -29,7 +43,16 @@ export default function TagItem({ tag, onTagClick, onDeleteTag }: TagItemProps) 
             event.stopPropagation();
             onDeleteTag(tag.id);
           }}
-          className="flex h-8 w-8 items-center justify-center rounded-md text-white/70 transition-colors hover:bg-red-500/20 hover:text-red-300"
+          className="flex h-8 w-8 items-center justify-center rounded-md transition-colors"
+          style={{ color: theme.textSecondary }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+            e.currentTarget.style.color = '#FCA5A5';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = theme.textSecondary;
+          }}
           aria-label="删除标签"
           title="删除标签"
         >
