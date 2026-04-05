@@ -37,6 +37,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.setAttribute('data-theme', themeMode);
   }, [themeMode, isLoaded]);
 
+  // 监听其他窗口的主题变化
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === THEME_STORAGE_KEY && event.newValue) {
+        setThemeMode(event.newValue as ThemeMode);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const toggleTheme = () => {
     setThemeMode((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
