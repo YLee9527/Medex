@@ -117,11 +117,7 @@ body,
   width: 100%;
   min-height: 100%;
   margin: 0;
-<<<<<<< HEAD
-  background: var(--medex-background, #101010);
-=======
   background: var(--medex-background);
->>>>>>> 397ed58 (feat: 实现完整的主题系统)
 }
 
 /* 主题过渡动画 */
