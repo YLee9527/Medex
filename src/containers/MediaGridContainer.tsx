@@ -39,6 +39,7 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
   const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb);
   const { theme } = useThemeContext();
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
+  const [libraryPath, setLibraryPath] = useState<string | null>(null);
   const thumbnailMapRef = useRef<Record<string, string>>({});
   const requestingSet = useRef<Set<string>>(new Set());
   const queuedSet = useRef<Set<string>>(new Set());
@@ -264,6 +265,41 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
     }));
   }, [mediaItems, selectedIds, activeNavId, theme]);
 
+  // 检查 libraryPath 是否存在
+  useEffect(() => {
+    const path = localStorage.getItem('libraryPath');
+    setLibraryPath(path);
+  }, []);
+
+  // 处理选择文件夹
+  const handleSelectFolder = async () => {
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      
+      const selected = await open({
+        directory: true,
+        multiple: false
+      });
+      if (!selected || Array.isArray(selected)) {
+        return;
+      }
+
+      // 保存选择的路径到 localStorage
+      localStorage.setItem('libraryPath', selected);
+      setLibraryPath(selected);
+
+      // 触发扫描和索引
+      await invoke('scan_and_index', { path: selected });
+    } catch (error) {
+      console.error('[ui] scan failed:', error);
+      window.alert(`扫描失败：${String(error)}`);
+    }
+  };
+
+  // 显示状态：没有媒体数据时
+  const shouldShowEmptyState = mediaItems.length === 0;
+  const shouldShowSelectFolder = !libraryPath;
+
   useEffect(() => {
     thumbnailMapRef.current = thumbnails;
   }, [thumbnails]);
@@ -420,31 +456,124 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
 
   return (
     <>
-      <MediaGrid
-        mediaList={mediaList}
-        selectedIds={selectedIds}
-        onCardClick={handleCardClick}
-        onCardDoubleClick={onOpenViewer}
-        onToggleFavorite={handleToggleFavorite}
-        onTagAdded={addTagToMediaLocal}
-        onTagRemoved={removeTagFromMediaLocal}
-        onCardContextMenu={handleContextMenu}
-        onBackgroundClick={handleBackgroundClick}
-        thumbnails={thumbnails}
-        onVisibleRangeChange={handleVisibleRangeChange}
-        viewMode="grid"
-        theme={theme}
-      />
-      <MediaCardContextMenu
-        visible={contextMenuVisible}
-        x={contextMenuPosition.x}
-        y={contextMenuPosition.y}
-        mediaId={contextMenuMediaId}
-        mediaTags={contextMenuMedia?.tags ?? []}
-        allTags={allTagsForMenu}
-        onClose={handleContextMenuClose}
-        onTagsApplied={handleTagsApplied}
-      />
+      {shouldShowEmptyState ? (
+        <div className="flex h-full w-full items-center justify-center">
+          <div 
+            className="flex flex-col items-center justify-center gap-4 rounded-lg border p-8"
+            style={{ 
+              backgroundColor: theme.sidebar,
+              borderColor: theme.borderLight
+            }}
+          >
+            {shouldShowSelectFolder ? (
+              <>
+                <div 
+                  className="flex h-16 w-16 items-center justify-center rounded-full"
+                  style={{ backgroundColor: theme.inputBg }}
+                >
+                  <svg 
+                    className="h-8 w-8" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={1.5} 
+                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" 
+                    />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <p className="mb-2 text-sm font-medium" style={{ color: theme.text }}>
+                    暂无媒体库
+                  </p>
+                  <p className="mb-4 text-xs" style={{ color: theme.textTertiary }}>
+                    请选择包含媒体文件的文件夹
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleSelectFolder}
+                    className="rounded-[6px] px-4 py-2 text-xs transition-colors"
+                    style={{
+                      backgroundColor: theme.buttonBg,
+                      color: theme.text
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.buttonHover;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.buttonBg;
+                    }}
+                  >
+                    选择文件夹
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div 
+                  className="flex h-16 w-16 items-center justify-center rounded-full"
+                  style={{ backgroundColor: theme.inputBg }}
+                >
+                  <svg 
+                    className="h-8 w-8" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={1.5} 
+                      d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" 
+                    />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <p className="mb-2 text-sm font-medium" style={{ color: theme.text }}>
+                    暂无数据
+                  </p>
+                  <p className="text-xs" style={{ color: theme.textTertiary }}>
+                    当前媒体库中没有媒体文件
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
+          <MediaGrid
+            mediaList={mediaList}
+            selectedIds={selectedIds}
+            onCardClick={handleCardClick}
+            onCardDoubleClick={onOpenViewer}
+            onToggleFavorite={handleToggleFavorite}
+            onTagAdded={addTagToMediaLocal}
+            onTagRemoved={removeTagFromMediaLocal}
+            onCardContextMenu={handleContextMenu}
+            onBackgroundClick={handleBackgroundClick}
+            thumbnails={thumbnails}
+            onVisibleRangeChange={handleVisibleRangeChange}
+            viewMode="grid"
+            theme={theme}
+          />
+          <MediaCardContextMenu
+            visible={contextMenuVisible}
+            x={contextMenuPosition.x}
+            y={contextMenuPosition.y}
+            mediaId={contextMenuMediaId}
+            mediaTags={contextMenuMedia?.tags ?? []}
+            allTags={allTagsForMenu}
+            onClose={handleContextMenuClose}
+            onTagsApplied={handleTagsApplied}
+          />
+        </>
+      )}
     </>
   );
 }

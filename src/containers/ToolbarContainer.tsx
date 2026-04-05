@@ -68,6 +68,9 @@ export default function ToolbarContainer() {
         return;
       }
 
+      // 保存选择的路径到 localStorage
+      localStorage.setItem('libraryPath', selected);
+
       setLoading(true);
       setStatusMessage('');
       scanInFlightRef.current = true;
