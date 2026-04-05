@@ -259,7 +259,7 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
       selected: selectedIds.has(item.id),
       onClick: () => {}
     }));
-  }, [mediaItems, selectedIds]);
+  }, [mediaItems, selectedIds, activeNavId]);
 
   useEffect(() => {
     thumbnailMapRef.current = thumbnails;
