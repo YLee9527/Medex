@@ -3,7 +3,7 @@
  * 深色主题为原始设计，浅色主题基于深色主题自动生成
  */
 
-export type ThemeMode = 'dark' | 'light';
+export type ThemeMode = 'dark' | 'light' | 'system';
 
 export interface ThemeColors {
   // 基础背景色
@@ -153,5 +153,6 @@ export const lightTheme = generateLightTheme(darkTheme);
 
 export const themes: Record<ThemeMode, ThemeColors> = {
   dark: darkTheme,
-  light: lightTheme
+  light: lightTheme,
+  system: darkTheme // 默认使用深色，实际使用时会根据系统偏好动态选择
 };
