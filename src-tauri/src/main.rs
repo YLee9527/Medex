@@ -22,10 +22,10 @@ fn main() {
             }
             
             // 创建并设置菜单
-            let about_item = MenuItem::with_id(app.handle(), "about", "About Medex", true, None::<&str>)?;
+            let about_item = MenuItem::with_id(app.handle(), "about", "关于", true, None::<&str>)?;
             let settings_item = MenuItem::with_id(app.handle(), "settings", "设置", true, None::<&str>)?;
             let check_update_item = MenuItem::with_id(app.handle(), "check_update", "检查更新", true, None::<&str>)?;
-            let quit_item = MenuItem::with_id(app.handle(), "quit", "Quit", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app.handle(), "quit", "退出应用", true, None::<&str>)?;
 
             let submenu = Submenu::with_items(app.handle(), "Medex", true, &[
                 &about_item,

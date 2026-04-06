@@ -119,7 +119,13 @@ export default function UpdatePage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#1e1e1e] text-[#e0e0e0] items-center justify-center p-6">
+    <div 
+      className="flex flex-col h-screen items-center justify-center p-6"
+      style={{ 
+        backgroundColor: theme.background,
+        color: theme.text
+      }}
+    >
       <div className="w-full max-w-md">
         {/* Content */}
         <div className="transition-all duration-300 ease-in-out">
