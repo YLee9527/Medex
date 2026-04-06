@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
+import { emit } from '@tauri-apps/api/event';
 import { useThemeContext } from '../contexts/ThemeContext';
 import { ThemeColors } from '../theme/theme';
 
@@ -49,9 +50,23 @@ export default function Settings() {
     }
   };
 
-  const handleClearLibraryPath = () => {
-    localStorage.removeItem('libraryPath');
-    setLibraryPath('');
+  const handleClearLibraryPath = async () => {
+    try {
+      // 调用后端 API 清理数据库
+      await invoke('clear_library_data');
+      
+      // 清除 localStorage 和状态
+      localStorage.removeItem('libraryPath');
+      setLibraryPath('');
+      
+      // 使用 Tauri 全局事件通知所有窗口
+      await emit('medex:library-path-cleared');
+      
+      console.log('[ui] library data cleared successfully');
+    } catch (error) {
+      console.error('[ui] clear library data failed:', error);
+      window.alert(`清除数据失败：${String(error)}`);
+    }
   };
 
   return (

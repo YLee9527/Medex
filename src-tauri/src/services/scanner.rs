@@ -4,7 +4,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::{Context, Result};
 use rusqlite::{params, params_from_iter, types::Value, Connection};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use walkdir::WalkDir;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -303,6 +303,13 @@ pub fn scan_and_index(path: String, app_handle: AppHandle) -> Result<(), String>
         .emit("scan_done", true)
         .map_err(|err| err.to_string())?;
 
+    // 刷新主窗口
+    for (_label, window) in app_handle.webview_windows() {
+        if _label != "settings" {
+            let _ = window.eval("window.location.reload()");
+        }
+    }
+
     println!("[scanner] done");
 
     Ok(())
@@ -437,4 +444,56 @@ fn normalize_media_type(media_type: Option<String>) -> Result<Option<String>, St
         return Ok(Some(normalized));
     }
     Err(format!("unsupported media_type: {raw}"))
+}
+
+/// 清除媒体库数据，删除 media、media_tag、recent_views 表的数据，并重置自增 ID
+#[tauri::command]
+pub fn clear_library_data(app_handle: AppHandle) -> Result<(), String> {
+    println!("[scanner] clearing library data...");
+
+    let result: Result<(), anyhow::Error> = crate::db::with_connection(|conn| {
+        let tx = conn
+            .transaction()
+            .context("failed to start transaction")?;
+
+        // 删除 media_tags 表的所有数据
+        tx.execute("DELETE FROM media_tags;", [])
+            .context("failed to delete from media_tags")?;
+
+        // 删除 recent_views 表的所有数据
+        tx.execute("DELETE FROM recent_views;", [])
+            .context("failed to delete from recent_views")?;
+
+        // 删除 media 表的所有数据
+        tx.execute("DELETE FROM media;", [])
+            .context("failed to delete from media")?;
+
+        // 重置 media 表的自增 ID
+        tx.execute("DELETE FROM sqlite_sequence WHERE name='media';", [])
+            .context("failed to reset media sequence")?;
+
+        tx.commit()
+            .context("failed to commit transaction")?;
+
+        Ok(())
+    });
+
+    match result {
+        Ok(_) => {
+            // 刷新所有非设置窗口
+            for (_label, window) in app_handle.webview_windows() {
+                if _label != "settings" {
+                    let _ = window.eval("window.location.reload()");
+                }
+            }
+            
+            println!("[scanner] library data cleared successfully");
+            Ok(())
+        }
+        Err(err) => {
+            let err_str = err.to_string();
+            eprintln!("[scanner] clear library data failed: {err_str}");
+            Err(err_str)
+        }
+    }
 }

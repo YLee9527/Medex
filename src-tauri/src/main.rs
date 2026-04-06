@@ -53,6 +53,7 @@ fn main() {
             services::scanner::filter_media,
             services::scanner::set_media_favorite,
             services::scanner::mark_media_viewed,
+            services::scanner::clear_library_data,
             services::tags::get_all_tags,
             services::tags::get_all_tags_with_count,
             services::tags::create_tag,

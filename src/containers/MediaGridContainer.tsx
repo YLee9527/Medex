@@ -266,39 +266,44 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
     }));
   }, [mediaItems, selectedIds, activeNavId, theme]);
 
-  // 检查 libraryPath 是否存在
+  // 检查 libraryPath 是否存在，当变化时刷新媒体列表
   useEffect(() => {
     const checkLibraryPath = () => {
       const path = localStorage.getItem('libraryPath');
-      setLibraryPath(path);
+      console.log('[MediaGrid] checkLibraryPath:', path);
+      // 当 libraryPath 发生变化时，刷新媒体列表
+      if (libraryPath !== path) {
+        setLibraryPath(path);
+        // 重新加载媒体数据
+        void fetchFilteredMedia();
+      }
     };
     checkLibraryPath();
     
-    // 监听 storage 变化（包括其他标签页或手动清除）
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'libraryPath') {
-        checkLibraryPath();
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    
     // 定期检查 libraryPath（确保同步）
-    const interval = setInterval(checkLibraryPath, 1000);
+    const interval = setInterval(() => {
+      checkLibraryPath();
+    }, 500);
     
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
-  }, []);
+  }, [libraryPath]);
 
-  // 监听 libraryPath 清除事件
+  // 监听 libraryPath 清除事件（跨窗口，使用 Tauri 事件）
   useEffect(() => {
-    const handleLibraryPathCleared = () => {
-      setLibraryPath(null);
+    let unlisten: (() => void) | null = null;
+    const setup = async () => {
+      unlisten = await listen('medex:library-path-cleared', () => {
+        console.log('[MediaGrid] received library-path-cleared event via Tauri');
+        // 立即检查并更新
+        const path = localStorage.getItem('libraryPath');
+        setLibraryPath(path);
+      });
     };
-    window.addEventListener('medex:library-path-cleared', handleLibraryPathCleared);
+    void setup();
     return () => {
-      window.removeEventListener('medex:library-path-cleared', handleLibraryPathCleared);
+      if (unlisten) unlisten();
     };
   }, []);
 
