@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { open } from '@tauri-apps/plugin-dialog';
 import MediaGrid, { RenderRange } from '../components/MediaGrid';
 import { MediaCardProps } from '../components/MediaCard';
 import MediaCardContextMenu from '../components/MediaCardContextMenu';
@@ -267,12 +268,71 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
 
   // 检查 libraryPath 是否存在
   useEffect(() => {
-    const path = localStorage.getItem('libraryPath');
-    setLibraryPath(path);
+    const checkLibraryPath = () => {
+      const path = localStorage.getItem('libraryPath');
+      setLibraryPath(path);
+    };
+    checkLibraryPath();
+    
+    // 监听 storage 变化（包括其他标签页或手动清除）
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'libraryPath') {
+        checkLibraryPath();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    
+    // 定期检查 libraryPath（确保同步）
+    const interval = setInterval(checkLibraryPath, 1000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
   }, []);
+
+  // 监听 libraryPath 清除事件
+  useEffect(() => {
+    const handleLibraryPathCleared = () => {
+      setLibraryPath(null);
+    };
+    window.addEventListener('medex:library-path-cleared', handleLibraryPathCleared);
+    return () => {
+      window.removeEventListener('medex:library-path-cleared', handleLibraryPathCleared);
+    };
+  }, []);
+
+  // 处理选择文件夹
+  const handleSelectFolder = async () => {
+    try {
+      const selected = await open({
+        directory: true,
+        multiple: false
+      });
+      if (!selected || Array.isArray(selected)) {
+        return;
+      }
+
+      // 保存选择的路径到 localStorage
+      localStorage.setItem('libraryPath', selected);
+      setLibraryPath(selected);
+
+      // 触发扫描和索引
+      await invoke('scan_and_index', { path: selected });
+    } catch (error) {
+      console.error('[ui] scan failed:', error);
+      window.alert(`扫描失败：${String(error)}`);
+    }
+  };
 
   // 显示状态：没有媒体数据时
   const shouldShowEmptyState = mediaItems.length === 0;
+  const shouldShowAddLibrary = !libraryPath;
+  
+  // 调试用：输出 libraryPath 状态
+  useEffect(() => {
+    console.log('[MediaGrid] libraryPath:', libraryPath, 'shouldShowAddLibrary:', shouldShowAddLibrary);
+  }, [libraryPath, shouldShowAddLibrary]);
 
   useEffect(() => {
     thumbnailMapRef.current = thumbnails;
@@ -439,33 +499,84 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
               borderColor: theme.borderLight
             }}
           >
-            <div 
-              className="flex h-16 w-16 items-center justify-center rounded-full"
-              style={{ backgroundColor: theme.inputBg }}
-            >
-              <svg 
-                className="h-8 w-8" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-                style={{ color: theme.textSecondary }}
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={1.5} 
-                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" 
-                />
-              </svg>
-            </div>
-            <div className="text-center">
-              <p className="mb-2 text-sm font-medium" style={{ color: theme.text }}>
-                暂无数据
-              </p>
-              <p className="text-xs" style={{ color: theme.textTertiary }}>
-                当前媒体库中没有媒体文件
-              </p>
-            </div>
+            {shouldShowAddLibrary ? (
+              <>
+                <div 
+                  className="flex h-16 w-16 items-center justify-center rounded-full"
+                  style={{ backgroundColor: theme.inputBg }}
+                >
+                  <svg 
+                    className="h-8 w-8" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={1.5} 
+                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" 
+                    />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <p className="mb-2 text-sm font-medium" style={{ color: theme.text }}>
+                    暂无媒体库
+                  </p>
+                  <p className="mb-4 text-xs" style={{ color: theme.textTertiary }}>
+                    请选择包含媒体文件的文件夹
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleSelectFolder}
+                    className="rounded-[6px] px-4 py-2 text-xs transition-colors"
+                    style={{
+                      backgroundColor: theme.buttonBg,
+                      color: theme.text
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.buttonHover;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.buttonBg;
+                    }}
+                  >
+                    添加媒体库
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div 
+                  className="flex h-16 w-16 items-center justify-center rounded-full"
+                  style={{ backgroundColor: theme.inputBg }}
+                >
+                  <svg 
+                    className="h-8 w-8" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={1.5} 
+                      d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" 
+                    />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <p className="mb-2 text-sm font-medium" style={{ color: theme.text }}>
+                    暂无数据
+                  </p>
+                  <p className="text-xs" style={{ color: theme.textTertiary }}>
+                    当前媒体库中没有媒体文件
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       ) : (

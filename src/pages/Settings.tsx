@@ -49,6 +49,11 @@ export default function Settings() {
     }
   };
 
+  const handleClearLibraryPath = () => {
+    localStorage.removeItem('libraryPath');
+    setLibraryPath('');
+  };
+
   return (
     <div 
       className="flex flex-col h-screen"
@@ -138,17 +143,57 @@ export default function Settings() {
           >
             <div className="text-sm font-medium" style={{ color: theme.text }}>媒体库路径</div>
             <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={libraryPath}
-                onChange={(e) => setLibraryPath(e.target.value)}
-                className="w-64 px-3 py-1.5 border rounded text-sm focus:outline-none focus:border-blue-500"
-                style={{
-                  backgroundColor: theme.inputBg,
-                  borderColor: theme.inputBorder,
-                  color: theme.text
-                }}
-              />
+              <div 
+                className="relative flex w-64 items-center"
+              >
+                <input
+                  type="text"
+                  value={libraryPath}
+                  readOnly
+                  placeholder="未选择媒体库路径"
+                  className="w-full px-3 py-1.5 pr-10 border rounded text-sm focus:outline-none cursor-not-allowed"
+                  style={{
+                    backgroundColor: theme.inputBg,
+                    borderColor: theme.inputBorder,
+                    color: theme.text,
+                    opacity: 0.7
+                  }}
+                />
+                {libraryPath && (
+                  <button
+                    type="button"
+                    onClick={handleClearLibraryPath}
+                    className="absolute right-2 flex items-center justify-center rounded p-1 transition-colors"
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: theme.textSecondary
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = theme.text;
+                      e.currentTarget.style.backgroundColor = theme.tagHover;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = theme.textSecondary;
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                    title="清除路径"
+                  >
+                    <svg 
+                      className="h-4 w-4" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M6 18L18 6M6 6l12 12" 
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
               <button 
                 onClick={handleSelectFolder}
                 disabled={isScanning}
