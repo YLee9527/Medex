@@ -250,6 +250,31 @@ pub fn filter_media(tag_names: Vec<String>, media_type: Option<String>) -> Resul
 pub fn scan_and_index(path: String, app_handle: AppHandle) -> Result<(), String> {
     println!("[scanner] start scanning path: {path}");
 
+    // 先清理旧的媒体库数据
+    println!("[scanner] clearing old library data before scanning new path");
+    let _ = crate::db::with_connection(|conn| {
+        let tx = conn.transaction().context("failed to start transaction")?;
+        
+        // 删除 media_tags 表的所有数据
+        tx.execute("DELETE FROM media_tags;", [])
+            .context("failed to delete from media_tags")?;
+        
+        // 删除 recent_views 表的所有数据
+        tx.execute("DELETE FROM recent_views;", [])
+            .context("failed to delete from recent_views")?;
+        
+        // 删除 media 表的所有数据
+        tx.execute("DELETE FROM media;", [])
+            .context("failed to delete from media")?;
+        
+        // 重置 media 表的自增 ID
+        tx.execute("DELETE FROM sqlite_sequence WHERE name='media';", [])
+            .context("failed to reset media sequence")?;
+        
+        tx.commit().context("failed to commit transaction")?;
+        Ok::<(), anyhow::Error>(())
+    });
+
     let files = scan_directory(&path).map_err(|err| err.to_string())?;
     let total = files.len();
 
