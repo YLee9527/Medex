@@ -1,12 +1,53 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
 import { useThemeContext } from '../contexts/ThemeContext';
 import { ThemeColors } from '../theme/theme';
 
 export default function Settings() {
   const { theme, themeMode, toggleTheme, setTheme } = useThemeContext();
   const [language, setLanguage] = useState('zh-CN');
-  const [libraryPath, setLibraryPath] = useState('/Users/terryyoung/Pictures');
+  const [libraryPath, setLibraryPath] = useState<string>('');
   const [autoScan, setAutoScan] = useState(true);
+  const [isScanning, setIsScanning] = useState(false);
+
+  // 初始化时从 localStorage 读取媒体库路径
+  useEffect(() => {
+    const path = localStorage.getItem('libraryPath');
+    if (path) {
+      setLibraryPath(path);
+    }
+  }, []);
+
+  const handleSelectFolder = async () => {
+    try {
+      const selected = await open({
+        directory: true,
+        multiple: false
+      });
+      if (!selected || Array.isArray(selected)) {
+        return;
+      }
+
+      // 保存选择的路径到 localStorage
+      localStorage.setItem('libraryPath', selected);
+      setLibraryPath(selected);
+
+      // 触发扫描和索引
+      setIsScanning(true);
+      await invoke('scan_and_index', { path: selected });
+      
+      // 扫描完成后提示用户
+      setTimeout(() => {
+        setIsScanning(false);
+        window.alert('媒体库扫描完成！');
+      }, 1000);
+    } catch (error) {
+      console.error('[ui] scan failed:', error);
+      window.alert(`扫描失败：${String(error)}`);
+      setIsScanning(false);
+    }
+  };
 
   return (
     <div 
@@ -109,19 +150,26 @@ export default function Settings() {
                 }}
               />
               <button 
-                className="px-3 py-1.5 rounded text-xs transition-colors"
+                onClick={handleSelectFolder}
+                disabled={isScanning}
+                className="px-3 py-1.5 rounded text-xs transition-colors disabled:cursor-not-allowed"
                 style={{ 
-                  backgroundColor: theme.buttonBg,
-                  color: theme.text
+                  backgroundColor: isScanning ? 'transparent' : theme.buttonBg,
+                  color: theme.text,
+                  opacity: isScanning ? 0.6 : 1
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = theme.buttonHover;
+                  if (!isScanning) {
+                    e.currentTarget.style.backgroundColor = theme.buttonHover;
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = theme.buttonBg;
+                  if (!isScanning) {
+                    e.currentTarget.style.backgroundColor = theme.buttonBg;
+                  }
                 }}
               >
-                浏览
+                {isScanning ? '扫描中...' : '选择'}
               </button>
             </div>
           </div>

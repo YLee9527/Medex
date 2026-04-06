@@ -5,7 +5,6 @@ export interface ToolbarProps {
   resultCount: number;
   mediaType: 'all' | 'image' | 'video';
   onMediaTypeChange: (mode: 'all' | 'image' | 'video') => void;
-  onSelectFolder: () => void;
   loading?: boolean;
   theme: ThemeColors;
 }
@@ -15,7 +14,6 @@ export default function Toolbar({
   resultCount,
   mediaType,
   onMediaTypeChange,
-  onSelectFolder,
   loading = false,
   theme
 }: ToolbarProps) {
@@ -70,29 +68,6 @@ export default function Toolbar({
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={onSelectFolder}
-          disabled={loading}
-          className="rounded-[6px] px-3 py-1.5 text-xs transition-colors disabled:cursor-not-allowed"
-          style={{
-            backgroundColor: loading ? 'transparent' : theme.buttonBg,
-            color: theme.text,
-            opacity: loading ? 0.6 : 1
-          }}
-          onMouseEnter={(e) => {
-            if (!loading) {
-              e.currentTarget.style.backgroundColor = theme.buttonHover;
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!loading) {
-              e.currentTarget.style.backgroundColor = theme.buttonBg;
-            }
-          }}
-        >
-          {loading ? '扫描中...' : '选择文件夹'}
-        </button>
       </div>
     </div>
   );
