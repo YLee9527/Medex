@@ -12,13 +12,24 @@ export default function Settings() {
   const [autoScan, setAutoScan] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
 
-  // 初始化时从 localStorage 读取媒体库路径
+  // 初始化时从 localStorage 读取媒体库路径和自动扫描设置
   useEffect(() => {
     const path = localStorage.getItem('libraryPath');
     if (path) {
       setLibraryPath(path);
     }
+    
+    // 读取自动扫描设置
+    const autoScanSetting = localStorage.getItem('autoScanOnStartup');
+    if (autoScanSetting !== null) {
+      setAutoScan(autoScanSetting === 'true');
+    }
   }, []);
+
+  // 当 autoScan 变化时，保存到 localStorage
+  useEffect(() => {
+    localStorage.setItem('autoScanOnStartup', String(autoScan));
+  }, [autoScan]);
 
   const handleSelectFolder = async () => {
     try {
