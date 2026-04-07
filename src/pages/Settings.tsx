@@ -1,108 +1,125 @@
-import { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { open } from '@tauri-apps/plugin-dialog';
-import { emit } from '@tauri-apps/api/event';
-import { useThemeContext } from '../contexts/ThemeContext';
-import { ThemeColors } from '../theme/theme';
+import { useEffect, useState } from 'react'
+import { invoke } from '@tauri-apps/api/core'
+import { open } from '@tauri-apps/plugin-dialog'
+import { emit } from '@tauri-apps/api/event'
+import { useThemeContext } from '../contexts/ThemeContext'
+import { ThemeColors } from '../theme/theme'
 
 export default function Settings() {
-  const { theme, themeMode, toggleTheme, setTheme } = useThemeContext();
-  const [language, setLanguage] = useState('zh-CN');
-  const [libraryPath, setLibraryPath] = useState<string>('');
-  const [autoScan, setAutoScan] = useState(true);
-  const [isScanning, setIsScanning] = useState(false);
+  const { theme, themeMode, toggleTheme, setTheme } = useThemeContext()
 
-  // 初始化时从 localStorage 读取媒体库路径和自动扫描设置
+  // 辅助：将 localStorage 中的字符串布尔值解析为真正的 boolean
+  const parseBoolean = (val: string | null, defaultVal = false) => {
+    if (val === null) return defaultVal
+    const s = String(val).trim().toLowerCase()
+    if (s === 'true' || s === '1' || s === 'yes') return true
+    if (s === 'false' || s === '0' || s === '') return false
+    try {
+      return Boolean(JSON.parse(val as string))
+    } catch {
+      return defaultVal
+    }
+  }
+
+  const [language, setLanguage] = useState('zh-CN')
+  const [libraryPath, setLibraryPath] = useState<string>('')
+  // 使用懒初始化确保初始值来自 localStorage，避免 mount 时被初始 true 覆盖
+  const [autoScan, setAutoScan] = useState<boolean>(() => parseBoolean(localStorage.getItem('autoScanOnStartup'), false))
+  const [isScanning, setIsScanning] = useState(false)
+
+  // 初始化时从 localStorage 读取媒体库路径（autoScan 由懒初始化负责）
   useEffect(() => {
-    const path = localStorage.getItem('libraryPath');
+    const path = localStorage.getItem('libraryPath')
     if (path) {
-      setLibraryPath(path);
+      setLibraryPath(path)
     }
-    
-    // 读取自动扫描设置
-    const autoScanSetting = localStorage.getItem('autoScanOnStartup');
-    if (autoScanSetting !== null) {
-      setAutoScan(autoScanSetting === 'true');
-    }
-  }, []);
+  }, [])
 
-  // 当 autoScan 变化时，保存到 localStorage
+  // 当 autoScan 变化时，保存到 localStorage（只有在值不同的情况下写入，避免不必要覆盖）
   useEffect(() => {
-    localStorage.setItem('autoScanOnStartup', String(autoScan));
-  }, [autoScan]);
+    try {
+      const current = localStorage.getItem('autoScanOnStartup')
+      const normalized = autoScan ? 'true' : 'false'
+      if (current !== normalized) {
+        localStorage.setItem('autoScanOnStartup', normalized)
+      }
+    } catch (err) {
+      console.warn('[settings] failed to persist autoScan setting', err)
+    }
+  }, [autoScan])
 
   // 启动一次扫描并管理状态与事件
   const startScan = async (path: string) => {
     if (!path) {
-      window.alert('请先选择媒体库路径');
-      return;
+      window.alert('请先选择媒体库路径')
+      return
     }
     try {
-      setIsScanning(true);
-      window.dispatchEvent(new CustomEvent('medex:scan-started'));
-      await invoke('scan_and_index', { path });
-      window.dispatchEvent(new CustomEvent('medex:scan-completed'));
-      window.alert('媒体库扫描完成！');
+      setIsScanning(true)
+      window.dispatchEvent(new CustomEvent('medex:scan-started'))
+      await invoke('scan_and_index', { path })
+      window.dispatchEvent(new CustomEvent('medex:scan-completed'))
+      window.alert('媒体库扫描完成！')
     } catch (error) {
-      console.error('[ui] scan failed:', error);
-      window.alert(`扫描失败：${String(error)}`);
+      console.error('[ui] scan failed:', error)
+      window.alert(`扫描失败：${String(error)}`)
     } finally {
-      setIsScanning(false);
+      setIsScanning(false)
     }
-  };
+  }
 
   const handleSelectFolder = async () => {
     try {
       const selected = await open({
         directory: true,
-        multiple: false
-      });
+        multiple: false,
+      })
       if (!selected || Array.isArray(selected)) {
-        return;
+        return
       }
 
       // 保存选择的路径到 localStorage
-      localStorage.setItem('libraryPath', selected);
-      setLibraryPath(selected);
+      localStorage.setItem('libraryPath', selected)
+      setLibraryPath(selected)
 
       // 触发扫描和索引（使用统一入口）
-      await startScan(selected);
+      await startScan(selected)
     } catch (error) {
-      console.error('[ui] scan failed:', error);
-      window.alert(`扫描失败：${String(error)}`);
-      setIsScanning(false);
+      console.error('[ui] scan failed:', error)
+      window.alert(`扫描失败：${String(error)}`)
+      setIsScanning(false)
     }
-  };
+  }
 
   const handleClearLibraryPath = async () => {
     try {
       // 调用后端 API 清理数据库
-      await invoke('clear_library_data');
-      
+      await invoke('clear_library_data')
+
       // 清除 localStorage 和状态
-      localStorage.removeItem('libraryPath');
-      setLibraryPath('');
-      
+      localStorage.removeItem('libraryPath')
+      setLibraryPath('')
+
       // 使用 Tauri 全局事件通知所有窗口
-      await emit('medex:library-path-cleared');
-      
-      console.log('[ui] library data cleared successfully');
+      await emit('medex:library-path-cleared')
+
+      console.log('[ui] library data cleared successfully')
     } catch (error) {
-      console.error('[ui] clear library data failed:', error);
-      window.alert(`清除数据失败：${String(error)}`);
+      console.error('[ui] clear library data failed:', error)
+      window.alert(`清除数据失败：${String(error)}`)
     }
-  };
+  }
 
   return (
-    <div 
+    <div
       className="flex flex-col h-screen"
-      style={{ 
-        backgroundColor: theme.background, 
-        color: theme.text
+      style={{
+        backgroundColor: theme.background,
+        color: theme.text,
       }}
     >
       {/* Header */}
-      <div 
+      <div
         className="flex items-center justify-between px-6 py-4 border-b"
         style={{ borderColor: theme.borderLight }}
       >
@@ -113,11 +130,13 @@ export default function Settings() {
       <div className="flex-1 overflow-auto">
         <div className="max-w-4xl mx-auto py-6">
           {/* 1. Language Setting */}
-          <div 
+          <div
             className="flex items-center justify-between px-6 py-4 border-b"
             style={{ borderColor: theme.borderLight }}
           >
-            <div className="text-sm font-medium" style={{ color: theme.text }}>语言</div>
+            <div className="text-sm font-medium" style={{ color: theme.text }}>
+              语言
+            </div>
             <div>
               <select
                 value={language}
@@ -126,7 +145,7 @@ export default function Settings() {
                 style={{
                   backgroundColor: theme.inputBg,
                   borderColor: theme.inputBorder,
-                  color: theme.text
+                  color: theme.text,
                 }}
               >
                 <option value="zh-CN">简体中文</option>
@@ -136,17 +155,20 @@ export default function Settings() {
           </div>
 
           {/* 2. Theme Setting */}
-          <div 
+          <div
             className="flex items-center justify-between px-6 py-4 border-b"
             style={{ borderColor: theme.borderLight }}
           >
-            <div className="text-sm font-medium" style={{ color: theme.text }}>主题</div>
+            <div className="text-sm font-medium" style={{ color: theme.text }}>
+              主题
+            </div>
             <div className="flex space-x-2">
               <button
                 onClick={() => setTheme('dark')}
                 className="px-3 py-1.5 rounded text-xs transition-colors"
                 style={{
-                  backgroundColor: themeMode === 'dark' ? '#3B82F6' : theme.buttonBg,
+                  backgroundColor:
+                    themeMode === 'dark' ? '#3B82F6' : theme.buttonBg,
                   color: themeMode === 'dark' ? '#FFFFFF' : theme.text,
                 }}
               >
@@ -156,7 +178,8 @@ export default function Settings() {
                 onClick={() => setTheme('light')}
                 className="px-3 py-1.5 rounded text-xs transition-colors"
                 style={{
-                  backgroundColor: themeMode === 'light' ? '#3B82F6' : theme.buttonBg,
+                  backgroundColor:
+                    themeMode === 'light' ? '#3B82F6' : theme.buttonBg,
                   color: themeMode === 'light' ? '#FFFFFF' : theme.text,
                 }}
               >
@@ -166,7 +189,8 @@ export default function Settings() {
                 onClick={() => setTheme('system')}
                 className="px-3 py-1.5 rounded text-xs transition-colors"
                 style={{
-                  backgroundColor: themeMode === 'system' ? '#3B82F6' : theme.buttonBg,
+                  backgroundColor:
+                    themeMode === 'system' ? '#3B82F6' : theme.buttonBg,
                   color: themeMode === 'system' ? '#FFFFFF' : theme.text,
                 }}
               >
@@ -176,15 +200,15 @@ export default function Settings() {
           </div>
 
           {/* 3. Media Library Path */}
-          <div 
+          <div
             className="flex items-center justify-between px-6 py-4 border-b"
             style={{ borderColor: theme.borderLight }}
           >
-            <div className="text-sm font-medium" style={{ color: theme.text }}>媒体库路径</div>
+            <div className="text-sm font-medium" style={{ color: theme.text }}>
+              媒体库路径
+            </div>
             <div className="flex items-center space-x-2">
-              <div 
-                className="relative flex w-64 items-center"
-              >
+              <div className="relative flex w-64 items-center">
                 <input
                   type="text"
                   value={libraryPath}
@@ -195,7 +219,7 @@ export default function Settings() {
                     backgroundColor: theme.inputBg,
                     borderColor: theme.inputBorder,
                     color: theme.text,
-                    opacity: 0.7
+                    opacity: 0.7,
                   }}
                 />
                 {libraryPath && (
@@ -205,51 +229,51 @@ export default function Settings() {
                     className="absolute right-2 flex items-center justify-center rounded p-1 transition-colors"
                     style={{
                       backgroundColor: 'transparent',
-                      color: theme.textSecondary
+                      color: theme.textSecondary,
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.color = theme.text;
-                      e.currentTarget.style.backgroundColor = theme.tagHover;
+                      e.currentTarget.style.color = theme.text
+                      e.currentTarget.style.backgroundColor = theme.tagHover
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.color = theme.textSecondary;
-                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = theme.textSecondary
+                      e.currentTarget.style.backgroundColor = 'transparent'
                     }}
                     title="清除路径"
                   >
-                    <svg 
-                      className="h-4 w-4" 
-                      fill="none" 
-                      viewBox="0 0 24 24" 
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
                       stroke="currentColor"
                     >
-                      <path 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        strokeWidth={2} 
-                        d="M6 18L18 6M6 6l12 12" 
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
                       />
                     </svg>
                   </button>
                 )}
               </div>
-              <button 
+              <button
                 onClick={handleSelectFolder}
                 disabled={isScanning}
                 className="px-3 py-1.5 rounded text-xs transition-colors disabled:cursor-not-allowed"
-                style={{ 
+                style={{
                   backgroundColor: isScanning ? 'transparent' : theme.buttonBg,
                   color: theme.text,
-                  opacity: isScanning ? 0.6 : 1
+                  opacity: isScanning ? 0.6 : 1,
                 }}
                 onMouseEnter={(e) => {
                   if (!isScanning) {
-                    e.currentTarget.style.backgroundColor = theme.buttonHover;
+                    e.currentTarget.style.backgroundColor = theme.buttonHover
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isScanning) {
-                    e.currentTarget.style.backgroundColor = theme.buttonBg;
+                    e.currentTarget.style.backgroundColor = theme.buttonBg
                   }
                 }}
               >
@@ -259,11 +283,13 @@ export default function Settings() {
           </div>
 
           {/* 4. Auto Scan on Startup */}
-          <div 
+          <div
             className="flex items-center justify-between px-6 py-4 border-b"
             style={{ borderColor: theme.borderLight }}
           >
-            <div className="text-sm font-medium" style={{ color: theme.text }}>启动时自动扫描媒体库</div>
+            <div className="text-sm font-medium" style={{ color: theme.text }}>
+              启动时自动扫描媒体库
+            </div>
             <div>
               <label className="flex items-center cursor-pointer">
                 <input
@@ -273,16 +299,18 @@ export default function Settings() {
                   className="sr-only"
                   disabled={isScanning}
                 />
-                <div 
+                <div
                   className="relative w-10 h-6 rounded-full transition-colors"
-                  style={{ 
-                    backgroundColor: autoScan ? '#3B82F6' : theme.inputBorder 
+                  style={{
+                    backgroundColor: autoScan ? '#3B82F6' : theme.inputBorder,
                   }}
                 >
-                  <div 
+                  <div
                     className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform"
-                    style={{ 
-                      transform: autoScan ? 'translateX(16px)' : 'translateX(0)' 
+                    style={{
+                      transform: autoScan
+                        ? 'translateX(16px)'
+                        : 'translateX(0)',
                     }}
                   />
                 </div>
@@ -292,5 +320,5 @@ export default function Settings() {
         </div>
       </div>
     </div>
-  );
+  )
 }

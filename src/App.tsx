@@ -56,8 +56,22 @@ export default function App() {
       const alreadyFired = sessionStorage.getItem('medex:autoScanFired')
       const autoScanSetting = localStorage.getItem('autoScanOnStartup')
       const libraryPath = localStorage.getItem('libraryPath')
+
+      // 辅助：解析字符串布尔
+      const parseBoolean = (val: string | null, defaultVal = false) => {
+        if (val === null) return defaultVal
+        const s = String(val).trim().toLowerCase()
+        if (s === 'true' || s === '1' || s === 'yes') return true
+        if (s === 'false' || s === '0' || s === '') return false
+        try {
+          return Boolean(JSON.parse(val as string))
+        } catch {
+          return defaultVal
+        }
+      }
+
       // 仅在当前会话未触发过自动扫描时启动
-      if (autoScanSetting === 'true' && libraryPath && !alreadyFired) {
+      if (parseBoolean(autoScanSetting, false) && libraryPath && !alreadyFired) {
         sessionStorage.setItem('medex:autoScanFired', String(Date.now()))
         console.log('[app] auto-scan enabled, starting scan for', libraryPath)
         // 通知其他窗口或组件
