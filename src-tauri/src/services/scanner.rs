@@ -168,7 +168,10 @@ pub fn filter_media_by_tags(tag_names: Vec<String>) -> Result<Vec<MediaItem>, St
 }
 
 #[tauri::command]
-pub fn filter_media(tag_names: Vec<String>, media_type: Option<String>) -> Result<Vec<MediaItem>, String> {
+pub fn filter_media(
+    tag_names: Vec<String>,
+    media_type: Option<String>,
+) -> Result<Vec<MediaItem>, String> {
     let normalized_media_type = normalize_media_type(media_type)?;
 
     crate::db::with_connection(|conn| {
@@ -254,23 +257,23 @@ pub fn scan_and_index(path: String, app_handle: AppHandle) -> Result<(), String>
     println!("[scanner] clearing old library data before scanning new path");
     let _ = crate::db::with_connection(|conn| {
         let tx = conn.transaction().context("failed to start transaction")?;
-        
+
         // 删除 media_tags 表的所有数据
         tx.execute("DELETE FROM media_tags;", [])
             .context("failed to delete from media_tags")?;
-        
+
         // 删除 recent_views 表的所有数据
         tx.execute("DELETE FROM recent_views;", [])
             .context("failed to delete from recent_views")?;
-        
+
         // 删除 media 表的所有数据
         tx.execute("DELETE FROM media;", [])
             .context("failed to delete from media")?;
-        
+
         // 重置 media 表的自增 ID
         tx.execute("DELETE FROM sqlite_sequence WHERE name='media';", [])
             .context("failed to reset media sequence")?;
-        
+
         tx.commit().context("failed to commit transaction")?;
         Ok::<(), anyhow::Error>(())
     });
@@ -328,12 +331,16 @@ pub fn scan_and_index(path: String, app_handle: AppHandle) -> Result<(), String>
         .emit("scan_done", true)
         .map_err(|err| err.to_string())?;
 
-    // 刷新主窗口
-    for (_label, window) in app_handle.webview_windows() {
-        if _label != "settings" {
-            let _ = window.eval("window.location.reload()");
-        }
-    }
+    // 通知主窗口扫描完成（不通过直接 reload，改为前端监听 scan_done 事件处理刷新）
+    // 通过事件通知前端由前端决定是否刷新，避免 reload 导致循环重试
+    // 发送 scan_done 事件（已经发送 app_handle.emit("scan_done", true) ），前端监听该事件并刷新数据
+    // 旧实现：直接 window.eval("window.location.reload()")
+    // for (_label, window) in app_handle.webview_windows() {
+    //     if _label != "settings" {
+    //         let _ = window.eval("window.location.reload()");
+    //     }
+    // }
+    // No-op: 前端会在收到 scan_done 或 medex 事件后自行刷新。
 
     println!("[scanner] done");
 
@@ -345,7 +352,11 @@ pub fn set_media_favorite(media_id: i64, is_favorite: bool) -> Result<(), String
     crate::db::with_connection(|conn| {
         conn.execute(
             "UPDATE media SET is_favorite = ?, updated_at = ? WHERE id = ?;",
-            params![if is_favorite { 1 } else { 0 }, current_timestamp_seconds(), media_id],
+            params![
+                if is_favorite { 1 } else { 0 },
+                current_timestamp_seconds(),
+                media_id
+            ],
         )
         .context("failed to update media favorite state")?;
         Ok(())
@@ -407,7 +418,10 @@ fn parse_tags(tags_concat: String) -> Vec<String> {
         .collect()
 }
 
-fn get_all_media_with_type_inner(conn: &Connection, media_type: Option<&str>) -> Result<Vec<MediaItem>> {
+fn get_all_media_with_type_inner(
+    conn: &Connection,
+    media_type: Option<&str>,
+) -> Result<Vec<MediaItem>> {
     let mut sql = String::from(
         "SELECT
             m.id,
@@ -477,9 +491,7 @@ pub fn clear_library_data(app_handle: AppHandle) -> Result<(), String> {
     println!("[scanner] clearing library data...");
 
     let result: Result<(), anyhow::Error> = crate::db::with_connection(|conn| {
-        let tx = conn
-            .transaction()
-            .context("failed to start transaction")?;
+        let tx = conn.transaction().context("failed to start transaction")?;
 
         // 删除 media_tags 表的所有数据
         tx.execute("DELETE FROM media_tags;", [])
@@ -497,8 +509,7 @@ pub fn clear_library_data(app_handle: AppHandle) -> Result<(), String> {
         tx.execute("DELETE FROM sqlite_sequence WHERE name='media';", [])
             .context("failed to reset media sequence")?;
 
-        tx.commit()
-            .context("failed to commit transaction")?;
+        tx.commit().context("failed to commit transaction")?;
 
         Ok(())
     });
@@ -511,7 +522,7 @@ pub fn clear_library_data(app_handle: AppHandle) -> Result<(), String> {
                     let _ = window.eval("window.location.reload()");
                 }
             }
-            
+
             println!("[scanner] library data cleared successfully");
             Ok(())
         }

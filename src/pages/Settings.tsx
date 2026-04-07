@@ -31,6 +31,26 @@ export default function Settings() {
     localStorage.setItem('autoScanOnStartup', String(autoScan));
   }, [autoScan]);
 
+  // 启动一次扫描并管理状态与事件
+  const startScan = async (path: string) => {
+    if (!path) {
+      window.alert('请先选择媒体库路径');
+      return;
+    }
+    try {
+      setIsScanning(true);
+      window.dispatchEvent(new CustomEvent('medex:scan-started'));
+      await invoke('scan_and_index', { path });
+      window.dispatchEvent(new CustomEvent('medex:scan-completed'));
+      window.alert('媒体库扫描完成！');
+    } catch (error) {
+      console.error('[ui] scan failed:', error);
+      window.alert(`扫描失败：${String(error)}`);
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
   const handleSelectFolder = async () => {
     try {
       const selected = await open({
@@ -45,15 +65,8 @@ export default function Settings() {
       localStorage.setItem('libraryPath', selected);
       setLibraryPath(selected);
 
-      // 触发扫描和索引
-      setIsScanning(true);
-      await invoke('scan_and_index', { path: selected });
-      
-      // 扫描完成后提示用户
-      setTimeout(() => {
-        setIsScanning(false);
-        window.alert('媒体库扫描完成！');
-      }, 1000);
+      // 触发扫描和索引（使用统一入口）
+      await startScan(selected);
     } catch (error) {
       console.error('[ui] scan failed:', error);
       window.alert(`扫描失败：${String(error)}`);
@@ -258,6 +271,7 @@ export default function Settings() {
                   checked={autoScan}
                   onChange={(e) => setAutoScan(e.target.checked)}
                   className="sr-only"
+                  disabled={isScanning}
                 />
                 <div 
                   className="relative w-10 h-6 rounded-full transition-colors"
