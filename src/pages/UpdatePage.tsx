@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { check } from '@tauri-apps/plugin-updater'
 import { listen } from '@tauri-apps/api/event'
 import { useThemeContext } from '../contexts/ThemeContext'
+import { useI18n } from '../contexts/I18nContext'
 import { CheckingView } from './views/CheckingView'
 import { AvailableView } from './views/AvailableView'
 import { LatestView } from './views/LatestView'
@@ -28,6 +29,7 @@ const CURRENT_VERSION = '1.0.0'
 
 export default function UpdatePage() {
   const { theme } = useThemeContext()
+  const { t } = useI18n()
   const [status, setStatus] = useState<UpdateStatus>('idle')
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [errorMessage, setErrorMessage] = useState<string>('')
@@ -116,7 +118,7 @@ export default function UpdatePage() {
       }
     } catch (error) {
       console.error('update failed:', error)
-      setErrorMessage(error instanceof Error ? error.message : '更新失败')
+      setErrorMessage(error instanceof Error ? error.message : t('update.failed'))
       setStatus('error')
     }
   }

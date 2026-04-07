@@ -1,24 +1,28 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { useThemeContext } from '../contexts/ThemeContext';
-import { useI18n } from '../contexts/I18nContext';
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { invoke } from '@tauri-apps/api/core'
+import { useThemeContext } from '../contexts/ThemeContext'
+import { useI18n } from '../contexts/I18nContext'
 
 export interface Tag {
-  id: number;
-  name: string;
+  id: number
+  name: string
 }
 
 export interface ContextMenuProps {
-  visible: boolean;
-  x: number;
-  y: number;
-  mediaId: string;
-  mediaTags: string[];
-  allTags: Tag[];
-  selectedCount?: number;
-  commonTags?: string[];
-  onClose: () => void;
-  onTagsApplied: (mediaId: string, addedTags: string[], removedTags: string[]) => void;
+  visible: boolean
+  x: number
+  y: number
+  mediaId: string
+  mediaTags: string[]
+  allTags: Tag[]
+  selectedCount?: number
+  commonTags?: string[]
+  onClose: () => void
+  onTagsApplied: (
+    mediaId: string,
+    addedTags: string[],
+    removedTags: string[],
+  ) => void
 }
 
 export default function MediaCardContextMenu({
@@ -31,76 +35,80 @@ export default function MediaCardContextMenu({
   selectedCount = 0,
   commonTags = [],
   onClose,
-  onTagsApplied
+  onTagsApplied,
 }: ContextMenuProps) {
-  const { theme } = useThemeContext();
-  const menuRef = useRef<HTMLDivElement>(null);
-  const initialTagsRef = useRef<string[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [adjustedPosition, setAdjustedPosition] = useState({ x, y });
-  const [isClosing, setIsClosing] = useState(false);
+  const { theme } = useThemeContext()
+  const menuRef = useRef<HTMLDivElement>(null)
+  const initialTagsRef = useRef<string[]>([])
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [adjustedPosition, setAdjustedPosition] = useState({ x, y })
+  const [isClosing, setIsClosing] = useState(false)
 
   // 初始化选中状态（回显媒体已有标签或多选时的共有标签）
   useEffect(() => {
     if (visible) {
-      initialTagsRef.current = [...mediaTags];
-      setSelectedTags([...mediaTags]);
-      setSearchQuery('');
-      setIsClosing(false);
+      initialTagsRef.current = [...mediaTags]
+      setSelectedTags([...mediaTags])
+      setSearchQuery('')
+      setIsClosing(false)
     }
-  }, [visible, mediaTags]);
+  }, [visible, mediaTags])
 
   // 边界处理：防止菜单超出屏幕
   useEffect(() => {
-    if (!visible) return;
+    if (!visible) return
 
-    const menuWidth = 280;
-    const menuHeight = Math.min(320, allTags.length * 36 + 80);
-    const padding = 16;
+    const menuWidth = 280
+    const menuHeight = Math.min(320, allTags.length * 36 + 80)
+    const padding = 16
 
-    let adjustedX = x;
-    let adjustedY = y;
+    let adjustedX = x
+    let adjustedY = y
 
     if (x + menuWidth > window.innerWidth - padding) {
-      adjustedX = window.innerWidth - menuWidth - padding;
+      adjustedX = window.innerWidth - menuWidth - padding
     }
     if (y + menuHeight > window.innerHeight - padding) {
-      adjustedY = window.innerHeight - menuHeight - padding;
+      adjustedY = window.innerHeight - menuHeight - padding
     }
     if (adjustedX < padding) {
-      adjustedX = padding;
+      adjustedX = padding
     }
     if (adjustedY < padding) {
-      adjustedY = padding;
+      adjustedY = padding
     }
 
-    setAdjustedPosition({ x: adjustedX, y: adjustedY });
-  }, [visible, x, y, allTags.length]);
+    setAdjustedPosition({ x: adjustedX, y: adjustedY })
+  }, [visible, x, y, allTags.length])
 
   // 关闭时自动提交
   const closeAndSubmit = useCallback(async () => {
-    if (isClosing) return;
-    setIsClosing(true);
+    if (isClosing) return
+    setIsClosing(true)
 
-    const added = selectedTags.filter((t) => !initialTagsRef.current.includes(t));
-    const removed = initialTagsRef.current.filter((t) => !selectedTags.includes(t));
+    const added = selectedTags.filter(
+      (t) => !initialTagsRef.current.includes(t),
+    )
+    const removed = initialTagsRef.current.filter(
+      (t) => !selectedTags.includes(t),
+    )
 
     if (added.length > 0 || removed.length > 0) {
-      await applyTagChanges(added, removed);
+      await applyTagChanges(added, removed)
     }
 
-    onClose();
-  }, [selectedTags, onClose, isClosing]);
+    onClose()
+  }, [selectedTags, onClose, isClosing])
 
   // 应用标签变化
   const applyTagChanges = async (added: string[], removed: string[]) => {
-    if (!mediaId) return;
+    if (!mediaId) return
 
-    const mediaIdNum = Number(mediaId);
+    const mediaIdNum = Number(mediaId)
     if (!Number.isFinite(mediaIdNum)) {
-      console.error('[context-menu] invalid media id:', mediaId);
-      return;
+      console.error('[context-menu] invalid media id:', mediaId)
+      return
     }
 
     try {
@@ -108,96 +116,111 @@ export default function MediaCardContextMenu({
       for (const tagName of added) {
         await invoke('add_tag_to_media', {
           mediaId: mediaIdNum,
-          tagName
-        });
+          tagName,
+        })
       }
 
       // 移除取消选中的标签
       for (const tagName of removed) {
-        const dbTags = await invoke<{ id: number; name: string }[]>('get_tags_by_media', {
-          mediaId: mediaIdNum
-        });
-        const matched = dbTags.find((tag) => tag.name === tagName);
+        const dbTags = await invoke<{ id: number; name: string }[]>(
+          'get_tags_by_media',
+          {
+            mediaId: mediaIdNum,
+          },
+        )
+        const matched = dbTags.find((tag) => tag.name === tagName)
         if (matched) {
           await invoke('remove_tag_from_media', {
             mediaId: mediaIdNum,
-            tagId: matched.id
-          });
+            tagId: matched.id,
+          })
         }
       }
 
-      onTagsApplied(mediaId, added, removed);
+      onTagsApplied(mediaId, added, removed)
     } catch (error) {
-      console.error('[context-menu] apply tags failed:', error);
+      console.error('[context-menu] apply tags failed:', error)
     }
-  };
+  }
 
   // 点击外部关闭
   useEffect(() => {
-    if (!visible) return;
+    if (!visible) return
 
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        void closeAndSubmit();
+        void closeAndSubmit()
       }
-    };
+    }
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        void closeAndSubmit();
+        void closeAndSubmit()
       }
-    };
+    }
 
     // 延迟添加事件监听，避免立即触发关闭
     const timer = setTimeout(() => {
-      window.addEventListener('mousedown', handleClickOutside);
-      window.addEventListener('keydown', handleEscape);
-    }, 100);
+      window.addEventListener('mousedown', handleClickOutside)
+      window.addEventListener('keydown', handleEscape)
+    }, 100)
 
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('keydown', handleEscape);
-    };
-  }, [visible, closeAndSubmit]);
+      clearTimeout(timer)
+      window.removeEventListener('mousedown', handleClickOutside)
+      window.removeEventListener('keydown', handleEscape)
+    }
+  }, [visible, closeAndSubmit])
 
   const toggleTag = useCallback((tagName: string) => {
     setSelectedTags((prev) =>
-      prev.includes(tagName) ? prev.filter((t) => t !== tagName) : [...prev, tagName]
-    );
-  }, []);
+      prev.includes(tagName)
+        ? prev.filter((t) => t !== tagName)
+        : [...prev, tagName],
+    )
+  }, [])
 
   // 过滤标签（支持搜索）
-  const filteredTags = allTags.filter((tag) => tag.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredTags = allTags.filter((tag) =>
+    tag.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
 
-  const { t } = useI18n();
-  if (!visible) return null;
+  const { t } = useI18n()
+  if (!visible) return null
 
   return (
     <div
       ref={menuRef}
       className="fixed z-50 w-[280px] rounded-lg border p-3 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
-      style={{ 
-        top: adjustedPosition.y, 
+      style={{
+        top: adjustedPosition.y,
         left: adjustedPosition.x,
         backgroundColor: theme.sidebar,
-        borderColor: theme.borderLight
+        borderColor: theme.borderLight,
       }}
       onClick={(e) => e.stopPropagation()}
     >
       {/* 标题 */}
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs font-medium" style={{ color: theme.textTertiary }}>
-          {selectedCount > 0 ? `${t('context.bulkTags')} (${selectedCount}${t('context.selectedCountSuffix')})` : t('context.tags')}
+        <span
+          className="text-xs font-medium"
+          style={{ color: theme.textTertiary }}
+        >
+          {selectedCount > 0
+            ? `${t('context.bulkTags')} (${selectedCount}${t('context.selectedCountSuffix')})`
+            : t('context.tags')}
         </span>
-        <span className="text-xs" style={{ color: theme.textTertiary }}>{selectedTags.length}{t('context.selectedCountSuffix')}</span>
+        <span className="text-xs" style={{ color: theme.textTertiary }}>
+          {selectedTags.length}
+          {t('context.selectedCountSuffix')}
+        </span>
       </div>
 
       {/* 搜索框 */}
       <div className="mb-3">
         <input
           type="text"
-          placeholder="搜索标签..."
+          placeholder={t('context.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full rounded-md border px-3 py-1.5 text-sm outline-none transition-all duration-150"
@@ -214,7 +237,7 @@ export default function MediaCardContextMenu({
         {filteredTags.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {filteredTags.map((tag) => {
-              const isSelected = selectedTags.includes(tag.name);
+              const isSelected = selectedTags.includes(tag.name)
               return (
                 <button
                   key={tag.id}
@@ -223,34 +246,37 @@ export default function MediaCardContextMenu({
                   className={`
                     h-7 px-3 text-sm rounded-md cursor-pointer transition-all duration-150
                     active:scale-95
-                    ${
-                      isSelected
-                        ? 'text-white'
-                        : ''
-                    }
+                    ${isSelected ? 'text-white' : ''}
                   `}
                   style={{
                     backgroundColor: isSelected ? '#3B82F6' : theme.tagBg,
                     color: isSelected ? '#FFFFFF' : theme.textSecondary,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = isSelected ? '#60A5FA' : theme.tagHover;
+                    e.currentTarget.style.backgroundColor = isSelected
+                      ? '#60A5FA'
+                      : theme.tagHover
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = isSelected ? '#3B82F6' : theme.tagBg;
+                    e.currentTarget.style.backgroundColor = isSelected
+                      ? '#3B82F6'
+                      : theme.tagBg
                   }}
                 >
                   {tag.name}
                 </button>
-              );
+              )
             })}
           </div>
         ) : (
-          <div className="py-4 text-center text-sm" style={{ color: theme.textTertiary }}>
-            {searchQuery ? '未找到匹配的标签' : '暂无标签'}
+          <div
+            className="py-4 text-center text-sm"
+            style={{ color: theme.textTertiary }}
+          >
+            {searchQuery ? t('context.noMatch') : t('context.noTags')}
           </div>
         )}
       </div>
     </div>
-  );
+  )
 }

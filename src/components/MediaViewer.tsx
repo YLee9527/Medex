@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { MediaItem } from '../store/useAppStore';
 import { useThemeContext } from '../contexts/ThemeContext';
+import { useI18n } from '../contexts/I18nContext';
 
 export interface MediaViewerProps {
   open: boolean;
@@ -19,6 +20,7 @@ export default function MediaViewer({
   onChangeIndex
 }: MediaViewerProps) {
   const { theme } = useThemeContext();
+  const { t } = useI18n();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const safeIndex = useMemo(() => {
     if (mediaList.length === 0) {

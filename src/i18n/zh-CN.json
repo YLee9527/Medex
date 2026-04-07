@@ -58,7 +58,7 @@
   "inspector.favorite.remove": "取消收藏",
   "inspector.delete": "删除",
 
-  "mediaCard.noPreview": "No Preview",
+  "mediaCard.noPreview": "无预览",
   "mediaCard.generatingThumb": "生成缩略图...",
   "mediaCard.noTags": "暂无标签",
   "mediaCard.removeTagFailedPrefix": "移除标签失败：",
@@ -87,6 +87,15 @@
 
   "toolbar.scanCompletePrefix": "扫描完成，当前共 ",
   "toolbar.scanCompleteSuffix": " 个媒体文件",
+
+  "errors.batchTagFailed": "批量标签操作失败：",
+  "errors.updateFavoriteFailed": "收藏状态更新失败：",
+
+  "viewer.prev": "上一个",
+  "viewer.next": "下一个",
+
+  "update.notActive": "当前版本尚未发布更新。请在发布新版本后重试。",
+  "update.failed": "更新失败",
 
   "errors.createTagFailed": "新增标签失败：",
   "errors.deleteTagFailed": "删除标签失败：",

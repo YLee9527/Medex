@@ -19,6 +19,7 @@ export default function ToolbarContainer() {
   const setMediaTypeFilter = useAppStore((state) => state.setMediaTypeFilter)
   const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb)
   const { theme } = useThemeContext()
+  const { t } = useI18n()
   const [statusMessage, setStatusMessage] = useState('')
   const scanInFlightRef = useRef(false)
   const doneHandledRef = useRef(false)
@@ -68,7 +69,7 @@ export default function ToolbarContainer() {
         scanInFlightRef.current = false
         try {
           const count = await loadAllMedia()
-          setStatusMessage(`扫描完成，当前共 ${count} 个媒体文件`)
+          setStatusMessage(`${t('toolbar.scanCompletePrefix')}${count}${t('toolbar.scanCompleteSuffix')}`)
           window.setTimeout(() => setStatusMessage(''), 2800)
         } catch (error) {
           console.error('[ui] refresh after scan failed:', error)

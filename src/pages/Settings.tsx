@@ -25,7 +25,9 @@ export default function Settings() {
   const { t, language, setLanguage } = useI18n()
   const [libraryPath, setLibraryPath] = useState<string>('')
   // 使用懒初始化确保初始值来自 localStorage，避免 mount 时被初始 true 覆盖
-  const [autoScan, setAutoScan] = useState<boolean>(() => parseBoolean(localStorage.getItem('autoScanOnStartup'), false))
+  const [autoScan, setAutoScan] = useState<boolean>(() =>
+    parseBoolean(localStorage.getItem('autoScanOnStartup'), false),
+  )
   const [isScanning, setIsScanning] = useState(false)
 
   // 初始化时从 localStorage 读取媒体库路径（autoScan 由懒初始化负责）
@@ -52,7 +54,7 @@ export default function Settings() {
   // 启动一次扫描并管理状态与事件
   const startScan = async (path: string) => {
     if (!path) {
-      window.alert('请先选择媒体库路径')
+      window.alert(t('alerts.selectLibraryFirst'))
       return
     }
     try {
@@ -63,7 +65,7 @@ export default function Settings() {
       window.alert(t('alerts.scanComplete'))
     } catch (error) {
       console.error('[ui] scan failed:', error)
-      window.alert(`扫描失败：${String(error)}`)
+      window.alert(`${t('alerts.scanFailedPrefix')}${String(error)}`)
     } finally {
       setIsScanning(false)
     }
@@ -87,7 +89,7 @@ export default function Settings() {
       await startScan(selected)
     } catch (error) {
       console.error('[ui] scan failed:', error)
-      window.alert(`扫描失败：${String(error)}`)
+      window.alert(`${t('alerts.scanFailedPrefix')}${String(error)}`)
       setIsScanning(false)
     }
   }
@@ -107,7 +109,7 @@ export default function Settings() {
       console.log('[ui] library data cleared successfully')
     } catch (error) {
       console.error('[ui] clear library data failed:', error)
-      window.alert(`清除数据失败：${String(error)}`)
+      window.alert(`${t('alerts.scanFailedPrefix')}${String(error)}`)
     }
   }
 
@@ -124,7 +126,7 @@ export default function Settings() {
         className="flex items-center justify-between px-6 py-4 border-b"
         style={{ borderColor: theme.borderLight }}
       >
-        <h1 className="text-xl font-semibold">设置</h1>
+        <h1 className="text-xl font-semibold">{t('settings.title')}</h1>
       </div>
 
       {/* Settings List */}
@@ -136,7 +138,7 @@ export default function Settings() {
             style={{ borderColor: theme.borderLight }}
           >
             <div className="text-sm font-medium" style={{ color: theme.text }}>
-              语言
+              {t('settings.language.label')}
             </div>
             <div>
               <select
@@ -150,7 +152,11 @@ export default function Settings() {
                     console.warn('[settings] emit language-changed failed', err)
                   }
                   // Local window event for same-window listeners
-                  window.dispatchEvent(new CustomEvent('medex:language-changed', { detail: newLang }))
+                  window.dispatchEvent(
+                    new CustomEvent('medex:language-changed', {
+                      detail: newLang,
+                    }),
+                  )
                 }}
                 className="px-3 py-1.5 border rounded text-sm focus:outline-none focus:border-blue-500"
                 style={{
@@ -171,7 +177,7 @@ export default function Settings() {
             style={{ borderColor: theme.borderLight }}
           >
             <div className="text-sm font-medium" style={{ color: theme.text }}>
-              主题
+              {t('settings.theme.label')}
             </div>
             <div className="flex space-x-2">
               <button
@@ -183,7 +189,7 @@ export default function Settings() {
                   color: themeMode === 'dark' ? '#FFFFFF' : theme.text,
                 }}
               >
-                深色
+                {t('settings.theme.dark')}
               </button>
               <button
                 onClick={() => setTheme('light')}
@@ -194,7 +200,7 @@ export default function Settings() {
                   color: themeMode === 'light' ? '#FFFFFF' : theme.text,
                 }}
               >
-                浅色
+                {t('settings.theme.light')}
               </button>
               <button
                 onClick={() => setTheme('system')}
@@ -205,7 +211,7 @@ export default function Settings() {
                   color: themeMode === 'system' ? '#FFFFFF' : theme.text,
                 }}
               >
-                跟随系统
+                {t('settings.theme.system')}
               </button>
             </div>
           </div>
@@ -216,7 +222,7 @@ export default function Settings() {
             style={{ borderColor: theme.borderLight }}
           >
             <div className="text-sm font-medium" style={{ color: theme.text }}>
-              媒体库路径
+              {t('settings.library.label')}
             </div>
             <div className="flex items-center space-x-2">
               <div className="relative flex w-64 items-center">
@@ -250,7 +256,7 @@ export default function Settings() {
                       e.currentTarget.style.color = theme.textSecondary
                       e.currentTarget.style.backgroundColor = 'transparent'
                     }}
-                    title="清除路径"
+                    title={t('settings.clearPath.title')}
                   >
                     <svg
                       className="h-4 w-4"
@@ -288,7 +294,7 @@ export default function Settings() {
                   }
                 }}
               >
-                {isScanning ? '扫描中...' : '选择'}
+                {isScanning ? t('settings.scanning') : t('settings.select')}
               </button>
             </div>
           </div>
@@ -299,7 +305,7 @@ export default function Settings() {
             style={{ borderColor: theme.borderLight }}
           >
             <div className="text-sm font-medium" style={{ color: theme.text }}>
-              启动时自动扫描媒体库
+              {t('settings.autoScan.label')}
             </div>
             <div>
               <label className="flex items-center cursor-pointer">

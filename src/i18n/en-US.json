@@ -88,6 +88,15 @@
   "toolbar.scanCompletePrefix": "Scan complete, ",
   "toolbar.scanCompleteSuffix": " media files",
 
+  "errors.batchTagFailed": "Batch tag operation failed: ",
+  "errors.updateFavoriteFailed": "Updating favorite status failed: ",
+
+  "viewer.prev": "Previous",
+  "viewer.next": "Next",
+
+  "update.notActive": "No updates published for this version. Please try again after a release.",
+  "update.failed": "Update failed",
+
   "errors.createTagFailed": "Create tag failed: ",
   "errors.deleteTagFailed": "Delete tag failed: ",
 

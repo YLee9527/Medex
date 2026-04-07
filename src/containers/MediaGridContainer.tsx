@@ -8,6 +8,7 @@ import MediaCardContextMenu from '../components/MediaCardContextMenu';
 import { DbMediaItem, MediaItem, useAppStore } from '../store/useAppStore';
 import { useEffect } from 'react';
 import { useThemeContext } from '../contexts/ThemeContext';
+import { useI18n } from '../contexts/I18nContext';
 
 interface MediaGridContainerProps {
   onOpenViewer: (mediaId: string) => void;
@@ -39,6 +40,7 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
   const mediaTypeFilter = useAppStore((state) => state.mediaTypeFilter);
   const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb);
   const { theme } = useThemeContext();
+  const { t } = useI18n();
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
   const [libraryPath, setLibraryPath] = useState<string | null>(null);
   const thumbnailMapRef = useRef<Record<string, string>>({});
@@ -223,7 +225,7 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
         time: '',
         mediaType: row.type,
         duration: '--:--',
-        resolution: '未知',
+        resolution: t('unknown'),
         isFavorite: row.isFavorite ?? false,
         isRecent: row.isRecent ?? false,
         recentViewedAt: row.recentViewedAt ?? null

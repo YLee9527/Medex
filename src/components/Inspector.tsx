@@ -1,117 +1,122 @@
-import { useState } from 'react';
-import { convertFileSrc } from '@tauri-apps/api/core';
-import { invoke } from '@tauri-apps/api/core';
-import { MediaCardProps } from './MediaCard';
-import { useEffect } from 'react';
-import { useThemeContext } from '../contexts/ThemeContext';
-import { useI18n } from '../contexts/I18nContext';
+import { useState } from 'react'
+import { convertFileSrc } from '@tauri-apps/api/core'
+import { invoke } from '@tauri-apps/api/core'
+import { MediaCardProps } from './MediaCard'
+import { useEffect } from 'react'
+import { useThemeContext } from '../contexts/ThemeContext'
+import { useI18n } from '../contexts/I18nContext'
 
 interface Tag {
-  id: number;
-  name: string;
+  id: number
+  name: string
 }
 
 export interface InspectorProps {
-  media: MediaCardProps | null;
-  onToggleFavorite: (mediaId: string) => void;
-  onDeleteMedia: (mediaId: string) => void;
+  media: MediaCardProps | null
+  onToggleFavorite: (mediaId: string) => void
+  onDeleteMedia: (mediaId: string) => void
 }
 
-export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: InspectorProps) {
-  const { theme } = useThemeContext();
-  const { t } = useI18n();
-  const [newTag, setNewTag] = useState('');
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [loadingTags, setLoadingTags] = useState(false);
-  const previewSrc = media ? toPreviewSrc(media.path || media.thumbnail) : '';
-  const mediaId = media ? Number(media.id) : null;
+export default function Inspector({
+  media,
+  onToggleFavorite,
+  onDeleteMedia,
+}: InspectorProps) {
+  const { theme } = useThemeContext()
+  const { t } = useI18n()
+  const [newTag, setNewTag] = useState('')
+  const [tags, setTags] = useState<Tag[]>([])
+  const [loadingTags, setLoadingTags] = useState(false)
+  const previewSrc = media ? toPreviewSrc(media.path || media.thumbnail) : ''
+  const mediaId = media ? Number(media.id) : null
 
   const reloadTags = async () => {
     if (!mediaId) {
-      setTags([]);
-      return;
+      setTags([])
+      return
     }
-    setLoadingTags(true);
+    setLoadingTags(true)
     try {
-      const result = await invoke<Tag[]>('get_tags_by_media', { mediaId });
-      setTags(result);
+      const result = await invoke<Tag[]>('get_tags_by_media', { mediaId })
+      setTags(result)
     } catch (error) {
-      console.error('[inspector] get_tags_by_media failed:', error);
+      console.error('[inspector] get_tags_by_media failed:', error)
     } finally {
-      setLoadingTags(false);
+      setLoadingTags(false)
     }
-  };
+  }
 
   useEffect(() => {
-    void reloadTags();
-  }, [mediaId]);
+    void reloadTags()
+  }, [mediaId])
 
   useEffect(() => {
     const onUpdated = () => {
-      void reloadTags();
-    };
-    window.addEventListener('medex:media-tags-updated', onUpdated);
-    return () => window.removeEventListener('medex:media-tags-updated', onUpdated);
-  }, [mediaId]);
+      void reloadTags()
+    }
+    window.addEventListener('medex:media-tags-updated', onUpdated)
+    return () =>
+      window.removeEventListener('medex:media-tags-updated', onUpdated)
+  }, [mediaId])
 
   const handleRemoveTag = async (tagId: number) => {
-    if (!mediaId) return;
-      try {
-        await invoke('remove_tag_from_media', { mediaId, tagId });
-        await reloadTags();
-        window.dispatchEvent(new Event('medex:tags-updated'));
-      } catch (error) {
-      console.error('[inspector] remove_tag_from_media failed:', error);
-      window.alert(`删除标签失败：${String(error)}`);
+    if (!mediaId) return
+    try {
+      await invoke('remove_tag_from_media', { mediaId, tagId })
+      await reloadTags()
+      window.dispatchEvent(new Event('medex:tags-updated'))
+    } catch (error) {
+      console.error('[inspector] remove_tag_from_media failed:', error)
+      window.alert(`${t('errors.deleteTagFailed')}${String(error)}`)
     }
-  };
+  }
 
   const handleAddTag = () => {
-    const tagValue = newTag.trim();
+    const tagValue = newTag.trim()
     if (!tagValue || !mediaId) {
-      return;
+      return
     }
     if (tags.some((tag) => tag.name.toLowerCase() === tagValue.toLowerCase())) {
-      setNewTag('');
-      return;
+      setNewTag('')
+      return
     }
     const run = async () => {
       try {
-        await invoke('add_tag_to_media', { mediaId, tagName: tagValue });
-        setNewTag('');
-        await reloadTags();
-        window.dispatchEvent(new Event('medex:tags-updated'));
+        await invoke('add_tag_to_media', { mediaId, tagName: tagValue })
+        setNewTag('')
+        await reloadTags()
+        window.dispatchEvent(new Event('medex:tags-updated'))
       } catch (error) {
-        console.error('[inspector] add_tag_to_media failed:', error);
-        window.alert(`新增标签失败：${String(error)}`);
+        console.error('[inspector] add_tag_to_media failed:', error)
+        window.alert(`新增标签失败：${String(error)}`)
       }
-    };
-    void run();
-  };
+    }
+    void run()
+  }
 
   return (
-    <aside 
+    <aside
       className="flex h-full w-[320px] shrink-0 flex-col overflow-hidden border-l p-4"
-      style={{ 
+      style={{
         backgroundColor: theme.sidebar,
         borderColor: theme.borderLight,
-        color: theme.text
+        color: theme.text,
       }}
     >
       <h2 className="mb-4 text-base font-medium">{t('inspector.title')}</h2>
 
       {!media ? (
-        <div 
+        <div
           className="flex h-[220px] items-center justify-center rounded-lg border border-dashed p-4 text-sm"
-          style={{ 
+          style={{
             borderColor: theme.borderLight,
-            color: theme.textSecondary
+            color: theme.textSecondary,
           }}
         >
           {t('inspector.selectPrompt')}
         </div>
       ) : (
-        <div 
+        <div
           className="flex min-h-0 flex-1 flex-col gap-4 rounded-lg border p-3"
           style={{ borderColor: theme.borderLight }}
         >
@@ -124,9 +129,9 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
                 preload="metadata"
                 playsInline
                 onLoadedData={(e) => {
-                  const el = e.currentTarget;
-                  el.currentTime = 0.001;
-                  el.pause();
+                  const el = e.currentTarget
+                  el.currentTime = 0.001
+                  el.pause()
                 }}
               />
             ) : media.thumbnail ? (
@@ -136,7 +141,7 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
                 className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
               />
             ) : (
-              <div 
+              <div
                 className="flex h-full w-full items-center justify-center text-xs"
                 style={{ color: theme.textTertiary }}
               >
@@ -146,11 +151,15 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
           </div>
 
           <div>
-            <p className="text-[14px] leading-5" style={{ color: theme.text }}>{media.filename}</p>
+            <p className="text-[14px] leading-5" style={{ color: theme.text }}>
+              {media.filename}
+            </p>
           </div>
 
           <div>
-            <p className="mb-2 text-xs" style={{ color: theme.textSecondary }}>{t('inspector.tagsLabel')}</p>
+            <p className="mb-2 text-xs" style={{ color: theme.textSecondary }}>
+              {t('inspector.tagsLabel')}
+            </p>
             <div className="flex max-h-28 flex-wrap gap-1 overflow-y-auto">
               {tags.map((tag) => (
                 <button
@@ -158,22 +167,26 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
                   type="button"
                   onClick={() => void handleRemoveTag(tag.id)}
                   className="rounded-[6px] px-2 py-1 text-[12px] leading-4 transition-colors"
-                  style={{ 
+                  style={{
                     backgroundColor: theme.tagBg,
                     color: theme.text,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = theme.tagHover;
+                    e.currentTarget.style.backgroundColor = theme.tagHover
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = theme.tagBg;
+                    e.currentTarget.style.backgroundColor = theme.tagBg
                   }}
                   title="点击删除标签"
                 >
                   #{tag.name}
                 </button>
               ))}
-              {loadingTags ? <span className="text-xs" style={{ color: theme.textTertiary }}>加载中...</span> : null}
+              {loadingTags ? (
+                <span className="text-xs" style={{ color: theme.textTertiary }}>
+                  加载中...
+                </span>
+              ) : null}
             </div>
           </div>
 
@@ -186,7 +199,9 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
           </div>
 
           <div className="mt-auto">
-            <p className="mb-2 text-xs" style={{ color: theme.textSecondary }}>{t('inspector.actions')}</p>
+            <p className="mb-2 text-xs" style={{ color: theme.textSecondary }}>
+              {t('inspector.actions')}
+            </p>
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-[1fr_auto] gap-2">
                 <input
@@ -195,7 +210,7 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      handleAddTag();
+                      handleAddTag()
                     }
                   }}
                   placeholder="输入标签"
@@ -203,21 +218,21 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
                   style={{
                     backgroundColor: theme.inputBg,
                     borderColor: theme.inputBorder,
-                    color: theme.text
+                    color: theme.text,
                   }}
                 />
                 <button
                   type="button"
                   onClick={handleAddTag}
                   className="rounded-md px-3 py-2 text-sm text-white transition-colors"
-                  style={{ 
+                  style={{
                     backgroundColor: theme.buttonBg,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = theme.buttonHover;
+                    e.currentTarget.style.backgroundColor = theme.buttonHover
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = theme.buttonBg;
+                    e.currentTarget.style.backgroundColor = theme.buttonBg
                   }}
                 >
                   新增标签
@@ -228,18 +243,18 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
                 <button
                   type="button"
                   onClick={() => {
-                    console.log('inspector favorite toggle:', media.id);
-                    onToggleFavorite(media.id);
+                    console.log('inspector favorite toggle:', media.id)
+                    onToggleFavorite(media.id)
                   }}
                   className="rounded-md px-3 py-2 text-left text-sm text-white transition-colors"
-                  style={{ 
+                  style={{
                     backgroundColor: theme.buttonBg,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = theme.buttonHover;
+                    e.currentTarget.style.backgroundColor = theme.buttonHover
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = theme.buttonBg;
+                    e.currentTarget.style.backgroundColor = theme.buttonBg
                   }}
                 >
                   {media.isFavorite ? '取消收藏' : '收藏'}
@@ -247,12 +262,12 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
                 <button
                   type="button"
                   onClick={() => {
-                    console.log('inspector delete media:', media.id);
-                    onDeleteMedia(media.id);
+                    console.log('inspector delete media:', media.id)
+                    onDeleteMedia(media.id)
                   }}
                   className="rounded-md px-3 py-2 text-sm text-white transition-colors hover:bg-red-700"
-                  style={{ 
-                    backgroundColor: 'rgba(185, 28, 28, 0.8)'
+                  style={{
+                    backgroundColor: 'rgba(185, 28, 28, 0.8)',
                   }}
                 >
                   删除
@@ -263,16 +278,19 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
         </div>
       )}
     </aside>
-  );
+  )
 }
 
 function toPreviewSrc(src: string): string {
-  if (!src) return '';
-  const isRemote = src.startsWith('http://') || src.startsWith('https://') || src.startsWith('asset:');
-  const isAbsoluteUnix = src.startsWith('/');
-  const isAbsoluteWindows = /^[A-Za-z]:\\/.test(src);
+  if (!src) return ''
+  const isRemote =
+    src.startsWith('http://') ||
+    src.startsWith('https://') ||
+    src.startsWith('asset:')
+  const isAbsoluteUnix = src.startsWith('/')
+  const isAbsoluteWindows = /^[A-Za-z]:\\/.test(src)
 
-  if (isRemote) return src;
-  if (isAbsoluteUnix || isAbsoluteWindows) return convertFileSrc(src);
-  return src;
+  if (isRemote) return src
+  if (isAbsoluteUnix || isAbsoluteWindows) return convertFileSrc(src)
+  return src
 }
