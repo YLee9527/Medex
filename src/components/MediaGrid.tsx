@@ -9,6 +9,9 @@ import {
 } from 'react-window';
 import MediaCard, { MediaCardProps } from './MediaCard';
 import { ThemeColors } from '../theme/theme';
+import { useI18n } from '../contexts/I18nContext';
+
+// inside component, add: const { t } = useI18n();
 
 export interface MediaGridProps {
   mediaList: MediaCardProps[];
@@ -83,6 +86,7 @@ export default function MediaGrid({
   theme
 }: MediaGridProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const { t } = useI18n();
   const { width, height } = useElementSize(containerRef);
   const listData = useMemo<ListItemData>(
     () => ({ mediaList, selectedIds, onCardClick, onCardDoubleClick, thumbnails, theme }),
@@ -135,11 +139,11 @@ export default function MediaGrid({
     return (
       <div ref={containerRef} className="min-h-0 flex-1 overflow-hidden pr-1">
         <div className="grid h-[36px] grid-cols-[90px_2fr_2fr_1fr_80px] items-center gap-2 border-b border-white/15 bg-[#101010] px-3 py-2 text-xs text-white/60">
-          <span>媒体</span>
-          <span>名称</span>
-          <span>标签</span>
-          <span>时间</span>
-          <span>类型</span>
+          <span>{t('grid.header.media')}</span>
+          <span>{t('grid.header.name')}</span>
+          <span>{t('grid.header.tags')}</span>
+          <span>{t('grid.header.time')}</span>
+          <span>{t('grid.header.type')}</span>
         </div>
 
         {width > 0 && listHeight > 0 ? (

@@ -1,66 +1,68 @@
-import { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import Sidebar from '../components/Sidebar';
-import { DbTagItem, useAppStore } from '../store/useAppStore';
-import { useThemeContext } from '../contexts/ThemeContext';
+import { useEffect, useState } from 'react'
+import { invoke } from '@tauri-apps/api/core'
+import Sidebar from '../components/Sidebar'
+import { DbTagItem, useAppStore } from '../store/useAppStore'
+import { useThemeContext } from '../contexts/ThemeContext'
+import { useI18n } from '../contexts/I18nContext'
 
 export default function SidebarContainer() {
-  const navItems = useAppStore((state) => state.navItems);
-  const tags = useAppStore((state) => state.tags);
-  const clickNav = useAppStore((state) => state.clickNav);
-  const clickTag = useAppStore((state) => state.clickTag);
-  const setTagsFromDb = useAppStore((state) => state.setTagsFromDb);
-  const { theme } = useThemeContext();
-  const [newTagName, setNewTagName] = useState('');
+  const navItems = useAppStore((state) => state.navItems)
+  const tags = useAppStore((state) => state.tags)
+  const clickNav = useAppStore((state) => state.clickNav)
+  const clickTag = useAppStore((state) => state.clickTag)
+  const setTagsFromDb = useAppStore((state) => state.setTagsFromDb)
+  const { theme } = useThemeContext()
+  const { t } = useI18n()
+  const [newTagName, setNewTagName] = useState('')
 
   useEffect(() => {
     const loadTags = async () => {
       try {
-        const rows = await invoke<DbTagItem[]>('get_all_tags_with_count');
-        setTagsFromDb(rows);
+        const rows = await invoke<DbTagItem[]>('get_all_tags_with_count')
+        setTagsFromDb(rows)
       } catch (error) {
-        console.error('[sidebar] get_all_tags_with_count failed:', error);
+        console.error('[sidebar] get_all_tags_with_count failed:', error)
       }
-    };
+    }
 
-    void loadTags();
+    void loadTags()
 
     const onTagsUpdated = () => {
-      void loadTags();
-    };
-    window.addEventListener('medex:tags-updated', onTagsUpdated);
-    return () => window.removeEventListener('medex:tags-updated', onTagsUpdated);
-  }, [setTagsFromDb]);
+      void loadTags()
+    }
+    window.addEventListener('medex:tags-updated', onTagsUpdated)
+    return () => window.removeEventListener('medex:tags-updated', onTagsUpdated)
+  }, [setTagsFromDb])
 
   const handleCreateTag = async () => {
-    const normalized = newTagName.trim();
+    const normalized = newTagName.trim()
     if (!normalized) {
-      return;
+      return
     }
 
     try {
-      await invoke('create_tag', { tagName: normalized });
-      setNewTagName('');
-      const rows = await invoke<DbTagItem[]>('get_all_tags_with_count');
-      setTagsFromDb(rows);
-      window.dispatchEvent(new Event('medex:tags-updated'));
+      await invoke('create_tag', { tagName: normalized })
+      setNewTagName('')
+      const rows = await invoke<DbTagItem[]>('get_all_tags_with_count')
+      setTagsFromDb(rows)
+      window.dispatchEvent(new Event('medex:tags-updated'))
     } catch (error) {
-      console.error('[sidebar] create_tag failed:', error);
-      window.alert(`新增标签失败：${String(error)}`);
+      console.error('[sidebar] create_tag failed:', error)
+      window.alert(`${t('errors.createTagFailed') ?? '新增标签失败：'}${String(error)}`)
     }
-  };
+  }
 
   const handleDeleteTag = async (tagId: string) => {
     try {
-      await invoke('delete_tag', { tagId: Number(tagId) });
-      const rows = await invoke<DbTagItem[]>('get_all_tags_with_count');
-      setTagsFromDb(rows);
-      window.dispatchEvent(new Event('medex:tags-updated'));
+      await invoke('delete_tag', { tagId: Number(tagId) })
+      const rows = await invoke<DbTagItem[]>('get_all_tags_with_count')
+      setTagsFromDb(rows)
+      window.dispatchEvent(new Event('medex:tags-updated'))
     } catch (error) {
-      console.error('[sidebar] delete_tag failed:', error);
-      window.alert(`删除标签失败：${String(error)}`);
+      console.error('[sidebar] delete_tag failed:', error)
+      window.alert(`${t('errors.deleteTagFailed') ?? '删除标签失败：'}${String(error)}`)
     }
-  };
+  }
 
   return (
     <Sidebar
@@ -74,5 +76,5 @@ export default function SidebarContainer() {
       onTagClick={clickTag}
       theme={theme}
     />
-  );
+  )
 }

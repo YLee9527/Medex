@@ -1,5 +1,6 @@
 import { UpdateInfo } from '../UpdatePage';
 import { ThemeColors } from '../../theme/theme';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface AvailableViewProps {
   currentVersion: string;
@@ -16,9 +17,10 @@ export function AvailableView({
   onLater,
   theme,
 }: AvailableViewProps) {
+  const { t } = useI18n();
   return (
     <div className="text-center animate-fade-in">
-      <h2 className="text-xl font-medium mb-2" style={{ color: theme.highlight }}>发现新版本</h2>
+      <h2 className="text-xl font-medium mb-2" style={{ color: theme.highlight }}>{t('update.foundNew')}</h2>
       
       {/* Version Info */}
       <div 
@@ -40,7 +42,7 @@ export function AvailableView({
         className="rounded-lg p-4 mb-6 text-left max-h-48 overflow-y-auto"
         style={{ backgroundColor: theme.tagBg }}
       >
-        <h3 className="text-sm font-medium mb-2" style={{ color: theme.text }}>更新内容：</h3>
+        <h3 className="text-sm font-medium mb-2" style={{ color: theme.text }}>{t('update.releaseNotesTitle')}</h3>
         <pre className="text-xs whitespace-pre-wrap font-sans" style={{ color: theme.textSecondary }}>
           {updateInfo.body}
         </pre>

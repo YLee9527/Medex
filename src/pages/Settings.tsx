@@ -4,6 +4,7 @@ import { open } from '@tauri-apps/plugin-dialog'
 import { emit } from '@tauri-apps/api/event'
 import { useThemeContext } from '../contexts/ThemeContext'
 import { ThemeColors } from '../theme/theme'
+import { useI18n } from '../contexts/I18nContext'
 
 export default function Settings() {
   const { theme, themeMode, toggleTheme, setTheme } = useThemeContext()
@@ -21,7 +22,7 @@ export default function Settings() {
     }
   }
 
-  const [language, setLanguage] = useState('zh-CN')
+  const { t, language, setLanguage } = useI18n()
   const [libraryPath, setLibraryPath] = useState<string>('')
   // 使用懒初始化确保初始值来自 localStorage，避免 mount 时被初始 true 覆盖
   const [autoScan, setAutoScan] = useState<boolean>(() => parseBoolean(localStorage.getItem('autoScanOnStartup'), false))
@@ -59,7 +60,7 @@ export default function Settings() {
       window.dispatchEvent(new CustomEvent('medex:scan-started'))
       await invoke('scan_and_index', { path })
       window.dispatchEvent(new CustomEvent('medex:scan-completed'))
-      window.alert('媒体库扫描完成！')
+      window.alert(t('alerts.scanComplete'))
     } catch (error) {
       console.error('[ui] scan failed:', error)
       window.alert(`扫描失败：${String(error)}`)
@@ -140,7 +141,17 @@ export default function Settings() {
             <div>
               <select
                 value={language}
-                onChange={(e) => setLanguage(e.target.value)}
+                onChange={async (e) => {
+                  const newLang = e.target.value
+                  setLanguage(newLang)
+                  try {
+                    await emit('medex:language-changed', { language: newLang })
+                  } catch (err) {
+                    console.warn('[settings] emit language-changed failed', err)
+                  }
+                  // Local window event for same-window listeners
+                  window.dispatchEvent(new CustomEvent('medex:language-changed', { detail: newLang }))
+                }}
                 className="px-3 py-1.5 border rounded text-sm focus:outline-none focus:border-blue-500"
                 style={{
                   backgroundColor: theme.inputBg,
@@ -148,8 +159,8 @@ export default function Settings() {
                   color: theme.text,
                 }}
               >
-                <option value="zh-CN">简体中文</option>
-                <option value="en-US">English</option>
+                <option value="zh-CN">{t('languages.zh-CN')}</option>
+                <option value="en-US">{t('languages.en-US')}</option>
               </select>
             </div>
           </div>
@@ -213,7 +224,7 @@ export default function Settings() {
                   type="text"
                   value={libraryPath}
                   readOnly
-                  placeholder="未选择媒体库路径"
+                  placeholder={t('settings.library.placeholder')}
                   className="w-full px-3 py-1.5 pr-10 border rounded text-sm focus:outline-none cursor-not-allowed"
                   style={{
                     backgroundColor: theme.inputBg,

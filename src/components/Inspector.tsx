@@ -4,6 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { MediaCardProps } from './MediaCard';
 import { useEffect } from 'react';
 import { useThemeContext } from '../contexts/ThemeContext';
+import { useI18n } from '../contexts/I18nContext';
 
 interface Tag {
   id: number;
@@ -18,6 +19,7 @@ export interface InspectorProps {
 
 export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: InspectorProps) {
   const { theme } = useThemeContext();
+  const { t } = useI18n();
   const [newTag, setNewTag] = useState('');
   const [tags, setTags] = useState<Tag[]>([]);
   const [loadingTags, setLoadingTags] = useState(false);
@@ -96,7 +98,7 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
         color: theme.text
       }}
     >
-      <h2 className="mb-4 text-base font-medium">Inspector</h2>
+      <h2 className="mb-4 text-base font-medium">{t('inspector.title')}</h2>
 
       {!media ? (
         <div 
@@ -106,7 +108,7 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
             color: theme.textSecondary
           }}
         >
-          请选择一个媒体查看详情
+          {t('inspector.selectPrompt')}
         </div>
       ) : (
         <div 
@@ -148,7 +150,7 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
           </div>
 
           <div>
-            <p className="mb-2 text-xs" style={{ color: theme.textSecondary }}>标签：</p>
+            <p className="mb-2 text-xs" style={{ color: theme.textSecondary }}>{t('inspector.tagsLabel')}</p>
             <div className="flex max-h-28 flex-wrap gap-1 overflow-y-auto">
               {tags.map((tag) => (
                 <button
@@ -184,7 +186,7 @@ export default function Inspector({ media, onToggleFavorite, onDeleteMedia }: In
           </div>
 
           <div className="mt-auto">
-            <p className="mb-2 text-xs" style={{ color: theme.textSecondary }}>操作：</p>
+            <p className="mb-2 text-xs" style={{ color: theme.textSecondary }}>{t('inspector.actions')}</p>
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-[1fr_auto] gap-2">
                 <input

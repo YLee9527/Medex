@@ -1,17 +1,18 @@
-import { SidebarNavItem, SidebarTagItem } from '../store/useAppStore';
-import { ThemeColors } from '../theme/theme';
-import TagItem from './TagItem';
+import { SidebarNavItem, SidebarTagItem } from '../store/useAppStore'
+import { ThemeColors } from '../theme/theme'
+import TagItem from './TagItem'
+import { useI18n } from '../contexts/I18nContext'
 
 export interface SidebarProps {
-  navItems: SidebarNavItem[];
-  tags: SidebarTagItem[];
-  newTagName: string;
-  onNewTagNameChange: (value: string) => void;
-  onCreateTag: () => void;
-  onDeleteTag: (tagId: string) => void;
-  onTagClick: (tagId: string) => void;
-  onNavClick: (navId: string) => void;
-  theme: ThemeColors;
+  navItems: SidebarNavItem[]
+  tags: SidebarTagItem[]
+  newTagName: string
+  onNewTagNameChange: (value: string) => void
+  onCreateTag: () => void
+  onDeleteTag: (tagId: string) => void
+  onTagClick: (tagId: string) => void
+  onNavClick: (navId: string) => void
+  theme: ThemeColors
 }
 
 export default function Sidebar({
@@ -23,24 +24,36 @@ export default function Sidebar({
   onDeleteTag,
   onTagClick,
   onNavClick,
-  theme
+  theme,
 }: SidebarProps) {
+  const { t } = useI18n();
+
   return (
-    <aside 
+    <aside
       className="h-full w-[240px] shrink-0 overflow-y-auto p-4"
-      style={{ 
+      style={{
         backgroundColor: theme.sidebar,
         color: theme.text,
-        borderRight: `1px solid ${theme.borderLight}`
+        borderRight: `1px solid ${theme.borderLight}`,
       }}
     >
-      <div className="mb-8 rounded border p-3" style={{ borderColor: theme.borderLight }}>
-        <h1 className="text-xl font-semibold tracking-wide">Medex</h1>
-        <p className="mt-1 text-xs" style={{ color: theme.textTertiary }}>Media Management</p>
+      <div
+        className="mb-8 rounded border p-3"
+        style={{ borderColor: theme.borderLight }}
+      >
+        <h1 className="text-xl font-semibold tracking-wide">{t('sidebar.title')}</h1>
+        <p className="mt-1 text-xs" style={{ color: theme.textTertiary }}>
+          {t('sidebar.subtitle')}
+        </p>
       </div>
 
       <section className="mb-8">
-        <h2 className="mb-3 text-xs uppercase tracking-wider" style={{ color: theme.textTertiary }}>Navigation</h2>
+        <h2
+          className="mb-3 text-xs uppercase tracking-wider"
+          style={{ color: theme.textTertiary }}
+        >
+          Navigation
+        </h2>
         <ul className="space-y-2">
           {navItems.map((item) => (
             <li key={item.id}>
@@ -55,12 +68,12 @@ export default function Sidebar({
                 }}
                 onMouseEnter={(e) => {
                   if (!item.active) {
-                    e.currentTarget.style.backgroundColor = theme.hover;
+                    e.currentTarget.style.backgroundColor = theme.hover
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!item.active) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.backgroundColor = 'transparent'
                   }
                 }}
               >
@@ -72,7 +85,12 @@ export default function Sidebar({
       </section>
 
       <section>
-        <h2 className="mb-3 text-xs uppercase tracking-wider" style={{ color: theme.textTertiary }}>Tags</h2>
+        <h2
+          className="mb-3 text-xs uppercase tracking-wider"
+          style={{ color: theme.textTertiary }}
+        >
+          Tags
+        </h2>
 
         <div className="mb-3 grid grid-cols-[1fr_auto] gap-2">
           <input
@@ -81,10 +99,10 @@ export default function Sidebar({
             onChange={(e) => onNewTagNameChange(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                onCreateTag();
+                onCreateTag()
               }
             }}
-            placeholder="新增标签"
+            placeholder={t('sidebar.addTag.placeholder')}
             className="rounded-md px-2 py-1.5 text-xs outline-none transition-colors"
             style={{
               backgroundColor: theme.inputBg,
@@ -92,19 +110,19 @@ export default function Sidebar({
               color: theme.text,
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = theme.inputFocusBorder;
+              e.currentTarget.style.borderColor = theme.inputFocusBorder
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = theme.inputBorder;
+              e.currentTarget.style.borderColor = theme.inputBorder
             }}
             onMouseEnter={(e) => {
               if (document.activeElement !== e.currentTarget) {
-                e.currentTarget.style.backgroundColor = theme.hover;
+                e.currentTarget.style.backgroundColor = theme.hover
               }
             }}
             onMouseLeave={(e) => {
               if (document.activeElement !== e.currentTarget) {
-                e.currentTarget.style.backgroundColor = theme.inputBg;
+                e.currentTarget.style.backgroundColor = theme.inputBg
               }
             }}
           />
@@ -117,10 +135,10 @@ export default function Sidebar({
               color: theme.text,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = theme.buttonHover;
+              e.currentTarget.style.backgroundColor = theme.buttonHover
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = theme.buttonBg;
+              e.currentTarget.style.backgroundColor = theme.buttonBg
             }}
           >
             新增
@@ -129,10 +147,10 @@ export default function Sidebar({
 
         <ul className="space-y-2">
           {tags.map((tag) => (
-            <TagItem 
-              key={tag.id} 
-              tag={tag} 
-              onTagClick={onTagClick} 
+            <TagItem
+              key={tag.id}
+              tag={tag}
+              onTagClick={onTagClick}
               onDeleteTag={onDeleteTag}
               theme={theme}
             />
@@ -140,5 +158,5 @@ export default function Sidebar({
         </ul>
       </section>
     </aside>
-  );
+  )
 }

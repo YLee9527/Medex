@@ -71,7 +71,11 @@ export default function App() {
       }
 
       // 仅在当前会话未触发过自动扫描时启动
-      if (parseBoolean(autoScanSetting, false) && libraryPath && !alreadyFired) {
+      if (
+        parseBoolean(autoScanSetting, false) &&
+        libraryPath &&
+        !alreadyFired
+      ) {
         sessionStorage.setItem('medex:autoScanFired', String(Date.now()))
         console.log('[app] auto-scan enabled, starting scan for', libraryPath)
         // 通知其他窗口或组件
@@ -116,6 +120,40 @@ export default function App() {
           unlisten()
         } catch {}
       }
+    }
+  }, [])
+
+  // 监听全局语言变更事件（由设置窗口触发），在多窗口场景下刷新当前窗口以应用新语言
+  useEffect(() => {
+    let unlistenLang: (() => void) | null = null
+    void (async () => {
+      try {
+        const u = await listen('medex:language-changed', () => {
+          console.log(
+            '[app] language changed, reloading window to apply new language',
+          )
+          window.location.reload()
+        })
+        unlistenLang = u
+      } catch (err) {
+        console.warn('[app] failed to attach language-changed listener', err)
+      }
+    })()
+
+    // In addition, listen for same-window customEvent if emitted
+    const onLang = () => {
+      console.log('[app] received local language-changed, reloading')
+      window.location.reload()
+    }
+    window.addEventListener('medex:language-changed', onLang)
+
+    return () => {
+      if (unlistenLang) {
+        try {
+          unlistenLang()
+        } catch {}
+      }
+      window.removeEventListener('medex:language-changed', onLang)
     }
   }, [])
 

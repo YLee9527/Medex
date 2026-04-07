@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useThemeContext } from '../contexts/ThemeContext';
+import { useI18n } from '../contexts/I18nContext';
 
 export interface Tag {
   id: number;
@@ -169,6 +170,7 @@ export default function MediaCardContextMenu({
   // 过滤标签（支持搜索）
   const filteredTags = allTags.filter((tag) => tag.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
+  const { t } = useI18n();
   if (!visible) return null;
 
   return (
@@ -186,9 +188,9 @@ export default function MediaCardContextMenu({
       {/* 标题 */}
       <div className="mb-3 flex items-center justify-between">
         <span className="text-xs font-medium" style={{ color: theme.textTertiary }}>
-          {selectedCount > 0 ? `批量标签 (${selectedCount}项)` : '标签'}
+          {selectedCount > 0 ? `${t('context.bulkTags')} (${selectedCount}${t('context.selectedCountSuffix')})` : t('context.tags')}
         </span>
-        <span className="text-xs" style={{ color: theme.textTertiary }}>{selectedTags.length} 已选</span>
+        <span className="text-xs" style={{ color: theme.textTertiary }}>{selectedTags.length}{t('context.selectedCountSuffix')}</span>
       </div>
 
       {/* 搜索框 */}

@@ -1,12 +1,14 @@
-import { ThemeColors } from '../../theme/theme';
+import { ThemeColors } from '../../theme/theme'
+import { useI18n } from '../../contexts/I18nContext';
 
 interface ErrorViewProps {
-  message: string;
-  onRetry: () => void;
-  theme: ThemeColors;
+  message: string
+  onRetry: () => void
+  theme: ThemeColors
 }
 
 export function ErrorView({ message, onRetry, theme }: ErrorViewProps) {
+  const { t } = useI18n();
   return (
     <div className="text-center animate-fade-in">
       <div className="flex justify-center mb-4">
@@ -25,24 +27,28 @@ export function ErrorView({ message, onRetry, theme }: ErrorViewProps) {
           />
         </svg>
       </div>
-      <h2 className="text-xl font-medium mb-2" style={{ color: '#f87171' }}>检查更新失败</h2>
-      <p className="mb-6 text-sm" style={{ color: theme.textSecondary }}>{message}</p>
+      <h2 className="text-xl font-medium mb-2" style={{ color: '#f87171' }}>
+        {t('errors.updateCheckFailed')}
+      </h2>
+      <p className="mb-6 text-sm" style={{ color: theme.textSecondary }}>
+        {message}
+      </p>
       <button
         onClick={onRetry}
         className="px-6 py-2 rounded-lg transition-colors"
-        style={{ 
+        style={{
           backgroundColor: `${theme.text}18`,
-          color: theme.textSecondary
+          color: theme.textSecondary,
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = `${theme.text}30`;
+          e.currentTarget.style.backgroundColor = `${theme.text}30`
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = `${theme.text}18`;
+          e.currentTarget.style.backgroundColor = `${theme.text}18`
         }}
       >
         重试
       </button>
     </div>
-  );
+  )
 }

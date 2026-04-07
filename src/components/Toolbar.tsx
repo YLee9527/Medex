@@ -1,4 +1,5 @@
 import { ThemeColors } from '../theme/theme';
+import { useI18n } from '../contexts/I18nContext';
 
 export interface ToolbarProps {
   activeTags: string[];
@@ -17,6 +18,7 @@ export default function Toolbar({
   loading = false,
   theme
 }: ToolbarProps) {
+  const { t } = useI18n();
   return (
     <div 
       className="flex h-[60px] items-center justify-between gap-3 rounded-md px-3 py-2"
@@ -34,9 +36,9 @@ export default function Toolbar({
             </span>
           ))
         ) : (
-          <span className="text-[12px]" style={{ color: theme.textTertiary }}>未选择标签</span>
+          <span className="text-[12px]" style={{ color: theme.textTertiary }}>{t('toolbar.noTagsSelected')}</span>
         )}
-        <span className="ml-2 text-[12px]" style={{ color: theme.textTertiary }}>结果：{resultCount}</span>
+        <span className="ml-2 text-[12px]" style={{ color: theme.textTertiary }}>{t('toolbar.resultsPrefix')}{resultCount}</span>
       </div>
 
       <div className="flex items-center gap-2">
@@ -64,7 +66,7 @@ export default function Toolbar({
                 }
               }}
             >
-              {mode === 'all' ? 'All' : mode === 'image' ? 'Image' : 'Video'}
+              {mode === 'all' ? t('filter.all') : mode === 'image' ? t('filter.image') : t('filter.video')}
             </button>
           ))}
         </div>

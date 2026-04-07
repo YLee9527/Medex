@@ -1,4 +1,5 @@
 import { ThemeColors } from '../../theme/theme';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface ReadyViewProps {
   onRestart: () => void;
@@ -6,6 +7,7 @@ interface ReadyViewProps {
 }
 
 export function ReadyView({ onRestart, theme }: ReadyViewProps) {
+  const { t } = useI18n();
   return (
     <div className="text-center animate-fade-in">
       <div className="flex justify-center mb-4">
@@ -24,8 +26,8 @@ export function ReadyView({ onRestart, theme }: ReadyViewProps) {
           />
         </svg>
       </div>
-      <h2 className="text-xl font-medium mb-2" style={{ color: theme.text }}>更新已准备好</h2>
-      <p className="mb-6" style={{ color: theme.textSecondary }}>需要重启应用以完成更新</p>
+      <h2 className="text-xl font-medium mb-2" style={{ color: theme.text }}>{t('update.readyTitle')}</h2>
+      <p className="mb-6" style={{ color: theme.textSecondary }}>{t('update.readyDesc')}</p>
       <button
         onClick={onRestart}
         className="px-6 py-2 rounded-lg transition-colors shadow-md"
@@ -40,7 +42,7 @@ export function ReadyView({ onRestart, theme }: ReadyViewProps) {
           e.currentTarget.style.backgroundColor = '#3B82F6';
         }}
       >
-        立即重启
+        {t('update.restartNow')}
       </button>
     </div>
   );

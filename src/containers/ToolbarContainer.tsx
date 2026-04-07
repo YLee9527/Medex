@@ -1,38 +1,39 @@
-import { useEffect, useRef, useState } from 'react';
-import { convertFileSrc, invoke } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
-import Toolbar from '../components/Toolbar';
-import { DbMediaItem, MediaItem, useAppStore } from '../store/useAppStore';
-import { useThemeContext } from '../contexts/ThemeContext';
+import { useEffect, useRef, useState } from 'react'
+import { convertFileSrc, invoke } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event'
+import Toolbar from '../components/Toolbar'
+import { DbMediaItem, MediaItem, useAppStore } from '../store/useAppStore'
+import { useThemeContext } from '../contexts/ThemeContext'
+import { useI18n } from '../contexts/I18nContext'
 
 interface ScanProgressPayload {
-  current: number;
-  total: number;
-  filename: string;
+  current: number
+  total: number
+  filename: string
 }
 
 export default function ToolbarContainer() {
-  const tags = useAppStore((state) => state.tags);
-  const mediaItems = useAppStore((state) => state.mediaItems);
-  const mediaTypeFilter = useAppStore((state) => state.mediaTypeFilter);
-  const setMediaTypeFilter = useAppStore((state) => state.setMediaTypeFilter);
-  const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb);
-  const { theme } = useThemeContext();
-  const [statusMessage, setStatusMessage] = useState('');
-  const scanInFlightRef = useRef(false);
-  const doneHandledRef = useRef(false);
+  const tags = useAppStore((state) => state.tags)
+  const mediaItems = useAppStore((state) => state.mediaItems)
+  const mediaTypeFilter = useAppStore((state) => state.mediaTypeFilter)
+  const setMediaTypeFilter = useAppStore((state) => state.setMediaTypeFilter)
+  const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb)
+  const { theme } = useThemeContext()
+  const [statusMessage, setStatusMessage] = useState('')
+  const scanInFlightRef = useRef(false)
+  const doneHandledRef = useRef(false)
 
-  const activeTags = tags.filter((tag) => tag.selected).map((tag) => tag.name);
+  const activeTags = tags.filter((tag) => tag.selected).map((tag) => tag.name)
 
   const handleMediaTypeChange = (mode: 'all' | 'image' | 'video') => {
-    setMediaTypeFilter(mode);
-  };
+    setMediaTypeFilter(mode)
+  }
 
   const loadAllMedia = async () => {
     const rows = await invoke<DbMediaItem[]>('filter_media', {
       tagNames: activeTags,
-      mediaType: mediaTypeFilter === 'all' ? null : mediaTypeFilter
-    });
+      mediaType: mediaTypeFilter === 'all' ? null : mediaTypeFilter,
+    })
     const mapped: MediaItem[] = rows.map((row) => ({
       id: String(row.id),
       path: row.path,
@@ -45,46 +46,46 @@ export default function ToolbarContainer() {
       resolution: '未知',
       isFavorite: row.isFavorite ?? false,
       isRecent: row.isRecent ?? false,
-      recentViewedAt: row.recentViewedAt ?? null
-    }));
-    setMediaItemsFromDb(mapped);
-    return mapped.length;
-  };
+      recentViewedAt: row.recentViewedAt ?? null,
+    }))
+    setMediaItemsFromDb(mapped)
+    return mapped.length
+  }
 
   useEffect(() => {
-    void loadAllMedia();
-  }, []);
+    void loadAllMedia()
+  }, [])
 
   useEffect(() => {
-    let disposed = false;
-    let unlisten: (() => void) | null = null;
+    let disposed = false
+    let unlisten: (() => void) | null = null
     const setup = async () => {
       const fn = await listen('scan_done', async () => {
         if (!scanInFlightRef.current || doneHandledRef.current) {
-          return;
+          return
         }
-        doneHandledRef.current = true;
-        scanInFlightRef.current = false;
+        doneHandledRef.current = true
+        scanInFlightRef.current = false
         try {
-          const count = await loadAllMedia();
-          setStatusMessage(`扫描完成，当前共 ${count} 个媒体文件`);
-          window.setTimeout(() => setStatusMessage(''), 2800);
+          const count = await loadAllMedia()
+          setStatusMessage(`扫描完成，当前共 ${count} 个媒体文件`)
+          window.setTimeout(() => setStatusMessage(''), 2800)
         } catch (error) {
-          console.error('[ui] refresh after scan failed:', error);
+          console.error('[ui] refresh after scan failed:', error)
         }
-      });
+      })
       if (disposed) {
-        fn();
-        return;
+        fn()
+        return
       }
-      unlisten = fn;
-    };
-    void setup();
+      unlisten = fn
+    }
+    void setup()
     return () => {
-      disposed = true;
-      if (unlisten) unlisten();
-    };
-  }, []);
+      disposed = true
+      if (unlisten) unlisten()
+    }
+  }, [])
 
   return (
     <>
@@ -96,17 +97,17 @@ export default function ToolbarContainer() {
         theme={theme}
       />
       {statusMessage ? (
-        <div 
+        <div
           className="mt-2 rounded-md border px-3 py-2 text-xs"
-          style={{ 
+          style={{
             borderColor: `${theme.highlight}30`,
             backgroundColor: `${theme.highlight}10`,
-            color: theme.highlight
+            color: theme.highlight,
           }}
         >
           {statusMessage}
         </div>
       ) : null}
     </>
-  );
+  )
 }

@@ -1,0 +1,104 @@
+{
+  "settings.title": "Settings",
+  "settings.language.label": "Language",
+  "languages.zh-CN": "Simplified Chinese",
+  "languages.en-US": "English",
+  "settings.theme.label": "Theme",
+  "settings.theme.dark": "Dark",
+  "settings.theme.light": "Light",
+  "settings.theme.system": "System",
+  "settings.library.label": "Media Library Path",
+  "settings.library.placeholder": "No library path selected",
+  "settings.select": "Select",
+  "settings.scanning": "Scanning...",
+  "settings.autoScan.label": "Auto-scan media library on startup",
+  "settings.clearPath.title": "Clear path",
+  "alerts.selectLibraryFirst": "Please select a media library path first",
+  "alerts.scanComplete": "Media library scan completed!",
+  "alerts.scanFailedPrefix": "Scan failed: ",
+
+  "sidebar.title": "Medex",
+  "sidebar.subtitle": "Media Management",
+  "sidebar.navigation": "Navigation",
+  "sidebar.tags": "Tags",
+  "sidebar.addTag.placeholder": "New tag",
+  "sidebar.addTag.button": "Add",
+
+  "nav.all": "All Media",
+  "nav.favorites": "Favorites",
+  "nav.recent": "Recent",
+
+  "toolbar.noTagsSelected": "No tags selected",
+  "toolbar.resultsPrefix": "Results: ",
+
+  "grid.header.media": "Media",
+  "grid.header.name": "Name",
+  "grid.header.tags": "Tags",
+  "grid.header.time": "Time",
+  "grid.header.type": "Type",
+
+  "context.bulkTags": "Bulk tags",
+  "context.tags": "Tags",
+  "context.selectedCountSuffix": " selected",
+  "context.searchPlaceholder": "Search tags...",
+  "context.noMatch": "No matching tags found",
+  "context.noTags": "No tags",
+
+  "inspector.title": "Inspector",
+  "inspector.selectPrompt": "Select a media item to view details",
+  "inspector.tagsLabel": "Tags:",
+  "inspector.loadingTags": "Loading...",
+  "inspector.infoLabel": "Info:",
+  "inspector.duration": "Duration",
+  "inspector.resolution": "Resolution",
+  "inspector.actions": "Actions:",
+  "inspector.inputTagPlaceholder": "Enter tag",
+  "inspector.addTagButton": "Add tag",
+  "inspector.favorite.add": "Favorite",
+  "inspector.favorite.remove": "Unfavorite",
+  "inspector.delete": "Delete",
+
+  "mediaCard.noPreview": "No Preview",
+  "mediaCard.generatingThumb": "Generating thumbnail...",
+  "mediaCard.noTags": "No tags",
+  "mediaCard.removeTagFailedPrefix": "Remove tag failed: ",
+
+  "tag.mediaCount": "Media count",
+
+  "update.checking": "Checking for updates...",
+  "update.pleaseWait": "Please wait",
+  "update.downloading": "Downloading update...",
+  "update.readyTitle": "Update ready",
+  "update.readyDesc": "A restart is required to finish installing the update",
+  "update.restartNow": "Restart now",
+  "update.foundNew": "New version available",
+  "update.currentVersionLabel": "Current version",
+  "update.latestVersionLabel": "Latest version",
+  "update.releaseNotesTitle": "Release notes:",
+  "update.later": "Later",
+  "update.updateNow": "Update now",
+  "update.noUpdateFound": "You're on the latest version",
+  "update.recheck": "Re-check",
+
+  "errors.retry": "Retry",
+
+  "context.search.noQueryNoTags": "No tags",
+  "context.search.noQueryFound": "No matching tags",
+
+  "toolbar.scanCompletePrefix": "Scan complete, ",
+  "toolbar.scanCompleteSuffix": " media files",
+
+  "errors.createTagFailed": "Create tag failed: ",
+  "errors.deleteTagFailed": "Delete tag failed: ",
+
+  "filter.all": "All",
+  "filter.image": "Image",
+  "filter.video": "Video",
+
+  "viewer.close": "Close",
+
+  "actions.deleteTag": "Delete tag",
+  "actions.deleteTagTitle": "Click to delete tag",
+
+  "unknown": "Unknown"
+}

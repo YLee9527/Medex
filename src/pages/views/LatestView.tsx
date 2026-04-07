@@ -1,4 +1,5 @@
 import { ThemeColors } from '../../theme/theme';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface LatestViewProps {
   onRecheck: () => void;
@@ -6,6 +7,7 @@ interface LatestViewProps {
 }
 
 export function LatestView({ onRecheck, theme }: LatestViewProps) {
+  const { t } = useI18n();
   return (
     <div className="text-center animate-fade-in">
       <div className="flex justify-center mb-4">
@@ -24,8 +26,8 @@ export function LatestView({ onRecheck, theme }: LatestViewProps) {
           />
         </svg>
       </div>
-      <h2 className="text-xl font-medium mb-2" style={{ color: theme.text }}>已是最新版本</h2>
-      <p className="mb-6" style={{ color: theme.textSecondary }}>当前版本：1.0.0</p>
+      <h2 className="text-xl font-medium mb-2" style={{ color: theme.text }}>{t('update.noUpdateFound')}</h2>
+      <p className="mb-6" style={{ color: theme.textSecondary }}>{t('update.currentVersionLabel')}: 1.0.0</p>
       <button
         onClick={onRecheck}
         className="px-6 py-2 rounded-lg transition-colors"
@@ -40,7 +42,7 @@ export function LatestView({ onRecheck, theme }: LatestViewProps) {
           e.currentTarget.style.backgroundColor = `${theme.text}18`;
         }}
       >
-        重新检查
+        {t('update.recheck')}
       </button>
     </div>
   );

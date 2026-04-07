@@ -1,18 +1,23 @@
-import { ThemeColors } from '../../theme/theme';
+import { ThemeColors } from '../../theme/theme'
+import { useI18n } from '../../contexts/I18nContext';
 
 interface DownloadingViewProps {
-  theme: ThemeColors;
+  theme: ThemeColors
 }
 
 export function DownloadingView({ theme }: DownloadingViewProps) {
+  const { t } = useI18n();
   return (
     <div className="text-center animate-fade-in">
       {/* Loading Animation */}
       <div className="flex justify-center mb-4">
         <div className="relative">
-          <div 
+          <div
             className="w-16 h-16 border-4 border-t-blue-500 rounded-full animate-spin"
-            style={{ borderTopColor: theme.highlight, borderColor: `${theme.text}20` }}
+            style={{
+              borderTopColor: theme.highlight,
+              borderColor: `${theme.text}20`,
+            }}
           />
           <div className="absolute inset-0 flex items-center justify-center">
             <svg
@@ -32,8 +37,12 @@ export function DownloadingView({ theme }: DownloadingViewProps) {
           </div>
         </div>
       </div>
-      <h2 className="text-lg font-medium mb-2" style={{ color: theme.text }}>正在下载更新...</h2>
-      <p className="text-sm" style={{ color: theme.textSecondary }}>请稍候，不要关闭窗口</p>
+      <h2 className="text-lg font-medium mb-2" style={{ color: theme.text }}>
+        {t('update.downloading')}
+      </h2>
+      <p className="text-sm" style={{ color: theme.textSecondary }}>
+        {t('update.pleaseWait')}
+      </p>
     </div>
-  );
+  )
 }

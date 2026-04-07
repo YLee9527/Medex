@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from 'react';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { invoke } from '@tauri-apps/api/core';
 import { ThemeColors } from '../theme/theme';
+import { useI18n } from '../contexts/I18nContext';
 
 export interface MediaCardProps {
   id: string;
@@ -83,6 +84,7 @@ function MediaCard({
     }
   };
 
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -126,8 +128,8 @@ function MediaCard({
           }}
           className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full transition-colors"
           style={{ backgroundColor: theme.overlay }}
-          aria-label={isFavorite ? '取消收藏' : '收藏'}
-          title={isFavorite ? '取消收藏' : '收藏'}
+          aria-label={isFavorite ? t('inspector.favorite.remove') : t('inspector.favorite.add')}
+          title={isFavorite ? t('inspector.favorite.remove') : t('inspector.favorite.add')}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.55)';
           }}

@@ -1,5 +1,6 @@
 import { SidebarTagItem } from '../store/useAppStore';
 import { ThemeColors } from '../theme/theme';
+import { useI18n } from '../contexts/I18nContext';
 
 type TagItemProps = {
   tag: SidebarTagItem;
@@ -9,6 +10,7 @@ type TagItemProps = {
 };
 
 export default function TagItem({ tag, onTagClick, onDeleteTag, theme }: TagItemProps) {
+  const { t } = useI18n();
   const canDelete = tag.selected && (tag.mediaCount ?? 0) === 0;
 
   return (
@@ -21,7 +23,7 @@ export default function TagItem({ tag, onTagClick, onDeleteTag, theme }: TagItem
           backgroundColor: tag.selected ? theme.selected : 'transparent',
           color: tag.selected ? theme.text : theme.textSecondary,
         }}
-        title={`${tag.name}（媒体数：${tag.mediaCount ?? 0}）`}
+        title={`${tag.name} (${t('tag.mediaCount')}: ${tag.mediaCount ?? 0})`}
         onMouseEnter={(e) => {
           if (!tag.selected) {
             e.currentTarget.style.backgroundColor = theme.hover;
@@ -53,8 +55,8 @@ export default function TagItem({ tag, onTagClick, onDeleteTag, theme }: TagItem
             e.currentTarget.style.backgroundColor = 'transparent';
             e.currentTarget.style.color = theme.textSecondary;
           }}
-          aria-label="删除标签"
-          title="删除标签"
+          aria-label={t('actions.deleteTag')}
+          title={t('actions.deleteTag')}
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M3 6h18" />
