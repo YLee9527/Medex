@@ -114,7 +114,7 @@ try {
 // 步骤 6: 提交更改
 log('\n💾 步骤 6: 提交更改...', 'cyan');
 try {
-  exec('git add version.properties package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml');
+  exec('git add version.properties package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock');
   exec(`git commit -m "chore: release version ${version}"`);
   log(`✅ 提交成功：chore: release version ${version}`, 'green');
 } catch (error) {
