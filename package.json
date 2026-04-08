@@ -1,14 +1,15 @@
 {
   "name": "medex",
   "private": true,
-  "version": "0.8.6",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "sync-version": "node scripts/sync-version.js"
+    "sync-version": "node scripts/sync-version.js",
+    "deploy": "node scripts/deploy.js"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
