@@ -6,13 +6,25 @@
 - [SidebarContainer.tsx](file://src/containers/SidebarContainer.tsx)
 - [TagItem.tsx](file://src/components/TagItem.tsx)
 - [ThemeContext.tsx](file://src/contexts/ThemeContext.tsx)
+- [I18nContext.tsx](file://src/contexts/I18nContext.tsx)
 - [theme.ts](file://src/theme/theme.ts)
 - [useAppStore.ts](file://src/store/useAppStore.ts)
+- [en-US.json](file://src/i18n/en-US.json)
+- [zh-CN.json](file://src/i18n/zh-CN.json)
+- [Settings.tsx](file://src/pages/Settings.tsx)
 - [index.css](file://src/index.css)
 - [tailwind.config.ts](file://src/tailwind.config.ts)
 - [App.tsx](file://src/App.tsx)
 - [README.md](file://README.md)
 </cite>
+
+## 更新摘要
+**变更内容**
+- 新增国际化功能集成，支持中英文双语切换
+- 更新 Sidebar 组件以使用国际化上下文
+- 新增 I18nContext 提供者和资源文件
+- 扩展导航项翻译支持
+- 新增标签管理界面的国际化文本
 
 ## 目录
 1. [简介](#简介)
@@ -20,17 +32,20 @@
 3. [核心组件](#核心组件)
 4. [架构概览](#架构概览)
 5. [详细组件分析](#详细组件分析)
-6. [依赖关系分析](#依赖关系分析)
-7. [性能考虑](#性能考虑)
-8. [故障排除指南](#故障排除指南)
-9. [结论](#结论)
-10. [附录](#附录)
+6. [国际化功能](#国际化功能)
+7. [依赖关系分析](#依赖关系分析)
+8. [性能考虑](#性能考虑)
+9. [故障排除指南](#故障排除指南)
+10. [结论](#结论)
+11. [附录](#附录)
 
 ## 简介
 
-Sidebar 侧边栏组件是 Medex 多媒体管理应用的核心导航组件，负责提供应用的主要导航功能和标签管理系统。该组件采用现代化的 React + TypeScript 架构，集成了完整的主题系统、响应式设计和可访问性特性。
+Sidebar 侧边栏组件是 Medex 多媒体管理应用的核心导航组件，负责提供应用的主要导航功能和标签管理系统。该组件采用现代化的 React + TypeScript 架构，集成了完整的主题系统、响应式设计、可访问性特性和国际化功能。
 
-Medex 应用采用三栏式布局：Sidebar（侧边栏）+ Main（主内容区）+ Inspector（检查器），Sidebar 作为用户与应用交互的主要入口点，提供导航菜单和标签管理功能。
+Medex 应用采用三栏式布局：Sidebar（侧边栏）+ Main（主内容区）+ Inspector（检查器），Sidebar 作为用户与应用交互的主要入口点，提供导航菜单和标签管理功能。组件现已支持中英文双语界面，为全球用户提供本地化的使用体验。
+
+**更新** 组件现已完全国际化，使用 `useI18n()` 钩子和 `t()` 函数进行翻译，所有导航标签和UI文本均通过翻译系统提供多语言支持。
 
 ## 项目结构
 
@@ -48,6 +63,12 @@ end
 subgraph "状态管理层"
 useAppStore[useAppStore.ts]
 end
+subgraph "国际化系统"
+I18nContext[I18nContext.tsx]
+enUS[en-US.json]
+zhCN[zh-CN.json]
+Settings[Settings.tsx]
+end
 subgraph "主题系统"
 ThemeContext[ThemeContext.tsx]
 ThemeConfig[theme.ts]
@@ -64,18 +85,23 @@ SidebarContainer --> Sidebar
 Sidebar --> TagItem
 Sidebar --> useAppStore
 SidebarContainer --> useAppStore
+Sidebar --> I18nContext
+I18nContext --> enUS
+I18nContext --> zhCN
 Sidebar --> ThemeContext
 ThemeContext --> ThemeConfig
 Sidebar --> CSS
 Sidebar --> Tailwind
+Settings --> I18nContext
 ```
 
 **图表来源**
-- [Sidebar.tsx:1-145](file://src/components/Sidebar.tsx#L1-L145)
-- [SidebarContainer.tsx:1-79](file://src/containers/SidebarContainer.tsx#L1-L79)
-- [useAppStore.ts:1-395](file://src/store/useAppStore.ts#L1-L395)
-- [ThemeContext.tsx:1-99](file://src/contexts/ThemeContext.tsx#L1-L99)
-- [theme.ts:1-159](file://src/theme/theme.ts#L1-L159)
+- [Sidebar.tsx:1-163](file://src/components/Sidebar.tsx#L1-L163)
+- [SidebarContainer.tsx:1-81](file://src/containers/SidebarContainer.tsx#L1-L81)
+- [I18nContext.tsx:1-51](file://src/contexts/I18nContext.tsx#L1-L51)
+- [en-US.json:1-114](file://src/i18n/en-US.json#L1-L114)
+- [zh-CN.json:1-114](file://src/i18n/zh-CN.json#L1-L114)
+- [Settings.tsx:1-342](file://src/pages/Settings.tsx#L1-L342)
 
 **章节来源**
 - [README.md:123-140](file://README.md#L123-L140)
@@ -154,11 +180,14 @@ SidebarProps --> ThemeColors
 1. **导航功能**：提供应用主要页面的导航链接
 2. **标签管理**：支持标签的创建、选择和删除
 3. **主题适配**：完全集成的深色/浅色主题系统
-4. **响应式设计**：适应不同屏幕尺寸的布局
-5. **可访问性**：支持键盘导航和屏幕阅读器
+4. **国际化支持**：中英文双语界面切换
+5. **响应式设计**：适应不同屏幕尺寸的布局
+6. **可访问性**：支持键盘导航和屏幕阅读器
+
+**更新** 组件现已完全国际化，所有UI文本通过 `useI18n()` 钩子动态获取翻译。
 
 **章节来源**
-- [Sidebar.tsx:17-144](file://src/components/Sidebar.tsx#L17-L144)
+- [Sidebar.tsx:17-163](file://src/components/Sidebar.tsx#L17-L163)
 - [useAppStore.ts:70-81](file://src/store/useAppStore.ts#L70-L81)
 
 ## 架构概览
@@ -170,10 +199,13 @@ sequenceDiagram
 participant User as 用户
 participant Sidebar as Sidebar组件
 participant Container as SidebarContainer
+participant I18n as 国际化上下文
 participant Store as Zustand状态管理
 participant Theme as 主题系统
 participant Backend as 后端服务
 User->>Sidebar : 点击导航项
+Sidebar->>I18n : t('nav.all')
+I18n-->>Sidebar : 翻译后的文本
 Sidebar->>Container : onNavClick(navId)
 Container->>Store : clickNav(navId)
 Store->>Store : 更新导航状态
@@ -181,9 +213,13 @@ Store-->>Container : 状态更新
 Container-->>Sidebar : props更新
 Sidebar-->>User : 视图重新渲染
 User->>Sidebar : 输入新标签名
+Sidebar->>I18n : t('sidebar.addTag.placeholder')
+I18n-->>Sidebar : 翻译后的占位符
 Sidebar->>Container : onNewTagNameChange(value)
 Container->>Container : 更新本地状态
 User->>Sidebar : 点击创建标签
+Sidebar->>I18n : t('sidebar.addTag.button')
+I18n-->>Sidebar : 翻译后的按钮文本
 Sidebar->>Container : onCreateTag()
 Container->>Backend : create_tag(tagName)
 Backend-->>Container : 成功/失败
@@ -198,13 +234,13 @@ Sidebar-->>User : 标签列表刷新
 **图表来源**
 - [SidebarContainer.tsx:35-63](file://src/containers/SidebarContainer.tsx#L35-L63)
 - [useAppStore.ts:152-173](file://src/store/useAppStore.ts#L152-L173)
-- [ThemeContext.tsx:68-83](file://src/contexts/ThemeContext.tsx#L68-L83)
+- [I18nContext.tsx:40-43](file://src/contexts/I18nContext.tsx#L40-L43)
 
 ## 详细组件分析
 
 ### Sidebar 主组件
 
-Sidebar 组件实现了完整的侧边栏功能，包括导航菜单和标签管理区域。
+Sidebar 组件实现了完整的侧边栏功能，包括导航菜单和标签管理区域，并集成了国际化功能。
 
 #### 导航项渲染逻辑
 
@@ -220,11 +256,12 @@ HoverStyle --> MouseLeave["鼠标离开<br/>恢复透明背景"]
 ActiveStyle --> Render["渲染按钮"]
 MouseEnter --> Render
 MouseLeave --> Render
-Render --> End([完成渲染])
+Render --> TranslateText["调用 t() 函数获取翻译文本"]
+TranslateText --> End([完成渲染])
 ```
 
 **图表来源**
-- [Sidebar.tsx:47-69](file://src/components/Sidebar.tsx#L47-L69)
+- [Sidebar.tsx:47-81](file://src/components/Sidebar.tsx#L47-L81)
 
 #### 标签创建和删除机制
 
@@ -236,10 +273,13 @@ participant User as 用户
 participant Input as 标签输入框
 participant Button as 创建按钮
 participant Container as SidebarContainer
+participant I18n as 国际化上下文
 participant Backend as 后端服务
 participant Store as Zustand存储
 User->>Input : 输入标签名称
 User->>Button : 点击创建
+Button->>I18n : t('sidebar.addTag.button')
+I18n-->>Button : 翻译后的按钮文本
 Button->>Container : onCreateTag()
 Container->>Container : 验证输入
 Container->>Backend : create_tag(tagName)
@@ -283,7 +323,7 @@ TagItemProps --> ThemeColors
 - [TagItem.tsx:11-69](file://src/components/TagItem.tsx#L11-L69)
 
 **章节来源**
-- [Sidebar.tsx:17-144](file://src/components/Sidebar.tsx#L17-L144)
+- [Sidebar.tsx:17-163](file://src/components/Sidebar.tsx#L17-L163)
 - [TagItem.tsx:11-69](file://src/components/TagItem.tsx#L11-L69)
 
 ### SidebarContainer 容器组件
@@ -308,6 +348,9 @@ end
 subgraph "外部服务"
 Backend[后端服务]
 end
+subgraph "国际化"
+I18n[useI18n]
+end
 Container --> NavItems
 Container --> Tags
 Container --> ClickNav
@@ -315,6 +358,7 @@ Container --> ClickTag
 Container --> SetTagsFromDb
 Container --> LocalState
 Container --> Backend
+Container --> I18n
 ```
 
 **图表来源**
@@ -417,6 +461,130 @@ DOM-->>User : 主题切换完成
 - [theme.ts:54-159](file://src/theme/theme.ts#L54-L159)
 - [ThemeContext.tsx:17-89](file://src/contexts/ThemeContext.tsx#L17-L89)
 
+## 国际化功能
+
+### I18nContext 国际化上下文
+
+Sidebar 组件集成了完整的国际化功能，通过 I18nContext 提供多语言支持：
+
+#### 国际化上下文实现
+
+```mermaid
+classDiagram
+class I18nContextType {
++t(key : string) string
++string language
++setLanguage(lang : string) void
+}
+class I18nProvider {
+-String language
+-setLanguageState(state) void
++setLanguage(lang : string) void
++t(key : string) string
++render() ReactNode
+}
+class I18nResources {
++Record~string, Record~string, string~~ resources
++loadLanguage(lang : string) void
++getResource(lang : string) Record~string, string~
+}
+I18nProvider --> I18nContextType
+I18nProvider --> I18nResources
+```
+
+**图表来源**
+- [I18nContext.tsx:5-20](file://src/contexts/I18nContext.tsx#L5-L20)
+- [I18nContext.tsx:22-48](file://src/contexts/I18nContext.tsx#L22-L48)
+
+#### 语言资源管理
+
+国际化系统支持中英文双语，通过 JSON 文件管理翻译资源：
+
+```mermaid
+graph TB
+subgraph "语言资源"
+enUS[en-US.json]
+zhCN[zh-CN.json]
+end
+subgraph "资源映射"
+resources[resources对象]
+end
+subgraph "语言检测"
+detect[navigator.language检测]
+localStorage[localStorage持久化]
+fallback[默认回退机制]
+end
+enUS --> resources
+zhCN --> resources
+detect --> localStorage
+localStorage --> fallback
+resources --> detect
+resources --> localStorage
+resources --> fallback
+```
+
+**图表来源**
+- [en-US.json:1-114](file://src/i18n/en-US.json#L1-L114)
+- [zh-CN.json:1-114](file://src/i18n/zh-CN.json#L1-L114)
+- [I18nContext.tsx:11-31](file://src/contexts/I18nContext.tsx#L11-L31)
+
+#### 翻译键值系统
+
+Sidebar 组件使用标准化的翻译键值系统：
+
+| 翻译键 | 用途 | 示例文本 |
+|--------|------|----------|
+| `sidebar.title` | 侧边栏标题 | Medex |
+| `sidebar.subtitle` | 侧边栏副标题 | Media Management |
+| `sidebar.navigation` | 导航标题 | Navigation |
+| `sidebar.tags` | 标签标题 | Tags |
+| `sidebar.addTag.placeholder` | 新标签输入框占位符 | New tag |
+| `sidebar.addTag.button` | 新标签创建按钮 | Add |
+| `nav.all` | 全部媒体导航项 | All Media |
+| `nav.favorites` | 收藏导航项 | Favorites |
+| `nav.recent` | 最近导航项 | Recent |
+
+**更新** 所有导航项和UI文本现在都通过 `t()` 函数动态获取翻译，支持实时语言切换。
+
+**章节来源**
+- [I18nContext.tsx:1-51](file://src/contexts/I18nContext.tsx#L1-L51)
+- [en-US.json:20-29](file://src/i18n/en-US.json#L20-L29)
+- [zh-CN.json:20-29](file://src/i18n/zh-CN.json#L20-L29)
+
+### Settings 页面国际化集成
+
+Settings 页面提供了语言切换功能，与 Sidebar 组件形成完整的国际化体系：
+
+#### 语言设置界面
+
+```mermaid
+sequenceDiagram
+participant User as 用户
+participant Settings as Settings页面
+participant I18n as I18nContext
+participant App as App组件
+participant Backend as 后端服务
+User->>Settings : 选择语言
+Settings->>I18n : setLanguage(newLang)
+I18n->>I18n : 更新语言状态
+I18n->>Backend : emit('medex : language-changed')
+Backend-->>App : 语言变更事件
+App->>App : window.location.reload()
+App-->>User : 应用新语言界面
+```
+
+**图表来源**
+- [Settings.tsx:144-160](file://src/pages/Settings.tsx#L144-L160)
+- [App.tsx:127-158](file://src/App.tsx#L127-L158)
+
+#### 语言切换机制
+
+语言切换通过事件系统实现跨窗口同步：
+
+**章节来源**
+- [Settings.tsx:135-172](file://src/pages/Settings.tsx#L135-L172)
+- [App.tsx:126-158](file://src/App.tsx#L126-L158)
+
 ## 依赖关系分析
 
 Sidebar 组件的依赖关系展现了清晰的分层架构：
@@ -434,16 +602,24 @@ Sidebar[Sidebar.tsx]
 SidebarContainer[SidebarContainer.tsx]
 TagItem[TagItem.tsx]
 ThemeContext[ThemeContext.tsx]
+I18nContext[I18nContext.tsx]
 useAppStore[useAppStore.ts]
 theme[theme.ts]
+enUS[en-US.json]
+zhCN[zh-CN.json]
+Settings[Settings.tsx]
 end
 subgraph "样式系统"
 CSS[index.css]
 TailwindConfig[tailwind.config.ts]
 end
+subgraph "应用入口"
+App[App.tsx]
+end
 React --> Sidebar
 React --> SidebarContainer
 React --> TagItem
+React --> I18nContext
 Tauri --> SidebarContainer
 Zustand --> SidebarContainer
 Zustand --> useAppStore
@@ -451,17 +627,23 @@ Tailwind --> CSS
 Tailwind --> TailwindConfig
 Sidebar --> TagItem
 Sidebar --> useAppStore
+Sidebar --> I18nContext
 Sidebar --> ThemeContext
 SidebarContainer --> useAppStore
-SidebarContainer --> ThemeContext
+SidebarContainer --> I18nContext
+I18nContext --> enUS
+I18nContext --> zhCN
+Settings --> I18nContext
 ThemeContext --> theme
 CSS --> Sidebar
 TailwindConfig --> CSS
+App --> I18nContext
 ```
 
 **图表来源**
-- [Sidebar.tsx:1-3](file://src/components/Sidebar.tsx#L1-L3)
-- [SidebarContainer.tsx:2-5](file://src/containers/SidebarContainer.tsx#L2-L5)
+- [Sidebar.tsx:1-5](file://src/components/Sidebar.tsx#L1-L5)
+- [SidebarContainer.tsx:2-7](file://src/containers/SidebarContainer.tsx#L2-L7)
+- [I18nContext.tsx:1-4](file://src/contexts/I18nContext.tsx#L1-L4)
 - [useAppStore.ts:1](file://src/store/useAppStore.ts#L1)
 - [ThemeContext.tsx:2](file://src/contexts/ThemeContext.tsx#L2)
 - [theme.ts:2](file://src/theme/theme.ts#L2)
@@ -469,8 +651,11 @@ TailwindConfig --> CSS
 ### 组件耦合度分析
 
 - **低耦合高内聚**：Sidebar 组件专注于 UI 渲染，业务逻辑集中在容器组件
-- **清晰的职责分离**：导航逻辑、标签管理、主题处理各自独立
+- **清晰的职责分离**：导航逻辑、标签管理、主题处理、国际化各自独立
 - **松散耦合**：通过 props 和回调函数进行通信，减少直接依赖
+- **国际化解耦**：I18nContext 提供独立的语言服务，不影响其他组件
+
+**更新** 国际化功能通过 `useI18n()` 钩子实现，与组件的其他功能解耦，提高了代码的可维护性。
 
 **章节来源**
 - [Sidebar.tsx:17-27](file://src/components/Sidebar.tsx#L17-L27)
@@ -483,17 +668,20 @@ TailwindConfig --> CSS
 1. **条件渲染**：仅在必要时重新渲染标签项
 2. **事件委托**：使用事件冒泡减少事件处理器数量
 3. **样式缓存**：主题颜色通过上下文传递，避免重复计算
+4. **翻译缓存**：useMemo 优化翻译函数，避免重复计算
 
 ### 内存管理
 
 - **清理事件监听器**：在组件卸载时移除事件监听器
 - **防抖处理**：对频繁触发的操作进行防抖优化
 - **状态最小化**：只存储必要的状态数据
+- **语言资源缓存**：翻译资源通过上下文共享，避免重复加载
 
 ### 性能监控
 
 - **控制台日志**：关键操作添加日志输出便于调试
 - **错误边界**：异常情况下的优雅降级处理
+- **语言切换优化**：通过事件系统实现页面级语言切换
 
 ## 故障排除指南
 
@@ -544,27 +732,55 @@ TailwindConfig --> CSS
 3. 清除浏览器缓存
 4. 验证 CSS 变量定义
 
+#### 语言切换失效
+
+**问题症状**：切换语言后界面文本未更新
+
+**可能原因**：
+1. 事件系统未正确触发
+2. localStorage 保存失败
+3. 页面未重新加载
+4. 翻译资源加载失败
+
+**解决步骤**：
+1. 检查浏览器控制台是否有事件错误
+2. 验证 localStorage 是否正常工作
+3. 确认页面是否重新加载
+4. 检查翻译资源文件是否存在
+5. 验证翻译键值是否正确
+
+**更新** 对于国际化相关的问题，还需要检查：
+- `useI18n()` 钩子是否正确初始化
+- 翻译键值是否存在于对应的 JSON 文件中
+- `I18nProvider` 是否正确包装了应用
+
 **章节来源**
 - [SidebarContainer.tsx:21-23](file://src/containers/SidebarContainer.tsx#L21-L23)
 - [SidebarContainer.tsx:47-50](file://src/containers/SidebarContainer.tsx#L47-L50)
+- [App.tsx:126-158](file://src/App.tsx#L126-L158)
 
 ## 结论
 
-Sidebar 侧边栏组件展现了现代前端开发的最佳实践，通过清晰的架构设计、完善的主题系统集成和优秀的用户体验设计，为 Medex 应用提供了强大的导航和标签管理功能。
+Sidebar 侧边栏组件展现了现代前端开发的最佳实践，通过清晰的架构设计、完善的主题系统集成、优秀的用户体验设计和完整的国际化支持，为 Medex 应用提供了强大的导航和标签管理功能。
 
 组件的主要优势包括：
 
 1. **架构清晰**：分层设计确保了良好的可维护性和扩展性
 2. **主题完整**：深色/浅色主题的无缝切换提升了用户体验
 3. **功能完整**：导航和标签管理功能一应俱全
-4. **性能优秀**：合理的渲染策略和内存管理
-5. **易于使用**：直观的 API 设计和丰富的配置选项
+4. **国际化完善**：中英文双语支持，为全球化应用奠定基础
+5. **性能优秀**：合理的渲染策略和内存管理
+6. **易于使用**：直观的 API 设计和丰富的配置选项
+
+**更新** 组件现已完全国际化，使用 `useI18n()` 钩子和 `t()` 函数提供多语言支持，所有UI文本都可以动态切换语言。
 
 未来可以考虑的功能增强：
-- 添加标签搜索和过滤功能
+- 添加更多语言支持
+- 实现标签搜索和过滤功能
 - 实现标签拖拽排序
 - 增加标签分组和层级管理
 - 优化移动端响应式设计
+- 添加语言包热更新机制
 
 ## 附录
 
@@ -587,13 +803,28 @@ Sidebar 侧边栏组件展现了现代前端开发的最佳实践，通过清晰
 />
 ```
 
+#### 国际化集成模式
+
+```typescript
+// 在组件中使用国际化功能
+const { t, language, setLanguage } = useI18n();
+
+// 获取翻译文本
+const translatedText = t('sidebar.title');
+
+// 切换语言
+setLanguage('zh-CN');
+```
+
 #### 最佳实践建议
 
 1. **状态管理**：使用容器组件处理复杂的状态逻辑
 2. **主题适配**：始终通过 ThemeContext 获取主题颜色
-3. **错误处理**：为异步操作提供适当的错误处理
-4. **性能优化**：合理使用 React.memo 和 useMemo
-5. **可访问性**：确保组件支持键盘导航和屏幕阅读器
+3. **国际化**：使用标准化的翻译键值系统
+4. **错误处理**：为异步操作提供适当的错误处理
+5. **性能优化**：合理使用 React.memo 和 useMemo
+6. **可访问性**：确保组件支持键盘导航和屏幕阅读器
+7. **语言切换**：通过事件系统实现跨窗口语言同步
 
 ### API 参考
 
@@ -606,6 +837,14 @@ Sidebar 侧边栏组件展现了现代前端开发的最佳实践，通过清晰
 | onDeleteTag | (tagId: string) => void | void | 标签删除事件处理器 |
 | onCreateTag | () => void | void | 标签创建事件处理器 |
 | onNewTagNameChange | (value: string) => void | void | 新标签名称变更处理器 |
+
+#### 国际化 API
+
+| 方法名 | 参数类型 | 返回值 | 描述 |
+|--------|----------|--------|------|
+| t | (key: string) => string | string | 获取翻译文本的函数 |
+| language | string | string | 当前语言代码 |
+| setLanguage | (lang: string) => void | void | 设置语言的函数 |
 
 #### 主题颜色配置
 
@@ -620,3 +859,35 @@ Sidebar 侧边栏组件展现了现代前端开发的最佳实践，通过清晰
 - `selected`: 选中状态颜色
 - `inputBg`: 输入框背景色
 - `buttonBg`: 按钮背景色
+
+### 翻译键值参考
+
+#### Sidebar 组件翻译键值
+
+| 键值 | 语言 | 文本 |
+|------|------|------|
+| `sidebar.title` | zh-CN | Medex |
+| `sidebar.title` | en-US | Medex |
+| `sidebar.subtitle` | zh-CN | 媒体管理 |
+| `sidebar.subtitle` | en-US | Media Management |
+| `sidebar.navigation` | zh-CN | 导航 |
+| `sidebar.navigation` | en-US | Navigation |
+| `sidebar.tags` | zh-CN | 标签 |
+| `sidebar.tags` | en-US | Tags |
+| `sidebar.addTag.placeholder` | zh-CN | 新增标签 |
+| `sidebar.addTag.placeholder` | en-US | New tag |
+| `sidebar.addTag.button` | zh-CN | 新增 |
+| `sidebar.addTag.button` | en-US | Add |
+
+#### 导航项翻译键值
+
+| 键值 | 语言 | 文本 |
+|------|------|------|
+| `nav.all` | zh-CN | 所有媒体 |
+| `nav.all` | en-US | All Media |
+| `nav.favorites` | zh-CN | 收藏 |
+| `nav.favorites` | en-US | Favorites |
+| `nav.recent` | zh-CN | 最近 |
+| `nav.recent` | en-US | Recent |
+
+**更新** 所有导航项和UI文本现在都通过 `t()` 函数动态获取翻译，支持实时语言切换。
