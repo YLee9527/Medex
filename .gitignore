@@ -66,3 +66,6 @@ Thumbs.db
 # Key
 .tauriupdate.key
 .tauriupdate.key.pub
+
+# Qoder generated files
+.qoder/
