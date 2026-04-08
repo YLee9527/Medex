@@ -45,7 +45,7 @@ npm run sync-version
 3. **验证同步结果**
    - ✅ `package.json` - 自动更新
    - ✅ `tauri.conf.json` - 自动更新
-   - ✅ `Cargo.toml` - 构建时自动读取
+   - ✅ `Cargo.toml` - 自动更新
 
 ## 📋 配置文件说明
 
@@ -67,7 +67,7 @@ npm run sync-version
 ### 4. Cargo.toml（Rust 版本）
 - **位置**: `/src-tauri/Cargo.toml`
 - **作用**: Rust 包版本
-- **同步**: 通过 `build.rs` 在构建时自动读取 `version.properties`
+- **同步**: 运行 `npm run sync-version` 自动更新
 
 ## 🚀 发布新版本流程
 
@@ -78,11 +78,11 @@ VERSION=1.0.0
 # 2. 同步到所有配置文件
 npm run sync-version
 
-# 3. 构建项目（Cargo.toml 会自动读取版本）
+# 3. 构建项目
 npm run tauri build
 
 # 4. 提交更改
-git add version.properties package.json src-tauri/tauri.conf.json
+git add version.properties package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml
 git commit -m "chore: release version 1.0.0"
 ```
 
@@ -97,7 +97,7 @@ git commit -m "chore: release version 1.0.0"
 # 自动同步版本号
 if [ -f version.properties ]; then
   npm run sync-version
-  git add package.json
+  git add package.json src-tauri/Cargo.toml src-tauri/tauri.conf.json
 fi
 ```
 
@@ -110,7 +110,7 @@ fi
 
 ## ⚠️ 注意事项
 
-1. **Cargo.toml 版本**: 使用 `env("CARGO_PKG_VERSION")`，在构建时由 `build.rs` 注入
+1. **Cargo.toml 版本**: 通过同步脚本直接更新版本号
 2. **tauri.conf.json 版本**: 已通过同步脚本自动更新
 3. **版本号格式**: 遵循语义化版本（Semantic Versioning）：`MAJOR.MINOR.PATCH`
 

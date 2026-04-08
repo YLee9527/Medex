@@ -2,7 +2,7 @@
 
 /**
  * 版本同步脚本
- * 从 version.properties 读取版本号并同步到 package.json 和 tauri.conf.json
+ * 从 version.properties 读取版本号并同步到 package.json、tauri.conf.json 和 Cargo.toml
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -46,9 +46,24 @@ tauriConfig.version = version;
 writeFileSync(tauriConfigPath, JSON.stringify(tauriConfig, null, 2) + '\n', 'utf-8');
 console.log(`✅ tauri.conf.json 已更新：${oldTauriVersion} → ${version}`);
 
+// 同步到 Cargo.toml
+const cargoTomlPath = join(__dirname, '..', 'src-tauri', 'Cargo.toml');
+let cargoTomlContent = readFileSync(cargoTomlPath, 'utf-8');
+
+// 使用正则表达式替换 version 行
+const oldCargoVersionMatch = cargoTomlContent.match(/^version = "([^"]+)"/m);
+if (oldCargoVersionMatch) {
+  cargoTomlContent = cargoTomlContent.replace(
+    /^version = "[^"]+"/m,
+    `version = "${version}"`
+  );
+  writeFileSync(cargoTomlPath, cargoTomlContent, 'utf-8');
+  console.log(`✅ Cargo.toml 已更新：${oldCargoVersionMatch[1]} → ${version}`);
+}
+
 console.log('\n🎉 版本同步完成！');
 console.log(`   新版本：${version}`);
 console.log(`   已同步:`);
 console.log(`   - package.json`);
 console.log(`   - tauri.conf.json`);
-console.log(`   - Cargo.toml (构建时自动读取)`);
+console.log(`   - Cargo.toml`);
