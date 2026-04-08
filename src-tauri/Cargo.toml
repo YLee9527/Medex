@@ -1,6 +1,6 @@
 [package]
 name = "medex"
-version = "0.1.0"
+version = env("CARGO_PKG_VERSION")
 description = "Medex desktop app"
 authors = ["you"]
 license = "MIT"

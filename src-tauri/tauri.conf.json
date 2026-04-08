@@ -22,14 +22,18 @@
       "csp": null,
       "assetProtocol": {
         "enable": true,
-        "scope": ["**"]
+        "scope": [
+          "**"
+        ]
       }
     }
   },
   "bundle": {
     "active": true,
     "targets": "all",
-    "externalBin": ["binaries/ffmpeg"],
+    "externalBin": [
+      "binaries/ffmpeg"
+    ],
     "createUpdaterArtifacts": true
   },
   "plugins": {
