@@ -73,67 +73,9 @@ const initialNavItems: SidebarNavItem[] = [
   { id: 'recent', label: 'Recent', active: false }
 ];
 
-const initialTags: SidebarTagItem[] = [
-  { id: 'ui', name: 'UI', selected: false, mediaCount: 0 },
-  { id: 'assets', name: '素材', selected: false, mediaCount: 0 },
-  { id: 'cat', name: '猫', selected: false, mediaCount: 0 },
-  { id: 'night', name: '夜晚', selected: false, mediaCount: 0 }
-];
+const initialTags: SidebarTagItem[] = [];
 
-const initialMediaItems: MediaItem[] = [
-  {
-    id: 'media-1',
-    path: '/placeholder/media-1.mp4',
-    thumbnail: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=80',
-    filename: 'city-night-clip.mp4',
-    tags: ['夜晚', '城市', '素材'],
-    time: '2026-03',
-    mediaType: 'mp4',
-    duration: '00:32',
-    resolution: '1920x1080',
-    isFavorite: true,
-    isRecent: true
-  },
-  {
-    id: 'media-2',
-    path: '/placeholder/media-2.jpg',
-    thumbnail: 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=600&q=80',
-    filename: 'cat-closeup.jpg',
-    tags: ['猫', '宠物', 'UI'],
-    time: '2026-03',
-    mediaType: 'jpg',
-    duration: '00:08',
-    resolution: '1920x1080',
-    isFavorite: false,
-    isRecent: true
-  },
-  {
-    id: 'media-3',
-    path: '/placeholder/media-3.png',
-    thumbnail: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80',
-    filename: 'dashboard-reference.png',
-    tags: ['UI', '设计', '参考'],
-    time: '2026-02',
-    mediaType: 'png',
-    duration: '00:00',
-    resolution: '2560x1440',
-    isFavorite: true,
-    isRecent: false
-  },
-  {
-    id: 'media-4',
-    path: '/placeholder/media-4.mov',
-    thumbnail: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80',
-    filename: 'forest-atmosphere.mov',
-    tags: ['自然', '夜晚', '素材'],
-    time: '2026-01',
-    mediaType: 'mov',
-    duration: '01:12',
-    resolution: '3840x2160',
-    isFavorite: false,
-    isRecent: false
-  }
-];
+const initialMediaItems: MediaItem[] = [];
 
 const makeTagId = (tagName: string) =>
   tagName
@@ -164,9 +106,9 @@ export const useAppStore = create<AppState>((set) => ({
       tags: state.tags.map((tag) =>
         tag.id === tagId
           ? {
-              ...tag,
-              selected: !tag.selected
-            }
+            ...tag,
+            selected: !tag.selected
+          }
           : tag
       )
     }));
@@ -238,9 +180,9 @@ export const useAppStore = create<AppState>((set) => ({
       mediaItems: state.mediaItems.map((item) =>
         item.id === mediaId
           ? {
-              ...item,
-              isFavorite: !item.isFavorite
-            }
+            ...item,
+            isFavorite: !item.isFavorite
+          }
           : item
       )
     })),
@@ -329,14 +271,14 @@ export const useAppStore = create<AppState>((set) => ({
         tags: hasTag
           ? nextTags
           : [
-              ...nextTags,
-              {
-                id: makeTagId(normalized) || `tag-${Date.now()}`,
-                name: normalized,
-                selected: false,
-                mediaCount: 1
-              }
-            ]
+            ...nextTags,
+            {
+              id: makeTagId(normalized) || `tag-${Date.now()}`,
+              name: normalized,
+              selected: false,
+              mediaCount: 1
+            }
+          ]
       };
     }),
   removeTagFromMediaLocal: (mediaId, tagName) =>
@@ -368,9 +310,9 @@ export const useAppStore = create<AppState>((set) => ({
       const nextTags = state.tags.map((tag) =>
         tag.name === normalized
           ? {
-              ...tag,
-              mediaCount: Math.max(0, (tag.mediaCount ?? 0) - 1)
-            }
+            ...tag,
+            mediaCount: Math.max(0, (tag.mediaCount ?? 0) - 1)
+          }
           : tag
       );
 
@@ -384,10 +326,10 @@ export const useAppStore = create<AppState>((set) => ({
       mediaItems: state.mediaItems.map((item) =>
         item.id === mediaId
           ? {
-              ...item,
-              isRecent: true,
-              recentViewedAt: viewedAt
-            }
+            ...item,
+            isRecent: true,
+            recentViewedAt: viewedAt
+          }
           : item
       )
     }))

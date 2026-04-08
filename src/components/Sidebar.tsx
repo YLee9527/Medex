@@ -52,7 +52,7 @@ export default function Sidebar({
           className="mb-3 text-xs uppercase tracking-wider"
           style={{ color: theme.textTertiary }}
         >
-          Navigation
+          {t('sidebar.navigation')}
         </h2>
         <ul className="space-y-2">
           {navItems.map((item) => (
@@ -77,7 +77,7 @@ export default function Sidebar({
                   }
                 }}
               >
-                {item.label}
+                {item.id === 'all-media' ? t('nav.all') : item.id === 'favorites' ? t('nav.favorites') : item.id === 'recent' ? t('nav.recent') : item.label}
               </button>
             </li>
           ))}
@@ -89,7 +89,7 @@ export default function Sidebar({
           className="mb-3 text-xs uppercase tracking-wider"
           style={{ color: theme.textTertiary }}
         >
-          Tags
+          {t('sidebar.tags')}
         </h2>
 
         <div className="mb-3 grid grid-cols-[1fr_auto] gap-2">
@@ -141,7 +141,7 @@ export default function Sidebar({
               e.currentTarget.style.backgroundColor = theme.buttonBg
             }}
           >
-            新增
+            {t('sidebar.addTag.button')}
           </button>
         </div>
 
