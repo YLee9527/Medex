@@ -139,7 +139,7 @@ function MediaCard({
             onToggleFavorite?.(id)
           }}
           className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full transition-colors"
-          style={{ backgroundColor: theme.overlay }}
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)' }}
           aria-label={
             isFavorite
               ? t('inspector.favorite.remove')
@@ -151,17 +151,17 @@ function MediaCard({
               : t('inspector.favorite.add')
           }
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.55)'
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.75)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = theme.overlay
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.55)'
           }}
         >
           {isFavorite ? (
             <svg
               viewBox="0 0 24 24"
               className="h-4 w-4"
-              style={{ color: theme.favorite }}
+              style={{ color: '#F59E0B' }}
               fill="currentColor"
               aria-hidden="true"
             >
@@ -171,7 +171,7 @@ function MediaCard({
             <svg
               viewBox="0 0 24 24"
               className="h-4 w-4"
-              style={{ color: theme.textSecondary }}
+              style={{ color: 'rgba(0, 0, 0, 0.65)' }}
               fill="none"
               stroke="currentColor"
               strokeWidth="1.8"
