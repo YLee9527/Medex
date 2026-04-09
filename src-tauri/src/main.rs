@@ -31,36 +31,46 @@ fn main() {
                 return Err(Box::<dyn std::error::Error>::from(err));
             }
 
-            // 创建并设置菜单
-            let about_item = MenuItem::with_id(app.handle(), "about", "关于", true, None::<&str>)?;
-            let settings_item =
-                MenuItem::with_id(app.handle(), "settings", "设置", true, None::<&str>)?;
-            let check_update_item =
-                MenuItem::with_id(app.handle(), "check_update", "检查更新", true, None::<&str>)?;
-            let quit_item =
-                MenuItem::with_id(app.handle(), "quit", "退出应用", true, None::<&str>)?;
+            // 仅在 macOS 上设置菜单
+            #[cfg(target_os = "macos")]
+            {
+                // 创建并设置菜单
+                let about_item =
+                    MenuItem::with_id(app.handle(), "about", "关于", true, None::<&str>)?;
+                let settings_item =
+                    MenuItem::with_id(app.handle(), "settings", "设置", true, None::<&str>)?;
+                let check_update_item = MenuItem::with_id(
+                    app.handle(),
+                    "check_update",
+                    "检查更新",
+                    true,
+                    None::<&str>,
+                )?;
+                let quit_item =
+                    MenuItem::with_id(app.handle(), "quit", "退出应用", true, None::<&str>)?;
 
-            let submenu = Submenu::with_items(
-                app.handle(),
-                "Medex",
-                true,
-                &[
-                    &about_item,
-                    &settings_item,
-                    &check_update_item,
-                    &tauri::menu::PredefinedMenuItem::separator(app.handle())?,
-                    &quit_item,
-                ],
-            )?;
+                let submenu = Submenu::with_items(
+                    app.handle(),
+                    "Medex",
+                    true,
+                    &[
+                        &about_item,
+                        &settings_item,
+                        &check_update_item,
+                        &tauri::menu::PredefinedMenuItem::separator(app.handle())?,
+                        &quit_item,
+                    ],
+                )?;
 
-            let menu = Menu::with_items(app.handle(), &[&submenu])?;
-            app.set_menu(menu)?;
+                let menu = Menu::with_items(app.handle(), &[&submenu])?;
+                app.set_menu(menu)?;
 
-            // 监听菜单事件
-            let app_handle = app.handle().clone();
-            app.on_menu_event(move |_app, event| {
-                menu::handle_menu_event(app_handle.clone(), event);
-            });
+                // 监听菜单事件
+                let app_handle = app.handle().clone();
+                app.on_menu_event(move |_app, event| {
+                    menu::handle_menu_event(app_handle.clone(), event);
+                });
+            }
 
             Ok(())
         })
