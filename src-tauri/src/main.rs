@@ -7,6 +7,16 @@ mod menu;
 
 use tauri::menu::{MenuItem, Submenu, Menu};
 
+#[tauri::command]
+fn open_settings_window(app: tauri::AppHandle) {
+    menu::open_settings_window(app);
+}
+
+#[tauri::command]
+fn open_update_window(app: tauri::AppHandle) {
+    menu::open_update_window(app);
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -40,7 +50,7 @@ fn main() {
             
             // 监听菜单事件
             let app_handle = app.handle().clone();
-            app.on_menu_event(move |app, event| {
+            app.on_menu_event(move |_app, event| {
                 menu::handle_menu_event(app_handle.clone(), event);
             });
             
@@ -61,7 +71,9 @@ fn main() {
             services::tags::add_tag_to_media,
             services::tags::remove_tag_from_media,
             services::tags::get_tags_by_media,
-            thumbnail::request_thumbnail
+            thumbnail::request_thumbnail,
+            open_settings_window,
+            open_update_window
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

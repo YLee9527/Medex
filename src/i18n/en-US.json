@@ -12,6 +12,8 @@
   "settings.select": "Select",
   "settings.scanning": "Scanning...",
   "settings.autoScan.label": "Auto-scan media library on startup",
+  "settings.checkUpdate.label": "Check for updates",
+  "settings.checkUpdate.button": "Open update",
   "settings.clearPath.title": "Clear path",
   "alerts.selectLibraryFirst": "Please select a media library path first",
   "alerts.scanComplete": "Media library scan completed!",

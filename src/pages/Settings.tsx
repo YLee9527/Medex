@@ -113,6 +113,15 @@ export default function Settings() {
     }
   }
 
+  const handleOpenUpdateWindow = async () => {
+    try {
+      await invoke('open_update_window')
+    } catch (error) {
+      console.error('[settings] open_update_window failed:', error)
+      window.alert(`${t('alerts.scanFailedPrefix')}${String(error)}`)
+    }
+  }
+
   return (
     <div
       className="flex flex-col h-screen"
@@ -333,6 +342,33 @@ export default function Settings() {
                 </div>
               </label>
             </div>
+          </div>
+
+          {/* 5. Check for Updates */}
+          <div
+            className="flex items-center justify-between px-6 py-4 border-b"
+            style={{ borderColor: theme.borderLight }}
+          >
+            <div className="text-sm font-medium" style={{ color: theme.text }}>
+              {t('settings.checkUpdate.label')}
+            </div>
+            <button
+              type="button"
+              onClick={handleOpenUpdateWindow}
+              className="px-3 py-1.5 rounded text-xs transition-colors"
+              style={{
+                backgroundColor: theme.buttonBg,
+                color: theme.text,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme.buttonHover
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = theme.buttonBg
+              }}
+            >
+              {t('settings.checkUpdate.button')}
+            </button>
           </div>
         </div>
       </div>

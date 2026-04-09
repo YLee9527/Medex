@@ -5,13 +5,14 @@ import Main from './components/Main'
 import SidebarContainer from './containers/SidebarContainer'
 import MediaViewer from './components/MediaViewer'
 import { useAppStore } from './store/useAppStore'
-
+import { useThemeContext } from './contexts/ThemeContext'
 export default function App() {
   const mediaItems = useAppStore((state) => state.mediaItems)
   const navItems = useAppStore((state) => state.navItems)
   const markMediaViewedLocal = useAppStore(
     (state) => state.markMediaViewedLocal,
   )
+  const { theme } = useThemeContext()
   const [viewerOpen, setViewerOpen] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
 
@@ -48,6 +49,14 @@ export default function App() {
 
   const handleCloseViewer = () => {
     setViewerOpen(false)
+  }
+
+  const handleOpenSettings = async () => {
+    try {
+      await invoke('open_settings_window')
+    } catch (error) {
+      console.error('[app] open_settings_window failed:', error)
+    }
   }
 
   // 启动时自动扫描媒体库（如果用户开启了该设置）。使用 sessionStorage 标记避免后端触发的 reload 导致循环执行
@@ -169,7 +178,7 @@ export default function App() {
   }, [viewerOpen, currentIndex, viewerMediaList.length])
 
   return (
-    <div className="flex h-screen min-w-[1200px] overflow-hidden">
+    <div className="relative flex h-screen min-w-[1200px] overflow-hidden">
       <SidebarContainer />
       <Main onOpenViewer={handleOpenViewer} />
       <MediaViewer
@@ -179,6 +188,36 @@ export default function App() {
         onClose={handleCloseViewer}
         onChangeIndex={setCurrentIndex}
       />
+      <button
+        type="button"
+        onClick={handleOpenSettings}
+        title="设置"
+        className="absolute left-4 bottom-4 z-20 flex h-12 w-12 items-center justify-center rounded-full border transition-colors duration-150"
+        style={{
+          backgroundColor: theme.buttonBg,
+          borderColor: theme.borderLight,
+          color: theme.text,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = theme.buttonHover
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = theme.buttonBg
+        }}
+      >
+        <svg
+          className="h-6 w-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V20a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9.6 18.9a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H4a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 5.1 9.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H8a1.65 1.65 0 0 0 1-1.51V4a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V8a1.65 1.65 0 0 0 1.51 1H20a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      </button>
     </div>
   )
 }

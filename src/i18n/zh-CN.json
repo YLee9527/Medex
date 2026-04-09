@@ -12,6 +12,8 @@
   "settings.select": "选择",
   "settings.scanning": "扫描中...",
   "settings.autoScan.label": "启动时自动扫描媒体库",
+  "settings.checkUpdate.label": "检查更新",
+  "settings.checkUpdate.button": "打开检查更新",
   "settings.clearPath.title": "清除路径",
   "alerts.selectLibraryFirst": "请先选择媒体库路径",
   "alerts.scanComplete": "媒体库扫描完成！",
