@@ -1,13 +1,18 @@
-import { ThemeColors } from '../../theme/theme';
-import { useI18n } from '../../contexts/I18nContext';
+import { ThemeColors } from '../../theme/theme'
+import { useI18n } from '../../contexts/I18nContext'
 
 interface LatestViewProps {
-  onRecheck: () => void;
-  theme: ThemeColors;
+  onRecheck: () => void
+  currentVersion: string
+  theme: ThemeColors
 }
 
-export function LatestView({ onRecheck, theme }: LatestViewProps) {
-  const { t } = useI18n();
+export function LatestView({
+  onRecheck,
+  currentVersion,
+  theme,
+}: LatestViewProps) {
+  const { t } = useI18n()
   return (
     <div className="text-center animate-fade-in">
       <div className="flex justify-center mb-4">
@@ -26,24 +31,28 @@ export function LatestView({ onRecheck, theme }: LatestViewProps) {
           />
         </svg>
       </div>
-      <h2 className="text-xl font-medium mb-2" style={{ color: theme.text }}>{t('update.noUpdateFound')}</h2>
-      <p className="mb-6" style={{ color: theme.textSecondary }}>{t('update.currentVersionLabel')}: 1.0.0</p>
+      <h2 className="text-xl font-medium mb-2" style={{ color: theme.text }}>
+        {t('update.noUpdateFound')}
+      </h2>
+      <p className="mb-6" style={{ color: theme.textSecondary }}>
+        {t('update.currentVersionLabel')}: {currentVersion}
+      </p>
       <button
         onClick={onRecheck}
         className="px-6 py-2 rounded-lg transition-colors"
-        style={{ 
+        style={{
           backgroundColor: `${theme.text}18`,
-          color: theme.textSecondary
+          color: theme.textSecondary,
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = `${theme.text}30`;
+          e.currentTarget.style.backgroundColor = `${theme.text}30`
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = `${theme.text}18`;
+          e.currentTarget.style.backgroundColor = `${theme.text}18`
         }}
       >
         {t('update.recheck')}
       </button>
     </div>
-  );
+  )
 }

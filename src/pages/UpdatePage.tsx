@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { check } from '@tauri-apps/plugin-updater'
 import { listen } from '@tauri-apps/api/event'
+import { getVersion } from '@tauri-apps/api/app'
 import { useThemeContext } from '../contexts/ThemeContext'
 import { useI18n } from '../contexts/I18nContext'
 import { CheckingView } from './views/CheckingView'
@@ -25,16 +26,24 @@ export interface UpdateInfo {
   body: string
 }
 
-const CURRENT_VERSION = '1.0.0'
-
 export default function UpdatePage() {
   const { theme } = useThemeContext()
   const { t } = useI18n()
   const [status, setStatus] = useState<UpdateStatus>('idle')
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const [currentVersion, setCurrentVersion] = useState('0.0.0')
 
   useEffect(() => {
+    void (async () => {
+      try {
+        const version = await getVersion()
+        setCurrentVersion(version)
+      } catch (error) {
+        console.warn('[update] getVersion failed:', error)
+      }
+    })()
+
     checkForUpdates()
   }, [])
 
@@ -44,7 +53,9 @@ export default function UpdatePage() {
     void (async () => {
       try {
         const u = await listen('medex:language-changed', () => {
-          console.log('[update] language changed, reloading to apply new language')
+          console.log(
+            '[update] language changed, reloading to apply new language',
+          )
           // 重新检查以确保翻译和文案刷新
           checkForUpdates()
         })
@@ -118,7 +129,9 @@ export default function UpdatePage() {
       }
     } catch (error) {
       console.error('update failed:', error)
-      setErrorMessage(error instanceof Error ? error.message : t('update.failed'))
+      setErrorMessage(
+        error instanceof Error ? error.message : t('update.failed'),
+      )
       setStatus('error')
     }
   }
@@ -136,7 +149,7 @@ export default function UpdatePage() {
       case 'available':
         return (
           <AvailableView
-            currentVersion={CURRENT_VERSION}
+            currentVersion={currentVersion}
             updateInfo={updateInfo!}
             onUpdate={handleUpdate}
             onLater={() => setStatus('idle')}
@@ -144,7 +157,13 @@ export default function UpdatePage() {
           />
         )
       case 'latest':
-        return <LatestView onRecheck={checkForUpdates} theme={theme} />
+        return (
+          <LatestView
+            onRecheck={checkForUpdates}
+            currentVersion={currentVersion}
+            theme={theme}
+          />
+        )
       case 'downloading':
         return <DownloadingView theme={theme} />
       case 'downloaded':
