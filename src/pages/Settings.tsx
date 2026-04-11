@@ -24,17 +24,24 @@ export default function Settings() {
 
   const { t, language, setLanguage } = useI18n()
   const [libraryPath, setLibraryPath] = useState<string>('')
+  const [appPassword, setAppPassword] = useState<string>('')
+  const [isPasswordLocked, setIsPasswordLocked] = useState<boolean>(false)
   // 使用懒初始化确保初始值来自 localStorage，避免 mount 时被初始 true 覆盖
   const [autoScan, setAutoScan] = useState<boolean>(() =>
     parseBoolean(localStorage.getItem('autoScanOnStartup'), false),
   )
   const [isScanning, setIsScanning] = useState(false)
 
-  // 初始化时从 localStorage 读取媒体库路径（autoScan 由懒初始化负责）
+  // 初始化时从 localStorage 读取媒体库路径和应用密码（autoScan 由懒初始化负责）
   useEffect(() => {
     const path = localStorage.getItem('libraryPath')
     if (path) {
       setLibraryPath(path)
+    }
+    const storedPassword = localStorage.getItem('appPassword')
+    if (storedPassword) {
+      setAppPassword(storedPassword)
+      setIsPasswordLocked(true)
     }
   }, [])
 
@@ -50,6 +57,35 @@ export default function Settings() {
       console.warn('[settings] failed to persist autoScan setting', err)
     }
   }, [autoScan])
+
+  const isPasswordValid = appPassword.length >= 6 && appPassword.length <= 20
+
+  const handleSaveAppPassword = () => {
+    if (!isPasswordValid || isPasswordLocked) {
+      return
+    }
+
+    try {
+      localStorage.setItem('appPassword', appPassword)
+      setIsPasswordLocked(true)
+      window.alert(t('alerts.passwordSaved'))
+    } catch (err) {
+      console.error('[settings] save app password failed:', err)
+      window.alert(`${t('alerts.scanFailedPrefix')}${String(err)}`)
+    }
+  }
+
+  const handleClearAppPassword = () => {
+    try {
+      localStorage.removeItem('appPassword')
+      setAppPassword('')
+      setIsPasswordLocked(false)
+      window.alert(t('alerts.passwordCleared'))
+    } catch (err) {
+      console.error('[settings] clear app password failed:', err)
+      window.alert(`${t('alerts.scanFailedPrefix')}${String(err)}`)
+    }
+  }
 
   // 启动一次扫描并管理状态与事件
   const startScan = async (path: string) => {
@@ -344,7 +380,79 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* 5. Check for Updates */}
+          {/* 5. App Password */}
+          <div
+            className="flex flex-col px-6 py-4 border-b"
+            style={{ borderColor: theme.borderLight }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium" style={{ color: theme.text }}>
+                {t('settings.appPassword.label')}
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={handleClearAppPassword}
+                  className="px-3 py-1.5 rounded text-xs transition-colors"
+                  style={{
+                    backgroundColor: theme.buttonBg,
+                    color: theme.text,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.buttonHover
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.buttonBg
+                  }}
+                >
+                  {t('settings.appPassword.clear')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveAppPassword}
+                  disabled={!isPasswordValid || isPasswordLocked}
+                  className="px-3 py-1.5 rounded text-xs transition-colors disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor:
+                      !isPasswordValid || isPasswordLocked
+                        ? theme.inputBorder
+                        : theme.buttonBg,
+                    color: theme.text,
+                    opacity: !isPasswordValid || isPasswordLocked ? 0.6 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (isPasswordValid && !isPasswordLocked) {
+                      e.currentTarget.style.backgroundColor = theme.buttonHover
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (isPasswordValid && !isPasswordLocked) {
+                      e.currentTarget.style.backgroundColor = theme.buttonBg
+                    }
+                  }}
+                >
+                  {t('settings.appPassword.set')}
+                </button>
+              </div>
+            </div>
+            <input
+              type="password"
+              value={appPassword}
+              onChange={(e) => setAppPassword(e.target.value)}
+              placeholder={t('settings.appPassword.placeholder')}
+              disabled={isPasswordLocked}
+              className="mt-3 w-full px-3 py-1.5 border rounded text-sm focus:outline-none"
+              style={{
+                backgroundColor: theme.inputBg,
+                borderColor: theme.inputBorder,
+                color: theme.text,
+                opacity: isPasswordLocked ? 0.7 : 1,
+                cursor: isPasswordLocked ? 'not-allowed' : 'text',
+              }}
+            />
+          </div>
+
+          {/* 6. Check for Updates */}
           <div
             className="flex items-center justify-between px-6 py-4 border-b"
             style={{ borderColor: theme.borderLight }}
