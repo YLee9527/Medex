@@ -71,6 +71,21 @@ export default function App() {
     }
   }
 
+  const lockWhenMinimized = async () => {
+    const storedPassword = localStorage.getItem('appPassword')
+    if (!storedPassword) return
+
+    try {
+      const currentWindow = getCurrentWindow()
+      const minimized = await currentWindow.isMinimized()
+      if (minimized) {
+        setIsLocked(true)
+      }
+    } catch (err) {
+      console.warn('[app] failed to check minimized state', err)
+    }
+  }
+
   const handleUnlock = () => {
     const storedPassword = localStorage.getItem('appPassword')
     if (unlockPassword === storedPassword) {
@@ -206,7 +221,7 @@ export default function App() {
     }
   }, [viewerOpen, currentIndex, viewerMediaList.length])
 
-  // 监听窗口焦点变化，当失去焦点时显示锁屏
+  // 监听窗口焦点变化，当应用收起到 dock 时显示锁屏
   useEffect(() => {
     let unlistenFocus: (() => void) | null = null
     void (async () => {
@@ -214,8 +229,7 @@ export default function App() {
         const currentWindow = getCurrentWindow()
         const u = await currentWindow.onFocusChanged(({ payload: focused }) => {
           if (!focused) {
-            // 应用进入后台时立即显示锁屏
-            checkAndLockApp()
+            lockWhenMinimized()
           }
         })
         unlistenFocus = u
