@@ -386,7 +386,10 @@ export default function Settings() {
             style={{ borderColor: theme.borderLight }}
           >
             <div className="flex items-center justify-between">
-              <div className="text-sm font-medium" style={{ color: theme.text }}>
+              <div
+                className="text-sm font-medium"
+                style={{ color: theme.text }}
+              >
                 {t('settings.appPassword.label')}
               </div>
               <div className="flex items-center space-x-2">

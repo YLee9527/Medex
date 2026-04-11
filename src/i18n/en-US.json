@@ -24,6 +24,10 @@
   "alerts.scanComplete": "Media library scan completed!",
   "alerts.passwordSaved": "App password saved.",
   "alerts.passwordCleared": "App password cleared.",
+  "lockScreen.title": "Enter app password",
+  "lockScreen.placeholder": "App password",
+  "lockScreen.unlock": "Unlock",
+  "lockScreen.wrongPassword": "Wrong password, please try again",
   "alerts.scanFailedPrefix": "Scan failed: ",
 
   "sidebar.title": "Medex",

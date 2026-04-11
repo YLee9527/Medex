@@ -1,20 +1,25 @@
 import { useEffect, useMemo, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import Main from './components/Main'
 import SidebarContainer from './containers/SidebarContainer'
 import MediaViewer from './components/MediaViewer'
 import { useAppStore } from './store/useAppStore'
 import { useThemeContext } from './contexts/ThemeContext'
+import { useI18n } from './contexts/I18nContext'
 export default function App() {
   const mediaItems = useAppStore((state) => state.mediaItems)
   const navItems = useAppStore((state) => state.navItems)
   const markMediaViewedLocal = useAppStore(
     (state) => state.markMediaViewedLocal,
   )
-  const { theme } = useThemeContext()
+  const { theme, themeMode } = useThemeContext()
+  const { t } = useI18n()
   const [viewerOpen, setViewerOpen] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [isLocked, setIsLocked] = useState(false)
+  const [unlockPassword, setUnlockPassword] = useState('')
 
   const activeNavId = navItems.find((item) => item.active)?.id ?? 'all-media'
   const viewerMediaList = useMemo(() => {
@@ -56,6 +61,30 @@ export default function App() {
       await invoke('open_settings_window')
     } catch (error) {
       console.error('[app] open_settings_window failed:', error)
+    }
+  }
+
+  const checkAndLockApp = () => {
+    const storedPassword = localStorage.getItem('appPassword')
+    if (storedPassword) {
+      setIsLocked(true)
+    }
+  }
+
+  const handleUnlock = () => {
+    const storedPassword = localStorage.getItem('appPassword')
+    if (unlockPassword === storedPassword) {
+      setIsLocked(false)
+      setUnlockPassword('')
+    } else {
+      window.alert(t('lockScreen.wrongPassword'))
+      setUnlockPassword('')
+    }
+  }
+
+  const handleUnlockKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleUnlock()
     }
   }
 
@@ -177,6 +206,37 @@ export default function App() {
     }
   }, [viewerOpen, currentIndex, viewerMediaList.length])
 
+  // 监听窗口焦点变化，当获得焦点时检查是否需要锁屏
+  useEffect(() => {
+    let unlistenFocus: (() => void) | null = null
+    void (async () => {
+      try {
+        const currentWindow = getCurrentWindow()
+        const u = await currentWindow.onFocusChanged(({ payload: focused }) => {
+          if (focused) {
+            checkAndLockApp()
+          }
+        })
+        unlistenFocus = u
+      } catch (err) {
+        console.warn('[app] failed to attach focus listener', err)
+      }
+    })()
+
+    return () => {
+      if (unlistenFocus) {
+        try {
+          unlistenFocus()
+        } catch {}
+      }
+    }
+  }, [])
+
+  // 应用启动时检查是否需要锁屏
+  useEffect(() => {
+    checkAndLockApp()
+  }, [])
+
   return (
     <div className="relative flex h-screen min-w-[1200px] overflow-hidden">
       <SidebarContainer />
@@ -218,6 +278,61 @@ export default function App() {
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V20a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9.6 18.9a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H4a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 5.1 9.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H8a1.65 1.65 0 0 0 1-1.51V4a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V8a1.65 1.65 0 0 0 1.51 1H20a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
         </svg>
       </button>
+
+      {/* 密码锁屏蒙版 */}
+      {isLocked && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{
+            backgroundColor: themeMode === 'dark' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+          }}
+        >
+          <div
+            className="rounded-lg p-6 shadow-lg"
+            style={{
+              backgroundColor: theme.background,
+              border: `1px solid ${theme.borderLight}`,
+            }}
+          >
+            <h2
+              className="mb-4 text-center text-lg font-semibold"
+              style={{ color: theme.text }}
+            >
+              {t('lockScreen.title')}
+            </h2>
+            <input
+              type="password"
+              value={unlockPassword}
+              onChange={(e) => setUnlockPassword(e.target.value)}
+              onKeyPress={handleUnlockKeyPress}
+              placeholder={t('lockScreen.placeholder')}
+              className="mb-4 w-full rounded border px-3 py-2 focus:outline-none focus:ring-2"
+              style={{
+                backgroundColor: theme.inputBg,
+                borderColor: theme.inputBorder,
+                color: theme.text,
+              }}
+              autoFocus
+            />
+            <button
+              onClick={handleUnlock}
+              className="w-full rounded px-4 py-2 transition-colors"
+              style={{
+                backgroundColor: theme.buttonBg,
+                color: theme.text,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme.buttonHover
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = theme.buttonBg
+              }}
+            >
+              {t('lockScreen.unlock')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -24,6 +24,10 @@
   "alerts.scanComplete": "媒体库扫描完成！",
   "alerts.passwordSaved": "应用密码已保存。",
   "alerts.passwordCleared": "应用密码已清除。",
+  "lockScreen.title": "请输入应用密码",
+  "lockScreen.placeholder": "应用密码",
+  "lockScreen.unlock": "解锁",
+  "lockScreen.wrongPassword": "密码错误，请重试",
   "alerts.scanFailedPrefix": "扫描失败：",
 
   "sidebar.title": "Medex",
