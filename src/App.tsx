@@ -206,14 +206,15 @@ export default function App() {
     }
   }, [viewerOpen, currentIndex, viewerMediaList.length])
 
-  // 监听窗口焦点变化，当获得焦点时检查是否需要锁屏
+  // 监听窗口焦点变化，当失去焦点时显示锁屏
   useEffect(() => {
     let unlistenFocus: (() => void) | null = null
     void (async () => {
       try {
         const currentWindow = getCurrentWindow()
         const u = await currentWindow.onFocusChanged(({ payload: focused }) => {
-          if (focused) {
+          if (!focused) {
+            // 应用进入后台时立即显示锁屏
             checkAndLockApp()
           }
         })
@@ -284,7 +285,9 @@ export default function App() {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{
-            backgroundColor: themeMode === 'dark' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+            backgroundColor: themeMode === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)', // Safari support
           }}
         >
           <div
