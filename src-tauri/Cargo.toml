@@ -1,6 +1,6 @@
 [package]
 name = "medex"
-version = "0.9.1"
+version = "1.0.0"
 description = "Medex desktop app"
 authors = ["you"]
 license = "MIT"
