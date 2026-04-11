@@ -64,34 +64,46 @@ export default function App() {
     }
   }
 
-  const checkAndLockApp = () => {
-    const storedPassword = localStorage.getItem('appPassword')
-    if (storedPassword) {
-      setIsLocked(true)
+  const checkAndLockApp = async () => {
+    try {
+      const exists = await invoke('app_password_exists')
+      if (exists) {
+        setIsLocked(true)
+      }
+    } catch (err) {
+      console.warn('[app] failed to check app password exists', err)
     }
   }
 
   const lockWhenMinimized = async () => {
-    const storedPassword = localStorage.getItem('appPassword')
-    if (!storedPassword) return
-
     try {
       const currentWindow = getCurrentWindow()
       const minimized = await currentWindow.isMinimized()
       if (minimized) {
-        setIsLocked(true)
+        const exists = await invoke('app_password_exists')
+        if (exists) {
+          setIsLocked(true)
+        }
       }
     } catch (err) {
       console.warn('[app] failed to check minimized state', err)
     }
   }
 
-  const handleUnlock = () => {
-    const storedPassword = localStorage.getItem('appPassword')
-    if (unlockPassword === storedPassword) {
-      setIsLocked(false)
-      setUnlockPassword('')
-    } else {
+  const handleUnlock = async () => {
+    try {
+      const verified = await invoke('verify_app_password', {
+        password: unlockPassword,
+      })
+      if (verified) {
+        setIsLocked(false)
+        setUnlockPassword('')
+      } else {
+        window.alert(t('lockScreen.wrongPassword'))
+        setUnlockPassword('')
+      }
+    } catch (err) {
+      console.error('[app] verify_app_password failed:', err)
       window.alert(t('lockScreen.wrongPassword'))
       setUnlockPassword('')
     }
@@ -247,9 +259,10 @@ export default function App() {
     }
   }, [])
 
-  // 应用启动时检查是否需要锁屏
+  // 应用启动时检查是否需要锁屏，并清理旧版本地密码存储
   useEffect(() => {
-    checkAndLockApp()
+    localStorage.removeItem('appPassword')
+    void checkAndLockApp()
   }, [])
 
   return (

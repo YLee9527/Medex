@@ -26,23 +26,34 @@ export default function Settings() {
   const [libraryPath, setLibraryPath] = useState<string>('')
   const [appPassword, setAppPassword] = useState<string>('')
   const [isPasswordLocked, setIsPasswordLocked] = useState<boolean>(false)
+  const [hasAppPassword, setHasAppPassword] = useState<boolean>(false)
   // 使用懒初始化确保初始值来自 localStorage，避免 mount 时被初始 true 覆盖
   const [autoScan, setAutoScan] = useState<boolean>(() =>
     parseBoolean(localStorage.getItem('autoScanOnStartup'), false),
   )
   const [isScanning, setIsScanning] = useState(false)
 
-  // 初始化时从 localStorage 读取媒体库路径和应用密码（autoScan 由懒初始化负责）
+  // 初始化时从 localStorage 读取媒体库路径，并通过后端检查是否存在应用密码
   useEffect(() => {
     const path = localStorage.getItem('libraryPath')
     if (path) {
       setLibraryPath(path)
     }
-    const storedPassword = localStorage.getItem('appPassword')
-    if (storedPassword) {
-      setAppPassword(storedPassword)
-      setIsPasswordLocked(true)
+
+    const loadPasswordState = async () => {
+      try {
+        const exists = await invoke('app_password_exists')
+        if (exists) {
+          setHasAppPassword(true)
+          setIsPasswordLocked(true)
+          setAppPassword('********')
+        }
+      } catch (err) {
+        console.error('[settings] failed to check app password exists:', err)
+      }
     }
+
+    void loadPasswordState()
   }, [])
 
   // 当 autoScan 变化时，保存到 localStorage（只有在值不同的情况下写入，避免不必要覆盖）
@@ -60,14 +71,16 @@ export default function Settings() {
 
   const isPasswordValid = appPassword.length >= 6 && appPassword.length <= 20
 
-  const handleSaveAppPassword = () => {
+  const handleSaveAppPassword = async () => {
     if (!isPasswordValid || isPasswordLocked) {
       return
     }
 
     try {
-      localStorage.setItem('appPassword', appPassword)
+      await invoke('set_app_password', { password: appPassword })
+      setHasAppPassword(true)
       setIsPasswordLocked(true)
+      setAppPassword('********')
       window.alert(t('alerts.passwordSaved'))
     } catch (err) {
       console.error('[settings] save app password failed:', err)
@@ -75,11 +88,12 @@ export default function Settings() {
     }
   }
 
-  const handleClearAppPassword = () => {
+  const handleClearAppPassword = async () => {
     try {
-      localStorage.removeItem('appPassword')
+      await invoke('clear_app_password')
       setAppPassword('')
       setIsPasswordLocked(false)
+      setHasAppPassword(false)
       window.alert(t('alerts.passwordCleared'))
     } catch (err) {
       console.error('[settings] clear app password failed:', err)

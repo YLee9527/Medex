@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf, sync::Mutex};
 
 use anyhow::{anyhow, Context, Result};
 use once_cell::sync::OnceCell;
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, OptionalExtension};
 use tauri::Manager;
 
 static DB_CONN: OnceCell<Mutex<Connection>> = OnceCell::new();
@@ -36,6 +36,11 @@ CREATE TABLE IF NOT EXISTS recent_views (
     viewed_at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_media_path ON media(path);
 CREATE INDEX IF NOT EXISTS idx_media_tags_media_id ON media_tags(media_id);
 CREATE INDEX IF NOT EXISTS idx_media_tags_tag_id ON media_tags(tag_id);
@@ -54,6 +59,7 @@ pub fn init_db(app_handle: &tauri::AppHandle) -> Result<()> {
     conn.execute_batch(INIT_SQL)
         .context("failed to create tables/indexes for medex database")?;
     ensure_media_favorite_column(&conn)?;
+    ensure_app_settings_table(&conn)?;
 
     DB_CONN
         .set(Mutex::new(conn))
@@ -92,6 +98,48 @@ fn ensure_media_favorite_column(conn: &Connection) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn ensure_app_settings_table(conn: &Connection) -> Result<()> {
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS app_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        );",
+    )
+    .context("failed to create app_settings table")?;
+    Ok(())
+}
+
+pub fn set_setting(key: &str, value: &str) -> Result<()> {
+    with_connection(|conn| {
+        conn.execute(
+            "INSERT INTO app_settings (key, value) VALUES (?1, ?2)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value;",
+            params![key, value],
+        )
+        .context("failed to insert or update setting")?;
+        Ok(())
+    })
+}
+
+pub fn get_setting(key: &str) -> Result<Option<String>> {
+    with_connection(|conn| {
+        conn.query_row(
+            "SELECT value FROM app_settings WHERE key = ?1",
+            params![key],
+            |row| row.get(0),
+        )
+        .optional()
+        .context("failed to query setting")
+    })
+}
+
+pub fn remove_setting(key: &str) -> Result<()> {
+    with_connection(|conn| {
+        conn.execute("DELETE FROM app_settings WHERE key = ?1", params![key])?;
+        Ok(())
+    })
 }
 
 pub fn with_connection<T, F>(f: F) -> Result<T>

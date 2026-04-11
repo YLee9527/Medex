@@ -89,6 +89,10 @@ fn main() {
             services::tags::add_tag_to_media,
             services::tags::remove_tag_from_media,
             services::tags::get_tags_by_media,
+            services::security::set_app_password,
+            services::security::verify_app_password,
+            services::security::app_password_exists,
+            services::security::clear_app_password,
             thumbnail::request_thumbnail,
             open_settings_window,
             open_update_window
