@@ -95,12 +95,20 @@ export default function MediaGrid({
   showTags
 }: MediaGridProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const gridRef = useRef<FixedSizeGrid | null>(null);
   const { t } = useI18n();
   const { width, height } = useElementSize(containerRef);
   const listData = useMemo<ListItemData>(
     () => ({ mediaList, selectedIds, onCardClick, onCardDoubleClick, thumbnails, theme, showName, showTags }),
     [mediaList, selectedIds, onCardClick, onCardDoubleClick, thumbnails, theme, showName, showTags]
   );
+
+  // 当 mediaList 变化时，重置滚动条到顶部
+  useEffect(() => {
+    if (gridRef.current) {
+      gridRef.current.scrollTo({ scrollTop: 0 });
+    }
+  }, [mediaList]);
 
   const availableWidth = Math.max(1, width - GRID_PADDING * 2);
   const rawColumns = Math.floor((availableWidth + GRID_GAP) / GRID_CELL_WIDTH);
@@ -188,6 +196,7 @@ export default function MediaGrid({
     <div ref={containerRef} className="min-h-0 flex-1 overflow-hidden pr-1">
       {width > 0 && gridHeight > 0 ? (
         <FixedSizeGrid
+          ref={gridRef}
           width={width}
           height={gridHeight}
           rowCount={Math.max(1, rowCount)}
