@@ -43,6 +43,7 @@
 
   "toolbar.noTagsSelected": "未选择标签",
   "toolbar.resultsPrefix": "结果：",
+  "toolbar.refreshButton": "刷新",
 
   "grid.header.media": "媒体",
   "grid.header.name": "名称",

@@ -223,6 +223,19 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    if (import.meta.env.PROD) {
+      const handleContextMenu = (event: MouseEvent) => {
+        event.preventDefault()
+      }
+      window.addEventListener('contextmenu', handleContextMenu)
+      return () => {
+        window.removeEventListener('contextmenu', handleContextMenu)
+      }
+    }
+    return undefined
+  }, [])
+
+  useEffect(() => {
     if (!viewerOpen) return
     if (viewerMediaList.length === 0) {
       setViewerOpen(false)
@@ -312,7 +325,10 @@ export default function App() {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{
-            backgroundColor: themeMode === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)',
+            backgroundColor:
+              themeMode === 'dark'
+                ? 'rgba(0, 0, 0, 0.5)'
+                : 'rgba(255, 255, 255, 0.5)',
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)', // Safari support
           }}

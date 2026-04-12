@@ -43,6 +43,7 @@
 
   "toolbar.noTagsSelected": "No tags selected",
   "toolbar.resultsPrefix": "Results: ",
+  "toolbar.refreshButton": "Refresh",
 
   "grid.header.media": "Media",
   "grid.header.name": "Name",
