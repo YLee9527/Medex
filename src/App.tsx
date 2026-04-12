@@ -226,6 +226,40 @@ export default function App() {
     }
   }, [])
 
+  // 监听媒体卡片显示设置变更事件（由设置窗口触发），刷新当前窗口以应用新设置
+  useEffect(() => {
+    let unlistenDisplay: (() => void) | null = null
+    void (async () => {
+      try {
+        const u = await listen('medex:media-display-changed', () => {
+          console.log(
+            '[app] media display settings changed, reloading window to apply new settings',
+          )
+          window.location.reload()
+        })
+        unlistenDisplay = u
+      } catch (err) {
+        console.warn('[app] failed to attach media-display-changed listener', err)
+      }
+    })()
+
+    // In addition, listen for same-window customEvent if emitted
+    const onDisplay = () => {
+      console.log('[app] received local media-display-changed, reloading')
+      window.location.reload()
+    }
+    window.addEventListener('medex:media-display-changed', onDisplay)
+
+    return () => {
+      if (unlistenDisplay) {
+        try {
+          unlistenDisplay()
+        } catch {}
+      }
+      window.removeEventListener('medex:media-display-changed', onDisplay)
+    }
+  }, [])
+
   useEffect(() => {
     if (import.meta.env.PROD) {
       const handleContextMenu = (event: MouseEvent) => {

@@ -257,19 +257,6 @@ const GridCell = memo(function GridCell({ columnIndex, rowIndex, style, data }: 
       />
     </div>
   );
-}, (prev, next) => {
-  // 自定义比较函数，确保 showName 和 showTags 变化时重新渲染
-  return (
-    prev.columnIndex === next.columnIndex &&
-    prev.rowIndex === next.rowIndex &&
-    prev.style === next.style &&
-    prev.data.mediaList === next.data.mediaList &&
-    prev.data.selectedIds === next.data.selectedIds &&
-    prev.data.columnCount === next.data.columnCount &&
-    prev.data.theme === next.data.theme &&
-    prev.data.showName === next.data.showName &&
-    prev.data.showTags === next.data.showTags
-  );
 });
 
 const ListRow = memo(function ListRow({ index, style, data }: ListChildComponentProps<ListItemData & { theme: ThemeColors }>) {
@@ -328,17 +315,6 @@ const ListRow = memo(function ListRow({ index, style, data }: ListChildComponent
         <span className="text-xs uppercase" style={{ color: data.theme.textTertiary }}>{item.mediaType ?? '-'}</span>
       </button>
     </div>
-  );
-}, (prev, next) => {
-  // 自定义比较函数，确保 showName 和 showTags 变化时重新渲染
-  return (
-    prev.index === next.index &&
-    prev.style === next.style &&
-    prev.data.mediaList === next.data.mediaList &&
-    prev.data.selectedIds === next.data.selectedIds &&
-    prev.data.theme === next.data.theme &&
-    prev.data.showName === next.data.showName &&
-    prev.data.showTags === next.data.showTags
   );
 });
 

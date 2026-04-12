@@ -396,9 +396,7 @@ function areMediaCardPropsEqual(
     prev.time !== next.time ||
     prev.duration !== next.duration ||
     prev.resolution !== next.resolution ||
-    prev.isFavorite !== next.isFavorite ||
-    prev.showName !== next.showName ||
-    prev.showTags !== next.showTags
+    prev.isFavorite !== next.isFavorite
   ) {
     return false
   }

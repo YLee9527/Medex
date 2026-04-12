@@ -77,13 +77,15 @@ export default function Settings() {
     }
   }, [autoScan])
 
-  // 当媒体卡片显示设置变化时，保存到 localStorage
+  // 当媒体卡片显示设置变化时，保存到 localStorage 并触发主窗口刷新
   useEffect(() => {
     try {
       const currentName = localStorage.getItem('showMediaName')
       const normalizedName = showMediaName ? 'true' : 'false'
       if (currentName !== normalizedName) {
         localStorage.setItem('showMediaName', normalizedName)
+        // 触发主窗口刷新事件
+        void emit('medex:media-display-changed')
       }
     } catch (err) {
       console.warn('[settings] failed to persist showMediaName setting', err)
@@ -96,6 +98,8 @@ export default function Settings() {
       const normalizedTags = showMediaTags ? 'true' : 'false'
       if (currentTags !== normalizedTags) {
         localStorage.setItem('showMediaTags', normalizedTags)
+        // 触发主窗口刷新事件
+        void emit('medex:media-display-changed')
       }
     } catch (err) {
       console.warn('[settings] failed to persist showMediaTags setting', err)
