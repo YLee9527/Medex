@@ -269,10 +269,10 @@ function MediaCard({
         className={`flex flex-col gap-2 p-3 ${isGrid ? 'justify-center' : ''}`}
         style={{
           height: isGrid 
-            ? (showName || showTags ? '70px' : 'auto')
+            ? (showName && showTags ? '70px' : showName || showTags ? '40px' : 'auto')
             : 'auto',
           overflow: isGrid ? 'hidden' : 'visible',
-          minHeight: isGrid && (showName || showTags) ? '70px' : 'auto',
+          minHeight: isGrid && (showName && showTags) ? '70px' : isGrid && (showName || showTags) ? '40px' : 'auto',
         }}
       >
         {showName && (
