@@ -45,6 +45,7 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
   const { t } = useI18n();
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
   const [libraryPath, setLibraryPath] = useState<string | null>(null);
+  const [resetScrollKey, setResetScrollKey] = useState(0);
   const thumbnailMapRef = useRef<Record<string, string>>({});
   const requestingSet = useRef<Set<string>>(new Set());
   const queuedSet = useRef<Set<string>>(new Set());
@@ -251,6 +252,11 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
 
     return () => window.clearTimeout(timer);
   }, [selectedTagKey, mediaTypeFilter, fetchFilteredMedia]);
+
+  // 当筛选条件变化时（媒体类型或标签），触发滚动条重置
+  useEffect(() => {
+    setResetScrollKey((prev) => prev + 1);
+  }, [selectedTagKey, mediaTypeFilter]);
 
   const mediaList: MediaCardProps[] = useMemo(() => {
     const navFilteredMediaItems = mediaItems.filter((item) => {
@@ -612,6 +618,7 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
             theme={theme}
             showName={showMediaName}
             showTags={showMediaTags}
+            resetScrollKey={resetScrollKey}
           />
           <MediaCardContextMenu
             visible={contextMenuVisible}

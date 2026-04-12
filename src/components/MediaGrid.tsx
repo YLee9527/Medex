@@ -30,6 +30,8 @@ export interface MediaGridProps {
   // 媒体卡片显示设置
   showName?: boolean;
   showTags?: boolean;
+  // 重置滚动条的 key（当筛选条件变化时递增）
+  resetScrollKey?: number;
 }
 
 export type RenderRange = {
@@ -92,7 +94,8 @@ export default function MediaGrid({
   viewMode,
   theme,
   showName,
-  showTags
+  showTags,
+  resetScrollKey
 }: MediaGridProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const gridRef = useRef<FixedSizeGrid | null>(null);
@@ -103,12 +106,12 @@ export default function MediaGrid({
     [mediaList, selectedIds, onCardClick, onCardDoubleClick, thumbnails, theme, showName, showTags]
   );
 
-  // 当 mediaList 变化时，重置滚动条到顶部
+  // 当筛选条件变化时（媒体类型或标签），重置滚动条到顶部
   useEffect(() => {
     if (gridRef.current) {
       gridRef.current.scrollTo({ scrollTop: 0 });
     }
-  }, [mediaList]);
+  }, [resetScrollKey]);
 
   const availableWidth = Math.max(1, width - GRID_PADDING * 2);
   const rawColumns = Math.floor((availableWidth + GRID_GAP) / GRID_CELL_WIDTH);
