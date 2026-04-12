@@ -11,13 +11,22 @@
 - [src-tauri/src/thumbnail/worker.rs](file://src-tauri/src/thumbnail/worker.rs)
 - [src-tauri/src/thumbnail/utils.rs](file://src-tauri/src/thumbnail/utils.rs)
 - [src-tauri/src/db/mod.rs](file://src-tauri/src/db/mod.rs)
+- [src-tauri/src/menu.rs](file://src-tauri/src/menu.rs)
 - [src/containers/MediaGridContainer.tsx](file://src/containers/MediaGridContainer.tsx)
 - [src/containers/SidebarContainer.tsx](file://src/containers/SidebarContainer.tsx)
 - [src/containers/ToolbarContainer.tsx](file://src/containers/ToolbarContainer.tsx)
+- [src/pages/Settings.tsx](file://src/pages/Settings.tsx)
+- [src/pages/UpdatePage.tsx](file://src/pages/UpdatePage.tsx)
 - [src/store/useAppStore.ts](file://src/store/useAppStore.ts)
 - [API_REFERENCE.md](file://API_REFERENCE.md)
 - [DEVELOPMENT.md](file://DEVELOPMENT.md)
 </cite>
+
+## 更新摘要
+**变更内容**
+- 新增平台特定菜单交互命令：open_settings_window 和 open_update_window
+- 更新命令注册与架构图以反映新的菜单处理机制
+- 添加菜单事件处理与窗口复用逻辑说明
 
 ## 目录
 1. [简介](#简介)
@@ -32,13 +41,14 @@
 10. [附录](#附录)
 
 ## 简介
-本文件系统性梳理 Medex 应用中通过 Tauri 暴露给前端的命令接口，覆盖媒体扫描与查询、标签管理、缩略图系统三大功能域。文档为每个命令提供函数签名、参数说明、返回值格式、错误处理策略、执行流程、数据库操作与副作用，并给出最佳实践与性能优化建议。同时提供前端调用示例与常见问题排查指引。
+本文件系统性梳理 Medex 应用中通过 Tauri 暴露给前端的命令接口，覆盖媒体扫描与查询、标签管理、缩略图系统、平台特定菜单交互四大功能域。文档为每个命令提供函数签名、参数说明、返回值格式、错误处理策略、执行流程、数据库操作与副作用，并给出最佳实践与性能优化建议。同时提供前端调用示例与常见问题排查指引。
 
 ## 项目结构
 命令接口主要分布在以下模块：
 - 媒体扫描与查询：位于服务层 scanner.rs，负责扫描、索引、过滤、收藏、最近观看等
 - 标签管理：位于服务层 tags.rs，负责标签的增删改查与关联
 - 缩略图系统：位于 thumbnail 子模块，负责视频缩略图的请求、生成与缓存
+- 菜单交互系统：位于 menu.rs，负责平台特定菜单事件处理与窗口管理
 - 数据库：位于 db/mod.rs，提供 SQLite 初始化、连接池封装与表结构定义
 - 前端调用：位于各容器组件与存储中，演示命令调用与事件监听
 
@@ -49,6 +59,7 @@ MAIN["main.rs<br/>注册命令与插件"]
 SCANNER["services/scanner.rs<br/>媒体扫描/查询/收藏/最近"]
 TAGS["services/tags.rs<br/>标签管理"]
 THUMB["thumbnail/mod.rs<br/>缩略图命令"]
+MENU["menu.rs<br/>菜单事件处理/窗口管理"]
 THUMB_MGR["thumbnail/manager.rs<br/>任务管理器"]
 THUMB_Q["thumbnail/queue.rs<br/>队列"]
 THUMB_W["thumbnail/worker.rs<br/>工作线程"]
@@ -59,11 +70,14 @@ subgraph "前端"
 UI_MGC["MediaGridContainer.tsx<br/>缩略图请求/监听"]
 UI_SIDEBAR["SidebarContainer.tsx<br/>标签增删/刷新"]
 UI_TOOLBAR["ToolbarContainer.tsx<br/>媒体查询"]
+UI_SETTINGS["Settings.tsx<br/>设置窗口打开"]
+UI_UPDATE["UpdatePage.tsx<br/>更新窗口打开"]
 STORE["useAppStore.ts<br/>状态与转换"]
 end
 MAIN --> SCANNER
 MAIN --> TAGS
 MAIN --> THUMB
+MAIN --> MENU
 THUMB --> THUMB_MGR
 THUMB_MGR --> THUMB_Q
 THUMB_MGR --> THUMB_W
@@ -74,6 +88,8 @@ THUMB --> DB
 UI_MGC --> THUMB
 UI_SIDEBAR --> TAGS
 UI_TOOLBAR --> SCANNER
+UI_SETTINGS --> MAIN
+UI_UPDATE --> MAIN
 STORE --> UI_MGC
 STORE --> UI_SIDEBAR
 STORE --> UI_TOOLBAR
@@ -84,6 +100,7 @@ STORE --> UI_TOOLBAR
 - [src-tauri/src/services/scanner.rs:160-341](file://src-tauri/src/services/scanner.rs#L160-L341)
 - [src-tauri/src/services/tags.rs:19-220](file://src-tauri/src/services/tags.rs#L19-L220)
 - [src-tauri/src/thumbnail/mod.rs:57-61](file://src-tauri/src/thumbnail/mod.rs#L57-L61)
+- [src-tauri/src/menu.rs:1-52](file://src-tauri/src/menu.rs#L1-L52)
 - [src-tauri/src/db/mod.rs:45-123](file://src-tauri/src/db/mod.rs#L45-L123)
 
 **章节来源**
@@ -94,14 +111,16 @@ STORE --> UI_TOOLBAR
 - 命令注册中心：在应用启动时集中注册所有命令，统一暴露给前端
 - 数据访问层：通过 with_connection 封装数据库连接，确保线程安全与事务一致性
 - 缩略图子系统：基于多线程工作池与有界队列，异步生成并缓存视频缩略图
+- 菜单交互系统：处理平台特定菜单事件，管理独立窗口的生命周期
 - 前端调用层：容器组件通过 invoke 调用命令，结合事件监听实现响应式更新
 
 **章节来源**
 - [src-tauri/src/main.rs:49-65](file://src-tauri/src/main.rs#L49-L65)
 - [src-tauri/src/db/mod.rs:97-110](file://src-tauri/src/db/mod.rs#L97-L110)
+- [src-tauri/src/menu.rs:1-52](file://src-tauri/src/menu.rs#L1-L52)
 
 ## 架构总览
-命令接口采用“命令驱动 + 事件通知”的模式：
+命令接口采用"命令驱动 + 事件通知"的模式：
 - 前端通过 invoke 调用后端命令
 - 后端执行业务逻辑，必要时发出事件（如扫描进度、缩略图生成完成）
 - 前端监听事件并更新 UI 状态
@@ -362,6 +381,75 @@ ReturnPending --> End
 - [src-tauri/src/thumbnail/mod.rs:57-61](file://src-tauri/src/thumbnail/mod.rs#L57-L61)
 - [src-tauri/src/thumbnail/manager.rs:51-106](file://src-tauri/src/thumbnail/manager.rs#L51-L106)
 
+### 平台特定菜单交互命令
+
+#### 命令：open_settings_window
+- 函数签名：open_settings_window(app: AppHandle) -> ()
+- 参数：应用句柄（用于窗口管理）
+- 返回值：无返回值（void）
+- 功能概述：打开或激活设置窗口
+- 执行流程
+  - 检查是否存在名为 "settings" 的现有窗口
+  - 如果存在：显示并聚焦到现有窗口
+  - 如果不存在：创建新窗口，设置标题为"设置"，尺寸为 600x500，不可调整大小
+- 窗口特性：固定尺寸、不可调整大小、居中显示
+- 错误处理：创建失败时静默忽略，不影响其他功能
+
+**更新** 新增命令，用于支持平台特定菜单中的设置项
+
+**章节来源**
+- [src-tauri/src/main.rs:10-18](file://src-tauri/src/main.rs#L10-L18)
+- [src-tauri/src/menu.rs:3-15](file://src-tauri/src/menu.rs#L3-L15)
+
+#### 命令：open_update_window
+- 函数签名：open_update_window(app: AppHandle) -> ()
+- 参数：应用句柄（用于窗口管理）
+- 返回值：无返回值（void）
+- 功能概述：打开或激活更新窗口
+- 执行流程
+  - 检查是否存在名为 "update" 的现有窗口
+  - 如果存在：显示并聚焦到现有窗口
+  - 如果不存在：创建新窗口，设置标题为"检查更新"，尺寸为 400x300，不可调整大小
+- 窗口特性：固定尺寸、不可调整大小、居中显示
+- 错误处理：创建失败时静默忽略，不影响其他功能
+
+**更新** 新增命令，用于支持平台特定菜单中的更新检查项
+
+**章节来源**
+- [src-tauri/src/main.rs:15-18](file://src-tauri/src/main.rs#L15-L18)
+- [src-tauri/src/menu.rs:17-29](file://src-tauri/src/menu.rs#L17-L29)
+
+### 菜单事件处理系统
+
+#### 功能概述
+菜单事件处理系统负责响应平台特定菜单的用户交互，将菜单事件转换为相应的窗口操作：
+- 设置菜单项：打开设置窗口
+- 检查更新菜单项：打开更新窗口  
+- 关于菜单项：显示应用信息对话框
+- 退出菜单项：优雅关闭应用
+
+#### 执行流程
+```mermaid
+flowchart TD
+Start(["菜单事件触发"]) --> CheckId{"检查事件ID"}
+CheckId --> |settings| OpenSettings["调用 open_settings_window"]
+CheckId --> |check_update| OpenUpdate["调用 open_update_window"]
+CheckId --> |about| ShowAbout["显示关于对话框"]
+CheckId --> |quit| ExitApp["退出应用"]
+CheckId --> |其他| Ignore["忽略事件"]
+OpenSettings --> End(["完成"])
+OpenUpdate --> End
+ShowAbout --> End
+ExitApp --> End
+Ignore --> End
+```
+
+**图表来源**
+- [src-tauri/src/menu.rs:31-51](file://src-tauri/src/menu.rs#L31-L51)
+
+**章节来源**
+- [src-tauri/src/menu.rs:31-51](file://src-tauri/src/menu.rs#L31-L51)
+
 ## 依赖关系分析
 
 ```mermaid
@@ -369,15 +457,20 @@ graph LR
 MAIN["main.rs"] --> SCANNER["scanner.rs"]
 MAIN --> TAGS["tags.rs"]
 MAIN --> THUMB["thumbnail/mod.rs"]
+MAIN --> MENU["menu.rs"]
 SCANNER --> DB["db/mod.rs"]
 TAGS --> DB
 THUMB --> THUMB_MGR["manager.rs"]
 THUMB_MGR --> THUMB_Q["queue.rs"]
 THUMB_MGR --> THUMB_W["worker.rs"]
 THUMB_MGR --> THUMB_U["utils.rs"]
+MENU --> UI_SETTINGS["Settings.tsx"]
+MENU --> UI_UPDATE["UpdatePage.tsx"]
 UI_MGC["MediaGridContainer.tsx"] --> THUMB
 UI_SIDEBAR["SidebarContainer.tsx"] --> TAGS
 UI_TOOLBAR["ToolbarContainer.tsx"] --> SCANNER
+UI_SETTINGS --> MAIN
+UI_UPDATE --> MAIN
 STORE["useAppStore.ts"] --> UI_MGC
 STORE --> UI_SIDEBAR
 STORE --> UI_TOOLBAR
@@ -389,6 +482,7 @@ STORE --> UI_TOOLBAR
 - [src-tauri/src/services/tags.rs:19-220](file://src-tauri/src/services/tags.rs#L19-L220)
 - [src-tauri/src/thumbnail/mod.rs:57-61](file://src-tauri/src/thumbnail/mod.rs#L57-L61)
 - [src-tauri/src/db/mod.rs:45-123](file://src-tauri/src/db/mod.rs#L45-L123)
+- [src-tauri/src/menu.rs:1-52](file://src-tauri/src/menu.rs#L1-L52)
 
 **章节来源**
 - [src-tauri/src/main.rs:49-65](file://src-tauri/src/main.rs#L49-L65)
@@ -401,6 +495,9 @@ STORE --> UI_TOOLBAR
   - 固定并发工作线程数与有界队列，防止资源耗尽
   - 去重集合避免重复生成同一视频缩略图
   - 缓存命中直接返回，避免重复 IO
+- 窗口管理
+  - 窗口复用机制避免重复创建，减少内存占用
+  - 固定窗口尺寸减少布局计算开销
 - 前端
   - 限流并发与队列长度，避免 UI 卡顿
   - 使用虚拟化渲染，仅渲染可见区域
@@ -417,12 +514,16 @@ STORE --> UI_TOOLBAR
   - 排查是否在网格内批量挂载 <video>，是否启用虚拟化，缩略图请求并发是否过高
 - 对话框权限
   - 检查 capabilities/default.json 是否包含 dialog:allow-open 与 dialog:default
+- 设置/更新窗口无法打开
+  - 检查前端是否正确调用 invoke('open_settings_window') 或 invoke('open_update_window')
+  - 确认菜单事件处理函数是否正确绑定到应用实例
+  - 验证窗口 URL 是否正确指向 pages/settings.html 或 pages/update.html
 
 **章节来源**
 - [DEVELOPMENT.md:564-596](file://DEVELOPMENT.md#L564-L596)
 
 ## 结论
-本文档系统梳理了 Medex 的 Tauri 命令接口，涵盖媒体扫描与查询、标签管理与缩略图系统。通过清晰的命令签名、参数说明、返回值格式与错误处理策略，配合执行流程与数据库操作细节，帮助开发者正确集成与优化。前端调用示例与最佳实践进一步降低了接入成本，配合故障排除指南可快速定位与解决问题。
+本文档系统梳理了 Medex 的 Tauri 命令接口，涵盖媒体扫描与查询、标签管理、缩略图系统与平台特定菜单交互四大功能域。通过清晰的命令签名、参数说明、返回值格式与错误处理策略，配合执行流程与数据库操作细节，帮助开发者正确集成与优化。新增的 open_settings_window 和 open_update_window 命令为跨平台应用提供了统一的菜单交互体验。前端调用示例与最佳实践进一步降低了接入成本，配合故障排除指南可快速定位与解决问题。
 
 [本节为总结性内容，无需特定文件来源]
 
@@ -439,11 +540,16 @@ STORE --> UI_TOOLBAR
   - 前端应监听 thumbnail_ready 事件并及时更新缓存映射
   - 控制并发与队列长度，避免阻塞 UI
   - 使用占位符与骨架屏提升用户体验
+- 窗口管理
+  - 使用窗口复用机制，避免重复创建
+  - 固定窗口尺寸，确保跨平台一致性
+  - 正确处理窗口焦点切换
 
 **章节来源**
 - [src/containers/MediaGridContainer.tsx:360-559](file://src/containers/MediaGridContainer.tsx#L360-L559)
 - [src/containers/SidebarContainer.tsx:35-63](file://src/containers/SidebarContainer.tsx#L35-L63)
 - [API_REFERENCE.md:397-440](file://API_REFERENCE.md#L397-L440)
+- [src-tauri/src/menu.rs:3-29](file://src-tauri/src/menu.rs#L3-L29)
 
 ### 前端调用示例路径
 - 扫描并刷新
@@ -454,6 +560,11 @@ STORE --> UI_TOOLBAR
   - [API_REFERENCE.md:423-428](file://API_REFERENCE.md#L423-L428)
 - 缩略图结果监听
   - [API_REFERENCE.md:432-437](file://API_REFERENCE.md#L432-L437)
+- 打开设置窗口
+  - [src/pages/Settings.tsx:116-123](file://src/pages/Settings.tsx#L116-L123)
+- 打开更新窗口
+  - [src/pages/Settings.tsx:116-123](file://src/pages/Settings.tsx#L116-L123)
 
 **章节来源**
 - [API_REFERENCE.md:397-440](file://API_REFERENCE.md#L397-L440)
+- [src/pages/Settings.tsx:116-123](file://src/pages/Settings.tsx#L116-L123)

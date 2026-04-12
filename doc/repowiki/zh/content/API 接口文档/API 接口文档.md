@@ -2,11 +2,16 @@
 
 <cite>
 **本文档引用的文件**
+- [API_REFERENCE.md](file://doc/API_REFERENCE.md)
+- [DEVELOPMENT.md](file://doc/DEVELOPMENT.md)
+- [API 接口文档.md](file://doc/repowiki/zh/content/API 接口文档/API 接口文档.md)
+- [Tauri 命令接口/Tauri 命令接口.md](file://doc/repowiki/zh/content/API 接口文档/Tauri 命令接口/Tauri 命令接口.md)
+- [事件系统.md](file://doc/repowiki/zh/content/API 接口文档/事件系统.md)
+- [并发与性能约定.md](file://doc/repowiki/zh/content/API 接口文档/并发与性能约定.md)
+- [数据类型定义.md](file://doc/repowiki/zh/content/API 接口文档/数据类型定义.md)
+- [错误处理约定.md](file://doc/repowiki/zh/content/API 接口文档/错误处理约定.md)
+- [Tauri 命令接口/媒体相关命令.md](file://doc/repowiki/zh/content/API 接口文档/Tauri 命令接口/媒体相关命令.md)
 - [src-tauri/src/main.rs](file://src-tauri/src/main.rs)
-- [src-tauri/tauri.conf.json](file://src-tauri/tauri.conf.json)
-- [src-tauri/Cargo.toml](file://src-tauri/Cargo.toml)
-- [API_REFERENCE.md](file://API_REFERENCE.md)
-- [DEVELOPMENT.md](file://DEVELOPMENT.md)
 - [src-tauri/src/services/scanner.rs](file://src-tauri/src/services/scanner.rs)
 - [src-tauri/src/services/tags.rs](file://src-tauri/src/services/tags.rs)
 - [src-tauri/src/thumbnail/mod.rs](file://src-tauri/src/thumbnail/mod.rs)
@@ -21,6 +26,12 @@
 - [src/containers/SidebarContainer.tsx](file://src/containers/SidebarContainer.tsx)
 </cite>
 
+## 更新摘要
+**变更内容**
+- 文档结构重构：API接口文档已移动到doc/API_REFERENCE.md和doc/repowiki/zh/content/API 接口文档目录
+- 内容扩展：新增详细的命令接口、事件系统、并发性能约定、数据类型定义和错误处理约定
+- 组织优化：采用模块化文档结构，便于维护和查找
+
 ## 目录
 1. [简介](#简介)
 2. [项目结构](#项目结构)
@@ -34,7 +45,9 @@
 10. [附录](#附录)
 
 ## 简介
-本文件为 Medex 桌面应用的完整 API 接口文档，覆盖 Tauri 命令接口（Rust -> 前端）、事件系统（Rust emit -> 前端 listen）、IPC 通信协议、错误处理策略、调试与监控方法，以及未来演进方向与兼容性建议。文档严格依据仓库现有实现编写，确保与代码一致。
+本文档为 Medex 桌面应用的完整 API 接口文档，覆盖 Tauri 命令接口（Rust -> 前端）、事件系统（Rust emit -> 前端 listen）、IPC 通信协议、错误处理策略、调试与监控方法，以及未来演进方向与兼容性建议。文档严格依据仓库现有实现编写，确保与代码一致。
+
+**更新** 文档已重构为模块化结构，包含完整的命令接口、事件系统、并发性能约定、数据类型定义和错误处理约定等专门文档。
 
 ## 项目结构
 - 后端（Rust/Tauri）位于 src-tauri，包含数据库、扫描器、标签系统、缩略图系统与主入口。
@@ -132,7 +145,7 @@ Tauri-->>FE : 媒体列表
 
 **章节来源**
 - [src-tauri/src/main.rs:78-94](file://src-tauri/src/main.rs#L78-L94)
-- [API_REFERENCE.md:35-545](file://API_REFERENCE.md#L35-L545)
+- [API_REFERENCE.md:35-545](file://doc/API_REFERENCE.md#L35-L545)
 
 #### 媒体扫描与查询
 - scan_and_index
@@ -262,7 +275,7 @@ Tauri-->>FE : 事件监听回调
 - MediaGridContainer 监听 thumbnail_ready，更新缩略图缓存映射并继续出队
 
 **章节来源**
-- [API_REFERENCE.md:282-329](file://API_REFERENCE.md#L282-L329)
+- [API_REFERENCE.md:282-329](file://doc/API_REFERENCE.md#L282-L329)
 - [src/containers/ToolbarContainer.tsx:58-87](file://src/containers/ToolbarContainer.tsx#L58-L87)
 - [src/containers/MediaGridContainer.tsx:454-487](file://src/containers/MediaGridContainer.tsx#L454-L487)
 
@@ -278,7 +291,7 @@ Tauri-->>FE : 事件监听回调
   - 个别跨容器同步使用 window.dispatchEvent（后续建议迁移到显式 store action）
 
 **章节来源**
-- [API_REFERENCE.md:19-32](file://API_REFERENCE.md#L19-L32)
+- [API_REFERENCE.md:19-32](file://doc/API_REFERENCE.md#L19-L32)
 - [src/containers/ToolbarContainer.tsx:31-52](file://src/containers/ToolbarContainer.tsx#L31-L52)
 - [src/containers/MediaGridContainer.tsx:366-387](file://src/containers/MediaGridContainer.tsx#L366-L387)
 - [src/containers/SidebarContainer.tsx:16-33](file://src/containers/SidebarContainer.tsx#L16-L33)
@@ -289,7 +302,7 @@ Tauri-->>FE : 事件监听回调
 - 前端容器对关键命令（收藏、标签、扫描）进行 try/catch 并弹窗提示
 
 **章节来源**
-- [API_REFERENCE.md:450-467](file://API_REFERENCE.md#L450-L467)
+- [API_REFERENCE.md:450-467](file://doc/API_REFERENCE.md#L450-L467)
 - [src/containers/MediaGridContainer.tsx:186-202](file://src/containers/MediaGridContainer.tsx#L186-L202)
 - [src/containers/MediaGridContainer.tsx:146-176](file://src/containers/MediaGridContainer.tsx#L146-L176)
 - [src/containers/ToolbarContainer.tsx:312-332](file://src/containers/ToolbarContainer.tsx#L312-L332)
@@ -306,12 +319,12 @@ Tauri-->>FE : 事件监听回调
   - 页面卡顿：检查是否误挂载大量 video 元素、是否启用虚拟化、并发是否过高
 
 **章节来源**
-- [DEVELOPMENT.md:470-500](file://DEVELOPMENT.md#L470-L500)
+- [DEVELOPMENT.md:470-500](file://doc/DEVELOPMENT.md#L470-L500)
 - [src-tauri/src/thumbnail/utils.rs:71-96](file://src-tauri/src/thumbnail/utils.rs#L71-L96)
 - [src-tauri/src/thumbnail/manager.rs:24-49](file://src-tauri/src/thumbnail/manager.rs#L24-L49)
 - [src-tauri/src/thumbnail/worker.rs:13-49](file://src-tauri/src/thumbnail/worker.rs#L13-L49)
 - [src/containers/MediaGridContainer.tsx:28-29](file://src/containers/MediaGridContainer.tsx#L28-L29)
-- [DEVELOPMENT.md:564-595](file://DEVELOPMENT.md#L564-L595)
+- [DEVELOPMENT.md:564-595](file://doc/DEVELOPMENT.md#L564-L595)
 
 ## 依赖分析
 - 外部依赖
@@ -360,7 +373,7 @@ Tags --> DB
   - 数据库：为 media/path、media_tags、recent_views 建立索引
 
 **章节来源**
-- [DEVELOPMENT.md:306-342](file://DEVELOPMENT.md#L306-L342)
+- [DEVELOPMENT.md:306-342](file://doc/DEVELOPMENT.md#L306-L342)
 - [src-tauri/src/services/scanner.rs:90-115](file://src-tauri/src/services/scanner.rs#L90-L115)
 - [src-tauri/src/db/mod.rs:39-42](file://src-tauri/src/db/mod.rs#L39-L42)
 - [src-tauri/src/thumbnail/manager.rs:24-49](file://src-tauri/src/thumbnail/manager.rs#L24-L49)
@@ -376,7 +389,7 @@ Tags --> DB
   - 排查是否在网格内挂载过多 video；确认启用虚拟化；检查并发是否过高
 
 **章节来源**
-- [DEVELOPMENT.md:564-595](file://DEVELOPMENT.md#L564-L595)
+- [DEVELOPMENT.md:564-595](file://doc/DEVELOPMENT.md#L564-L595)
 
 ## 结论
 本文档系统梳理了 Medex 的 Tauri 命令、事件与 IPC 通信，结合前端容器的实际使用，提供了参数、返回值、行为与错误处理的权威说明。同时给出性能与调试建议，为后续扩展（如分页、批量标签、统一错误码、版本化 API）提供参考。
@@ -394,7 +407,7 @@ Tags --> DB
   - MediaItem、DbMediaItem、DbTagItem（详见 useAppStore.ts）
 
 **章节来源**
-- [API_REFERENCE.md:485-521](file://API_REFERENCE.md#L485-L521)
+- [API_REFERENCE.md:485-521](file://doc/API_REFERENCE.md#L485-L521)
 - [src/store/useAppStore.ts:16-46](file://src/store/useAppStore.ts#L16-L46)
 
 ### 命令与事件索引
@@ -409,4 +422,19 @@ Tags --> DB
   - src/components/MediaCard.tsx
 
 **章节来源**
-- [API_REFERENCE.md:533-544](file://API_REFERENCE.md#L533-L544)
+- [API_REFERENCE.md:533-544](file://doc/API_REFERENCE.md#L533-L544)
+
+### 文档结构说明
+**更新** Medex 已采用模块化文档结构：
+
+- **核心参考文档**：doc/API_REFERENCE.md - 完整的 API 接口参考
+- **详细开发文档**：doc/DEVELOPMENT.md - 项目开发指南
+- **专题文档**：
+  - doc/repowiki/zh/content/API 接口文档/Tauri 命令接口/Tauri 命令接口.md
+  - doc/repowiki/zh/content/API 接口文档/事件系统.md
+  - doc/repowiki/zh/content/API 接口文档/并发与性能约定.md
+  - doc/repowiki/zh/content/API 接口文档/数据类型定义.md
+  - doc/repowiki/zh/content/API 接口文档/错误处理约定.md
+  - doc/repowiki/zh/content/API 接口文档/Tauri 命令接口/媒体相关命令.md
+
+这种结构化文档组织方式便于开发者根据具体需求查找相应内容，提高了文档的可维护性和可读性。
