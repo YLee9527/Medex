@@ -25,6 +25,9 @@ export interface MediaCardProps {
   className?: string
   mode?: 'grid' | 'list'
   theme: ThemeColors
+  // 媒体卡片显示设置
+  showName?: boolean
+  showTags?: boolean
 }
 
 type DbTag = {
@@ -50,6 +53,8 @@ function MediaCard({
   className,
   mode = 'grid',
   theme,
+  showName = true,
+  showTags = true,
 }: MediaCardProps) {
   const widthClass = className ?? 'w-[180px]'
   const isGrid = mode === 'grid'
@@ -129,8 +134,15 @@ function MediaCard({
         />
       )}
 
+      {/* 图片区域：根据显示内容动态调整高度 */}
       <div
-        className={`relative w-full overflow-hidden ${isGrid ? 'h-[150px] shrink-0' : 'aspect-video'}`}
+        className="relative w-full overflow-hidden shrink-0"
+        style={{
+          height: isGrid 
+            ? (showName && showTags ? '150px' : showName || showTags ? '180px' : '220px')
+            : 'auto',
+          aspectRatio: isGrid ? 'auto' : '16/9',
+        }}
       >
         <button
           type="button"
@@ -252,87 +264,101 @@ function MediaCard({
         ) : null}
       </div>
 
+      {/* 信息区域：根据显示内容自动调整高度 */}
       <div
-        className={`flex flex-col gap-2 p-3 ${isGrid ? 'h-[70px] overflow-hidden' : ''}`}
+        className={`flex flex-col gap-2 p-3 ${isGrid ? 'justify-center' : ''}`}
+        style={{
+          height: isGrid 
+            ? (showName || showTags ? '70px' : 'auto')
+            : 'auto',
+          overflow: isGrid ? 'hidden' : 'visible',
+          minHeight: isGrid && (showName || showTags) ? '70px' : 'auto',
+        }}
       >
-        <p
-          className={`text-[14px] leading-5 ${isGrid ? 'truncate' : 'overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]'}`}
-          style={{ color: theme.text }}
-        >
-          {filename}
-        </p>
+        {showName && (
+          <p
+            className={`text-[14px] leading-5 ${isGrid ? 'truncate' : 'overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]'}`}
+            style={{ color: theme.text }}
+          >
+            {filename}
+          </p>
+        )}
         {isGrid ? (
-          <div className="flex flex-nowrap items-center gap-1 overflow-hidden">
-            {tags.length > 0 ? (
-              tags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    void handleRemoveTag(tag)
-                  }}
-                  className="max-w-full truncate rounded px-2 py-0.5 text-[12px] leading-4 transition-colors"
-                  style={{
-                    backgroundColor: theme.tagBg,
-                    color: theme.textSecondary,
-                  }}
-                  title={`点击删除 #${tag}`}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = theme.tagHover
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = theme.tagBg
-                  }}
+          showTags && (
+            <div className="flex flex-nowrap items-center gap-1 overflow-hidden">
+              {tags.length > 0 ? (
+                tags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      void handleRemoveTag(tag)
+                    }}
+                    className="max-w-full truncate rounded px-2 py-0.5 text-[12px] leading-4 transition-colors"
+                    style={{
+                      backgroundColor: theme.tagBg,
+                      color: theme.textSecondary,
+                    }}
+                    title={`点击删除 #${tag}`}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.tagHover
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.tagBg
+                    }}
+                  >
+                    #{tag}
+                  </button>
+                ))
+              ) : (
+                <span
+                  className="truncate text-[12px] leading-4"
+                  style={{ color: theme.textTertiary }}
                 >
-                  #{tag}
-                </button>
-              ))
-            ) : (
-              <span
-                className="truncate text-[12px] leading-4"
-                style={{ color: theme.textTertiary }}
-              >
-                暂无标签
-              </span>
-            )}
-          </div>
+                  暂无标签
+                </span>
+              )}
+            </div>
+          )
         ) : (
-          <div className="flex max-h-[56px] flex-wrap gap-1 overflow-y-auto">
-            {tags.length > 0 ? (
-              tags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    void handleRemoveTag(tag)
-                  }}
-                  className="rounded px-2 py-0.5 text-[12px] leading-4 transition-colors"
-                  style={{
-                    backgroundColor: theme.tagBg,
-                    color: theme.textSecondary,
-                  }}
-                  title={`点击删除 #${tag}`}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = theme.tagHover
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = theme.tagBg
-                  }}
+          showTags && (
+            <div className="flex max-h-[56px] flex-wrap gap-1 overflow-y-auto">
+              {tags.length > 0 ? (
+                tags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      void handleRemoveTag(tag)
+                    }}
+                    className="rounded px-2 py-0.5 text-[12px] leading-4 transition-colors"
+                    style={{
+                      backgroundColor: theme.tagBg,
+                      color: theme.textSecondary,
+                    }}
+                    title={`点击删除 #${tag}`}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.tagHover
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.tagBg
+                    }}
+                  >
+                    #{tag}
+                  </button>
+                ))
+              ) : (
+                <span
+                  className="text-[12px] leading-4"
+                  style={{ color: theme.textTertiary }}
                 >
-                  #{tag}
-                </button>
-              ))
-            ) : (
-              <span
-                className="text-[12px] leading-4"
-                style={{ color: theme.textTertiary }}
-              >
-                暂无标签
-              </span>
-            )}
-          </div>
+                  暂无标签
+                </span>
+              )}
+            </div>
+          )
         )}
       </div>
     </button>
@@ -370,7 +396,9 @@ function areMediaCardPropsEqual(
     prev.time !== next.time ||
     prev.duration !== next.duration ||
     prev.resolution !== next.resolution ||
-    prev.isFavorite !== next.isFavorite
+    prev.isFavorite !== next.isFavorite ||
+    prev.showName !== next.showName ||
+    prev.showTags !== next.showTags
   ) {
     return false
   }

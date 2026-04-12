@@ -32,6 +32,14 @@ export default function Settings() {
     parseBoolean(localStorage.getItem('autoScanOnStartup'), false),
   )
   const [isScanning, setIsScanning] = useState(false)
+  
+  // 媒体卡片显示设置
+  const [showMediaName, setShowMediaName] = useState<boolean>(() =>
+    parseBoolean(localStorage.getItem('showMediaName'), true),
+  )
+  const [showMediaTags, setShowMediaTags] = useState<boolean>(() =>
+    parseBoolean(localStorage.getItem('showMediaTags'), true),
+  )
 
   // 初始化时从 localStorage 读取媒体库路径，并通过后端检查是否存在应用密码
   useEffect(() => {
@@ -68,6 +76,31 @@ export default function Settings() {
       console.warn('[settings] failed to persist autoScan setting', err)
     }
   }, [autoScan])
+
+  // 当媒体卡片显示设置变化时，保存到 localStorage
+  useEffect(() => {
+    try {
+      const currentName = localStorage.getItem('showMediaName')
+      const normalizedName = showMediaName ? 'true' : 'false'
+      if (currentName !== normalizedName) {
+        localStorage.setItem('showMediaName', normalizedName)
+      }
+    } catch (err) {
+      console.warn('[settings] failed to persist showMediaName setting', err)
+    }
+  }, [showMediaName])
+
+  useEffect(() => {
+    try {
+      const currentTags = localStorage.getItem('showMediaTags')
+      const normalizedTags = showMediaTags ? 'true' : 'false'
+      if (currentTags !== normalizedTags) {
+        localStorage.setItem('showMediaTags', normalizedTags)
+      }
+    } catch (err) {
+      console.warn('[settings] failed to persist showMediaTags setting', err)
+    }
+  }, [showMediaTags])
 
   const isPasswordValid = appPassword.length >= 6 && appPassword.length <= 20
 
@@ -469,7 +502,156 @@ export default function Settings() {
             />
           </div>
 
-          {/* 6. Check for Updates */}
+          {/* 5. Media Card Display Settings */}
+          <div
+            className="flex flex-col px-6 py-4 border-b"
+            style={{ borderColor: theme.borderLight }}
+          >
+            <div className="mb-3 text-sm font-medium" style={{ color: theme.text }}>
+              媒体卡片显示
+            </div>
+            
+            {/* 显示媒体名称 */}
+            <div className="flex items-center justify-between py-2">
+              <div className="text-sm" style={{ color: theme.textSecondary }}>
+                显示媒体名称
+              </div>
+              <div>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showMediaName}
+                    onChange={(e) => setShowMediaName(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div
+                    className="relative w-10 h-6 rounded-full transition-colors"
+                    style={{
+                      backgroundColor: showMediaName ? '#3B82F6' : theme.inputBorder,
+                    }}
+                  >
+                    <div
+                      className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform"
+                      style={{
+                        transform: showMediaName
+                          ? 'translateX(16px)'
+                          : 'translateX(0)',
+                      }}
+                    />
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* 显示媒体标签 */}
+            <div className="flex items-center justify-between py-2">
+              <div className="text-sm" style={{ color: theme.textSecondary }}>
+                显示媒体标签
+              </div>
+              <div>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showMediaTags}
+                    onChange={(e) => setShowMediaTags(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div
+                    className="relative w-10 h-6 rounded-full transition-colors"
+                    style={{
+                      backgroundColor: showMediaTags ? '#3B82F6' : theme.inputBorder,
+                    }}
+                  >
+                    <div
+                      className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform"
+                      style={{
+                        transform: showMediaTags
+                          ? 'translateX(16px)'
+                          : 'translateX(0)',
+                      }}
+                    />
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* 6. App Password */}
+          <div
+            className="flex flex-col px-6 py-4 border-b"
+            style={{ borderColor: theme.borderLight }}
+          >
+            <div className="flex items-center justify-between">
+              <div
+                className="text-sm font-medium"
+                style={{ color: theme.text }}
+              >
+                {t('settings.appPassword.label')}
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={handleClearAppPassword}
+                  className="px-3 py-1.5 rounded text-xs transition-colors"
+                  style={{
+                    backgroundColor: theme.buttonBg,
+                    color: theme.text,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.buttonHover
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.buttonBg
+                  }}
+                >
+                  {t('settings.appPassword.clear')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveAppPassword}
+                  disabled={!isPasswordValid || isPasswordLocked}
+                  className="px-3 py-1.5 rounded text-xs transition-colors disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor:
+                      !isPasswordValid || isPasswordLocked
+                        ? theme.inputBorder
+                        : theme.buttonBg,
+                    color: theme.text,
+                    opacity: !isPasswordValid || isPasswordLocked ? 0.6 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (isPasswordValid && !isPasswordLocked) {
+                      e.currentTarget.style.backgroundColor = theme.buttonHover
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (isPasswordValid && !isPasswordLocked) {
+                      e.currentTarget.style.backgroundColor = theme.buttonBg
+                    }
+                  }}
+                >
+                  {t('settings.appPassword.set')}
+                </button>
+              </div>
+            </div>
+            <input
+              type="password"
+              value={appPassword}
+              onChange={(e) => setAppPassword(e.target.value)}
+              placeholder={t('settings.appPassword.placeholder')}
+              disabled={isPasswordLocked}
+              className="mt-3 w-full px-3 py-1.5 border rounded text-sm focus:outline-none"
+              style={{
+                backgroundColor: theme.inputBg,
+                borderColor: theme.inputBorder,
+                color: theme.text,
+                opacity: isPasswordLocked ? 0.7 : 1,
+                cursor: isPasswordLocked ? 'not-allowed' : 'text',
+              }}
+            />
+          </div>
+
+          {/* 7. Check for Updates */}
           <div
             className="flex items-center justify-between px-6 py-4 border-b"
             style={{ borderColor: theme.borderLight }}

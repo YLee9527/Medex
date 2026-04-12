@@ -27,6 +27,9 @@ export interface MediaGridProps {
   onVisibleRangeChange?: (range: RenderRange) => void;
   viewMode: 'grid' | 'list';
   theme: ThemeColors;
+  // 媒体卡片显示设置
+  showName?: boolean;
+  showTags?: boolean;
 }
 
 export type RenderRange = {
@@ -49,6 +52,8 @@ type GridItemData = {
   thumbnails: Record<string, string>;
   columnCount: number;
   theme: ThemeColors;
+  showName?: boolean;
+  showTags?: boolean;
 };
 
 type ListItemData = {
@@ -58,6 +63,8 @@ type ListItemData = {
   onCardDoubleClick: (id: string) => void;
   thumbnails: Record<string, string>;
   theme: ThemeColors;
+  showName?: boolean;
+  showTags?: boolean;
 };
 
 const GRID_CARD_WIDTH = 180;
@@ -83,14 +90,16 @@ export default function MediaGrid({
   thumbnails,
   onVisibleRangeChange,
   viewMode,
-  theme
+  theme,
+  showName,
+  showTags
 }: MediaGridProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { t } = useI18n();
   const { width, height } = useElementSize(containerRef);
   const listData = useMemo<ListItemData>(
-    () => ({ mediaList, selectedIds, onCardClick, onCardDoubleClick, thumbnails, theme }),
-    [mediaList, selectedIds, onCardClick, onCardDoubleClick, thumbnails, theme]
+    () => ({ mediaList, selectedIds, onCardClick, onCardDoubleClick, thumbnails, theme, showName, showTags }),
+    [mediaList, selectedIds, onCardClick, onCardDoubleClick, thumbnails, theme, showName, showTags]
   );
 
   const availableWidth = Math.max(1, width - GRID_PADDING * 2);
@@ -110,7 +119,9 @@ export default function MediaGrid({
       onCardContextMenu,
       thumbnails,
       columnCount,
-      theme
+      theme,
+      showName,
+      showTags
     }),
     [
       mediaList,
@@ -123,7 +134,9 @@ export default function MediaGrid({
       onCardContextMenu,
       thumbnails,
       columnCount,
-      theme
+      theme,
+      showName,
+      showTags
     ]
   );
 
@@ -238,8 +251,24 @@ const GridCell = memo(function GridCell({ columnIndex, rowIndex, style, data }: 
         videoThumbnail={item.path ? data.thumbnails[item.path] : undefined}
         className="w-[180px]"
         mode="grid"
+        theme={data.theme}
+        showName={data.showName}
+        showTags={data.showTags}
       />
     </div>
+  );
+}, (prev, next) => {
+  // 自定义比较函数，确保 showName 和 showTags 变化时重新渲染
+  return (
+    prev.columnIndex === next.columnIndex &&
+    prev.rowIndex === next.rowIndex &&
+    prev.style === next.style &&
+    prev.data.mediaList === next.data.mediaList &&
+    prev.data.selectedIds === next.data.selectedIds &&
+    prev.data.columnCount === next.data.columnCount &&
+    prev.data.theme === next.data.theme &&
+    prev.data.showName === next.data.showName &&
+    prev.data.showTags === next.data.showTags
   );
 });
 
@@ -250,6 +279,8 @@ const ListRow = memo(function ListRow({ index, style, data }: ListChildComponent
   }
   const videoThumb = item.path ? data.thumbnails[item.path] : '';
   const isSelected = data.selectedIds.has(item.id);
+  const showName = data.showName ?? true;
+  const showTags = data.showTags ?? true;
 
   return (
     <div style={style} className="px-0.5 py-1">
@@ -291,12 +322,23 @@ const ListRow = memo(function ListRow({ index, style, data }: ListChildComponent
             )}
           </span>
         </span>
-        <span className="truncate">{item.filename}</span>
-        <span className="truncate text-xs" style={{ color: data.theme.textSecondary }}>{item.tags.map((tag) => `#${tag}`).join(' ')}</span>
+        {showName && <span className="truncate">{item.filename}</span>}
+        {showTags && <span className="truncate text-xs" style={{ color: data.theme.textSecondary }}>{item.tags.map((tag) => `#${tag}`).join(' ')}</span>}
         <span className="text-xs" style={{ color: data.theme.textTertiary }}>{item.time ?? '-'}</span>
         <span className="text-xs uppercase" style={{ color: data.theme.textTertiary }}>{item.mediaType ?? '-'}</span>
       </button>
     </div>
+  );
+}, (prev, next) => {
+  // 自定义比较函数，确保 showName 和 showTags 变化时重新渲染
+  return (
+    prev.index === next.index &&
+    prev.style === next.style &&
+    prev.data.mediaList === next.data.mediaList &&
+    prev.data.selectedIds === next.data.selectedIds &&
+    prev.data.theme === next.data.theme &&
+    prev.data.showName === next.data.showName &&
+    prev.data.showTags === next.data.showTags
   );
 });
 

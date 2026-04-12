@@ -52,6 +52,9 @@ type AppState = {
   selectedMediaId: string;
   viewMode: 'grid' | 'list';
   mediaTypeFilter: 'all' | 'image' | 'video';
+  // 媒体卡片显示设置
+  showMediaName: boolean;
+  showMediaTags: boolean;
   clickNav: (navId: string) => void;
   clickTag: (tagId: string) => void;
   clickMedia: (mediaId: string) => void;
@@ -65,6 +68,9 @@ type AppState = {
   addTagToMediaLocal: (mediaId: string, tagName: string) => void;
   removeTagFromMediaLocal: (mediaId: string, tagName: string) => void;
   markMediaViewedLocal: (mediaId: string, viewedAt: number) => void;
+  // 媒体卡片设置
+  setShowMediaName: (show: boolean) => void;
+  setShowMediaTags: (show: boolean) => void;
 };
 
 const initialNavItems: SidebarNavItem[] = [
@@ -76,6 +82,27 @@ const initialNavItems: SidebarNavItem[] = [
 const initialTags: SidebarTagItem[] = [];
 
 const initialMediaItems: MediaItem[] = [];
+
+// 从 localStorage 读取媒体卡片显示设置
+const getBooleanFromStorage = (key: string, defaultValue = true): boolean => {
+  try {
+    const val = localStorage.getItem(key);
+    if (val === null) return defaultValue;
+    const s = String(val).trim().toLowerCase();
+    if (s === 'true' || s === '1' || s === 'yes') return true;
+    if (s === 'false' || s === '0' || s === '') return false;
+    try {
+      return Boolean(JSON.parse(val as string));
+    } catch {
+      return defaultValue;
+    }
+  } catch {
+    return defaultValue;
+  }
+};
+
+const initialShowMediaName = getBooleanFromStorage('showMediaName', true);
+const initialShowMediaTags = getBooleanFromStorage('showMediaTags', true);
 
 const makeTagId = (tagName: string) =>
   tagName
@@ -91,6 +118,8 @@ export const useAppStore = create<AppState>((set) => ({
   selectedMediaId: '',
   viewMode: 'grid',
   mediaTypeFilter: 'all',
+  showMediaName: initialShowMediaName,
+  showMediaTags: initialShowMediaTags,
   clickNav: (navId) => {
     console.log('nav clicked:', navId);
     set((state) => ({
@@ -332,5 +361,13 @@ export const useAppStore = create<AppState>((set) => ({
           }
           : item
       )
-    }))
+    })),
+  setShowMediaName: (show) => {
+    localStorage.setItem('showMediaName', show ? 'true' : 'false');
+    set({ showMediaName: show });
+  },
+  setShowMediaTags: (show) => {
+    localStorage.setItem('showMediaTags', show ? 'true' : 'false');
+    set({ showMediaTags: show });
+  }
 }));

@@ -39,6 +39,8 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
   const removeTagFromMediaLocal = useAppStore((state) => state.removeTagFromMediaLocal);
   const mediaTypeFilter = useAppStore((state) => state.mediaTypeFilter);
   const setMediaItemsFromDb = useAppStore((state) => state.setMediaItemsFromDb);
+  const showMediaName = useAppStore((state) => state.showMediaName);
+  const showMediaTags = useAppStore((state) => state.showMediaTags);
   const { theme } = useThemeContext();
   const { t } = useI18n();
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
@@ -608,6 +610,8 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
             onVisibleRangeChange={handleVisibleRangeChange}
             viewMode="grid"
             theme={theme}
+            showName={showMediaName}
+            showTags={showMediaTags}
           />
           <MediaCardContextMenu
             visible={contextMenuVisible}
