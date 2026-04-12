@@ -231,10 +231,16 @@ export default function MediaGridContainer({ onOpenViewer }: MediaGridContainerP
         recentViewedAt: row.recentViewedAt ?? null
       }));
       setMediaItemsFromDb(mapped);
+      
+      // 筛选条件变化时，清空请求状态，让 visibleRangeChange 重新触发缩略图请求
+      // 保留已有的缩略图缓存，避免重复加载
+      requestingSet.current.clear();
+      queuedSet.current.clear();
+      taskQueue.current = [];
     } catch (error) {
       console.error('[ui] filter media failed:', error);
     }
-  }, [selectedTagNames, mediaTypeFilter, setMediaItemsFromDb]);
+  }, [selectedTagNames, mediaTypeFilter, setMediaItemsFromDb, t]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
