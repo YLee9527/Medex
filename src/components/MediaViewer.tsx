@@ -57,12 +57,22 @@ export default function MediaViewer({
   }, [open, safeIndex, mediaList.length]);
 
   useEffect(() => {
+    // 当索引变化或 viewer 打开时，自动播放视频
+    if (videoRef.current && media?.mediaType === 'video') {
+      videoRef.current.load(); // 重新加载视频源
+      videoRef.current.play().catch((err) => {
+        console.error('[viewer] video autoPlay failed:', err);
+      });
+    }
+  }, [safeIndex, open, media?.mediaType]);
+
+  useEffect(() => {
     return () => {
       if (videoRef.current) {
         videoRef.current.pause();
       }
     };
-  }, [safeIndex, open]);
+  }, []);
 
   if (!open || !media) {
     return null;
@@ -73,7 +83,11 @@ export default function MediaViewer({
   return (
     <div 
       className="fixed inset-0 z-[1200] transition-opacity duration-200"
-      style={{ backgroundColor: theme.overlay }}
+      style={{ 
+        backgroundColor: 'rgba(0, 0, 0, 0.98)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)'
+      }}
     >
       <button
         type="button"
@@ -144,6 +158,7 @@ export default function MediaViewer({
         </svg>
       </button>
 
+      {/* 背景遮罩，点击关闭 */}
       <button
         type="button"
         onClick={onClose}
@@ -151,15 +166,16 @@ export default function MediaViewer({
         aria-hidden="true"
       />
 
-      <div className="relative z-10 flex h-full w-full items-center justify-center px-16 py-12">
+      {/* 媒体内容区域 - 撑满整个容器 */}
+      <div className="relative z-10 h-full w-full">
         {media.mediaType === 'video' ? (
           <video
             ref={videoRef}
             key={media.id}
             src={src}
             controls
-            autoPlay
-            className="max-h-full max-w-full"
+            className="h-full w-full"
+            style={{ objectFit: 'contain' }}
           />
         ) : (
           <img
@@ -167,7 +183,7 @@ export default function MediaViewer({
             src={src}
             alt={media.filename}
             loading="lazy"
-            className="max-h-full max-w-full object-contain"
+            className="h-full w-full object-contain"
           />
         )}
       </div>
