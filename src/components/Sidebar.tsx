@@ -30,15 +30,16 @@ export default function Sidebar({
 
   return (
     <aside
-      className="h-full w-[240px] shrink-0 overflow-y-auto p-4"
+      className="flex h-full w-[240px] shrink-0 flex-col overflow-hidden p-4"
       style={{
         backgroundColor: theme.sidebar,
         color: theme.text,
         borderRight: `1px solid ${theme.borderLight}`,
       }}
     >
+      {/* 顶部标题区域 */}
       <div
-        className="mb-8 rounded border p-3"
+        className="mb-4 shrink-0 rounded border p-3"
         style={{ borderColor: theme.borderLight }}
       >
         <h1 className="text-xl font-semibold tracking-wide">{t('sidebar.title')}</h1>
@@ -47,7 +48,8 @@ export default function Sidebar({
         </p>
       </div>
 
-      <section className="mb-8">
+      {/* 导航区域 */}
+      <section className="mb-4 shrink-0">
         <h2
           className="mb-3 text-xs uppercase tracking-wider"
           style={{ color: theme.textTertiary }}
@@ -84,79 +86,90 @@ export default function Sidebar({
         </ul>
       </section>
 
-      <section>
-        <h2
-          className="mb-3 text-xs uppercase tracking-wider"
-          style={{ color: theme.textTertiary }}
-        >
-          {t('sidebar.tags')}
-        </h2>
-
-        <div className="mb-3 grid grid-cols-[1fr_auto] gap-2">
-          <input
-            type="text"
-            value={newTagName}
-            onChange={(e) => onNewTagNameChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                onCreateTag()
-              }
-            }}
-            placeholder={t('sidebar.addTag.placeholder')}
-            className="rounded-md px-2 py-1.5 text-xs outline-none transition-colors"
-            style={{
-              backgroundColor: theme.inputBg,
-              borderColor: theme.inputBorder,
-              color: theme.text,
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = theme.inputFocusBorder
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = theme.inputBorder
-            }}
-            onMouseEnter={(e) => {
-              if (document.activeElement !== e.currentTarget) {
-                e.currentTarget.style.backgroundColor = theme.hover
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (document.activeElement !== e.currentTarget) {
-                e.currentTarget.style.backgroundColor = theme.inputBg
-              }
-            }}
-          />
-          <button
-            type="button"
-            onClick={onCreateTag}
-            className="rounded-md px-2 py-1.5 text-xs text-white transition-colors"
-            style={{
-              backgroundColor: theme.buttonBg,
-              color: theme.text,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = theme.buttonHover
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = theme.buttonBg
-            }}
+      {/* 标签区域：占据剩余空间，但需要减去设置按钮的高度 */}
+      <section className="flex min-h-0 flex-1 flex-col">
+        {/* 固定部分：标签标题和新增框 */}
+        <div className="shrink-0">
+          <h2
+            className="mb-3 text-xs uppercase tracking-wider"
+            style={{ color: theme.textTertiary }}
           >
-            {t('sidebar.addTag.button')}
-          </button>
+            {t('sidebar.tags')}
+          </h2>
+
+          {/* 新增标签输入框：固定在标题下方 */}
+          <div className="mb-3 grid grid-cols-[1fr_auto] gap-2">
+            <input
+              type="text"
+              value={newTagName}
+              onChange={(e) => onNewTagNameChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  onCreateTag()
+                }
+              }}
+              placeholder={t('sidebar.addTag.placeholder')}
+              className="rounded-md px-2 py-1.5 text-xs outline-none transition-colors"
+              style={{
+                backgroundColor: theme.inputBg,
+                borderColor: theme.inputBorder,
+                color: theme.text,
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = theme.inputFocusBorder
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = theme.inputBorder
+              }}
+              onMouseEnter={(e) => {
+                if (document.activeElement !== e.currentTarget) {
+                  e.currentTarget.style.backgroundColor = theme.hover
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (document.activeElement !== e.currentTarget) {
+                  e.currentTarget.style.backgroundColor = theme.inputBg
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={onCreateTag}
+              className="rounded-md px-2 py-1.5 text-xs text-white transition-colors"
+              style={{
+                backgroundColor: theme.buttonBg,
+                color: theme.text,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme.buttonHover
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = theme.buttonBg
+              }}
+            >
+              {t('sidebar.addTag.button')}
+            </button>
+          </div>
         </div>
 
-        <ul className="space-y-2">
-          {tags.map((tag) => (
-            <TagItem
-              key={tag.id}
-              tag={tag}
-              onTagClick={onTagClick}
-              onDeleteTag={onDeleteTag}
-              theme={theme}
-            />
-          ))}
-        </ul>
+        {/* 标签列表：可滚动区域 */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="flex flex-wrap gap-[10px] pb-4 pt-[5px]">
+            {tags.map((tag) => (
+              <TagItem
+                key={tag.id}
+                tag={tag}
+                onTagClick={onTagClick}
+                onDeleteTag={onDeleteTag}
+                theme={theme}
+              />
+            ))}
+          </div>
+        </div>
       </section>
+
+      {/* 底部占位区域：预留设置按钮的高度，确保标签列表不会延伸到这里 */}
+      <div className="shrink-0" style={{ height: '80px' }} />
     </aside>
   )
 }

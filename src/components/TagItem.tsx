@@ -11,61 +11,60 @@ type TagItemProps = {
 
 export default function TagItem({ tag, onTagClick, onDeleteTag, theme }: TagItemProps) {
   const { t } = useI18n();
-  const canDelete = tag.selected && (tag.mediaCount ?? 0) === 0;
+  const canDelete = (tag.mediaCount ?? 0) === 0;
 
   return (
-    <li className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={() => onTagClick(tag.id)}
-        className="min-w-0 flex-1 rounded px-3 py-2 text-left text-sm transition-colors"
-        style={{
-          backgroundColor: tag.selected ? theme.selected : 'transparent',
-          color: tag.selected ? theme.text : theme.textSecondary,
-        }}
-        title={`${tag.name} (${t('tag.mediaCount')}: ${tag.mediaCount ?? 0})`}
-        onMouseEnter={(e) => {
-          if (!tag.selected) {
-            e.currentTarget.style.backgroundColor = theme.hover;
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!tag.selected) {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }
-        }}
-      >
-        <span className="block truncate">#{tag.name}</span>
-      </button>
+    <div
+      className="group relative inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors"
+      style={{
+        backgroundColor: tag.selected ? theme.selected : 'transparent',
+        color: tag.selected ? theme.text : theme.textSecondary,
+      }}
+      onClick={() => onTagClick(tag.id)}
+      title={`${tag.name} (${t('tag.mediaCount')}: ${tag.mediaCount ?? 0})`}
+      onMouseEnter={(e) => {
+        if (!tag.selected) {
+          e.currentTarget.style.backgroundColor = theme.hover;
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!tag.selected) {
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }
+      }}
+    >
+      {/* 标签名称 */}
+      <span className="max-w-[150px] truncate">#{tag.name}</span>
 
-      {canDelete ? (
+      {/* 删除按钮：仅当标签下没有媒体时显示 */}
+      {canDelete && (
         <button
           type="button"
           onClick={(event) => {
             event.stopPropagation();
             onDeleteTag(tag.id);
           }}
-          className="flex h-8 w-8 items-center justify-center rounded-md transition-colors"
-          style={{ color: theme.textSecondary }}
+          className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full opacity-0 transition-all group-hover:opacity-100"
+          style={{
+            backgroundColor: theme.tagHover,
+            color: theme.textSecondary,
+          }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
-            e.currentTarget.style.color = '#FCA5A5';
+            e.currentTarget.style.backgroundColor = '#EF4444';
+            e.currentTarget.style.color = '#FFFFFF';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.backgroundColor = theme.tagHover;
             e.currentTarget.style.color = theme.textSecondary;
           }}
           aria-label={t('actions.deleteTag')}
           title={t('actions.deleteTag')}
         >
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 6h18" />
-            <path d="M8 6V4h8v2" />
-            <path d="M7 6l1 14h8l1-14" />
-            <path d="M10 10v7M14 10v7" />
+          <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
-      ) : null}
-    </li>
+      )}
+    </div>
   );
 }
