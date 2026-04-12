@@ -8,6 +8,10 @@ import MediaViewer from './components/MediaViewer'
 import { useAppStore } from './store/useAppStore'
 import { useThemeContext } from './contexts/ThemeContext'
 import { useI18n } from './contexts/I18nContext'
+
+// 全局变量跟踪是否已检查锁屏，避免页面刷新时重复检查
+let hasCheckedLockScreen = false
+
 export default function App() {
   const mediaItems = useAppStore((state) => state.mediaItems)
   const navItems = useAppStore((state) => state.navItems)
@@ -275,7 +279,13 @@ export default function App() {
   // 应用启动时检查是否需要锁屏，并清理旧版本地密码存储
   useEffect(() => {
     localStorage.removeItem('appPassword')
-    void checkAndLockApp()
+    
+    // 只有在应用首次启动时才检查锁屏，避免页面刷新时重复弹出
+    const alreadyCheckedLockScreen = sessionStorage.getItem('medex:lockScreenChecked')
+    if (!alreadyCheckedLockScreen) {
+      sessionStorage.setItem('medex:lockScreenChecked', 'true')
+      void checkAndLockApp()
+    }
   }, [])
 
   return (
